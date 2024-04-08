@@ -13,6 +13,7 @@ var (
 )
 
 type Config struct {
+	ServerAddr  string
 	DatabaseURL string
 	JWTIssuer   string
 	JWTSecret   string
@@ -31,7 +32,13 @@ func LoadConfig() (Config, error) {
 
 	ret := Config{}
 
-	s, ok := env["DATABASE_URL"]
+	s, ok := env["SERVER_ADDR"]
+	if !ok {
+		return Config{}, ErrMissingKey
+	}
+	ret.ServerAddr = s
+
+	s, ok = env["DATABASE_URL"]
 	if !ok {
 		return Config{}, ErrMissingKey
 	}
