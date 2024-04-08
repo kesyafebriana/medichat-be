@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"os"
 	"strconv"
 	"time"
 
@@ -21,45 +22,21 @@ type Config struct {
 }
 
 func InitConfig() error {
-	return godotenv.Load(".env")
+	return godotenv.Load()
 }
 
 func LoadConfig() (Config, error) {
-	env, err := godotenv.Read(".env")
-	if err != nil {
-		return Config{}, err
-	}
-
 	ret := Config{}
 
-	s, ok := env["SERVER_ADDR"]
-	if !ok {
-		return Config{}, ErrMissingKey
-	}
-	ret.ServerAddr = s
+	ret.ServerAddr = os.Getenv("SERVER_ADDR")
 
-	s, ok = env["DATABASE_URL"]
-	if !ok {
-		return Config{}, ErrMissingKey
-	}
-	ret.DatabaseURL = s
+	ret.DatabaseURL = os.Getenv("DATABASE_URL")
 
-	s, ok = env["JWT_ISSUER"]
-	if !ok {
-		return Config{}, ErrMissingKey
-	}
-	ret.JWTIssuer = s
+	ret.JWTIssuer = os.Getenv("JWT_ISSUER")
 
-	s, ok = env["JWT_SECRET"]
-	if !ok {
-		return Config{}, ErrMissingKey
-	}
-	ret.JWTSecret = s
+	ret.JWTSecret = os.Getenv("JWT_SECRET")
 
-	s, ok = env["JWT_LIFESPAN"]
-	if !ok {
-		return Config{}, ErrMissingKey
-	}
+	s := os.Getenv("JWT_LIFESPAN")
 	i, err := strconv.Atoi(s)
 	if err != nil {
 		return Config{}, err

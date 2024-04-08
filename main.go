@@ -20,9 +20,10 @@ import (
 )
 
 func main() {
+	config.InitConfig()
 	conf, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("Error loaiding env config: %v", err)
+		log.Fatalf("Error loading env config: %v", err)
 	}
 
 	l := logrus.New()
