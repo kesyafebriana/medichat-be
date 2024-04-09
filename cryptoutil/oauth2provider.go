@@ -2,6 +2,7 @@ package cryptoutil
 
 import (
 	"context"
+	"medichat-be/apperror"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -21,7 +22,18 @@ func (p *oAuth2ProviderImpl) GetAuthURL(state string) string {
 }
 
 func (p *oAuth2ProviderImpl) Exchange(ctx context.Context, code string) (*oauth2.Token, error) {
-	return p.config.Exchange(ctx, code)
+	tok, err := p.config.Exchange(ctx, code)
+	if reterr, ok := err.(*oauth2.RetrieveError); ok && reterr.ErrorCode == "invalid_grant" {
+		return nil, apperror.NewAppError(
+			apperror.CodeBadRequest,
+			"invalid oauth2 grant",
+			err,
+		)
+	}
+	if err != nil {
+		return tok, apperror.Wrap(err)
+	}
+	return tok, nil
 }
 
 type GoogleAuthProviderOpts struct {
