@@ -10,6 +10,7 @@ import (
 	"medichat-be/logger"
 	"medichat-be/middleware"
 	"medichat-be/server"
+	"medichat-be/service"
 	"net/http"
 	"os"
 	"os/signal"
@@ -40,8 +41,22 @@ func main() {
 		conf.JWTSecret,
 		conf.JWTLifespan,
 	)
+	googleAuthProvider := cryptoutil.NewGoogleAuthProvider(cryptoutil.GoogleAuthProviderOpts{
+		RedirectURL:  conf.GoogleAPIRedirectURL,
+		ClientID:     conf.GoogleAPIClientID,
+		ClientSecret: conf.GoogleAPIClientSecret,
+	})
+	googleAuthStateProvider := cryptoutil.NewRandomTokenProvider(16)
+
+	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{
+		OAuth2Provider: googleAuthProvider,
+	})
 
 	pingHandler := handler.NewPingHandler()
+	googleAuthHandler := handler.NewOAuth2Handler(handler.OAuth2HandlerOpts{
+		OAuth2Service:       googleAuthService,
+		RandomTokenProvider: googleAuthStateProvider,
+	})
 
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
@@ -50,7 +65,10 @@ func main() {
 	authenticator := middleware.Authenticator(jwtProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
-		PingHandler: pingHandler,
+		PingHandler:       pingHandler,
+		GoogleAuthHandler: googleAuthHandler,
+
+		SessionKey: conf.SessionKey,
 
 		RequestID:     requestIDMid,
 		Authenticator: authenticator,

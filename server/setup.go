@@ -4,11 +4,16 @@ import (
 	"medichat-be/apperror"
 	"medichat-be/handler"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
 
 type SetupServerOpts struct {
-	PingHandler *handler.PingHandler
+	PingHandler       *handler.PingHandler
+	GoogleAuthHandler *handler.OAuth2Handler
+
+	SessionKey []byte
 
 	RequestID     gin.HandlerFunc
 	Authenticator gin.HandlerFunc
@@ -20,10 +25,14 @@ type SetupServerOpts struct {
 func SetupServer(opts SetupServerOpts) *gin.Engine {
 	router := gin.New()
 	router.ContextWithFallback = true
+
+	sessionStore := cookie.NewStore(opts.SessionKey)
+
 	router.Use(
 		opts.RequestID,
 		opts.Logger,
 		gin.Recovery(),
+		sessions.Sessions("session", sessionStore),
 		opts.CorsHandler,
 		opts.ErrorHandler,
 	)
@@ -33,6 +42,16 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	apiV1Group.GET(
 		"/ping",
 		opts.PingHandler.Ping,
+	)
+
+	googleGroup := apiV1Group.Group("/google")
+	googleGroup.GET(
+		"/auth",
+		opts.GoogleAuthHandler.GetAuthURL,
+	)
+	googleGroup.GET(
+		"/callback",
+		opts.GoogleAuthHandler.Callback,
 	)
 
 	router.NoRoute(func(ctx *gin.Context) {
