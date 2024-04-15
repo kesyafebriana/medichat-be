@@ -62,3 +62,9 @@ func (r *dataRepository) Sleep(ctx context.Context, duration time.Duration) erro
 func (r *dataRepository) AccountRepository() domain.AccountRepository {
 	return nil
 }
+
+func (r *dataRepository) ResetPasswordTokenRepository() domain.ResetPasswordTokenRepository {
+	return &resetPasswordTokenRepository{
+		querier: r.querier,
+	}
+}

@@ -13,6 +13,7 @@ type DataRepository interface {
 	Sleep(ctx context.Context, duration time.Duration) error
 
 	AccountRepository() AccountRepository
+	ResetPasswordTokenRepository() ResetPasswordTokenRepository
 }
 
 func RunAtomic[T any](
