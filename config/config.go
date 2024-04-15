@@ -38,6 +38,7 @@ type Config struct {
 	AccessTokenLifespan        time.Duration
 	RefreshTokenLifespan       time.Duration
 	ResetPasswordTokenLifespan time.Duration
+	VerifyEmailTokenLifespan   time.Duration
 
 	GoogleAPIClientID     string
 	GoogleAPIClientSecret string
@@ -97,6 +98,13 @@ func LoadConfig() (Config, error) {
 		return Config{}, err
 	}
 	ret.ResetPasswordTokenLifespan = time.Duration(i) * time.Minute
+
+	s = os.Getenv("VERIFY_EMAIL_TOKEN_LIFESPAN")
+	i, err = strconv.Atoi(s)
+	if err != nil {
+		return Config{}, err
+	}
+	ret.VerifyEmailTokenLifespan = time.Duration(i) * time.Minute
 
 	ret.GoogleAPIClientID = os.Getenv("GOOGLE_API_CLIENT_ID")
 	ret.GoogleAPIClientSecret = os.Getenv("GOOGLE_API_CLIENT_SECRET")
