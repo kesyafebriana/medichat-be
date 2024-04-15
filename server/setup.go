@@ -10,6 +10,7 @@ import (
 )
 
 type SetupServerOpts struct {
+	AccountHandler    *handler.AccountHandler
 	PingHandler       *handler.PingHandler
 	GoogleAuthHandler *handler.OAuth2Handler
 
@@ -42,6 +43,24 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	apiV1Group.GET(
 		"/ping",
 		opts.PingHandler.Ping,
+	)
+
+	authGroup := apiV1Group.Group("/auth")
+	authGroup.POST(
+		"/register",
+		opts.AccountHandler.Register,
+	)
+	authGroup.POST(
+		"/login",
+		opts.AccountHandler.Login,
+	)
+	authGroup.POST(
+		"/forget-password",
+		opts.AccountHandler.ForgetPassword,
+	)
+	authGroup.POST(
+		"/reset-password",
+		opts.AccountHandler.ResetPassword,
 	)
 
 	googleGroup := apiV1Group.Group("/google")
