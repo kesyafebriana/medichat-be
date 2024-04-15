@@ -6,6 +6,7 @@ import (
 	"medichat-be/constants"
 	"medichat-be/cryptoutil"
 	"medichat-be/domain"
+	"time"
 )
 
 type accountService struct {
@@ -23,23 +24,29 @@ type accountService struct {
 
 	pharmacyManagerAccessProvider  cryptoutil.JWTProvider
 	pharmacyManagerRefreshProvider cryptoutil.JWTProvider
+
+	rptProvider cryptoutil.RandomTokenProvider
+	rptLifespan time.Duration
 }
 
 type AccountServiceOpts struct {
 	DataRepository domain.DataRepository
 	PasswordHasher cryptoutil.PasswordHasher
 
-	AdminJWTProvider     cryptoutil.JWTProvider
+	AdminAccessProvider  cryptoutil.JWTProvider
 	AdminRefreshProvider cryptoutil.JWTProvider
 
-	UserJWTProvider     cryptoutil.JWTProvider
+	UserAccessProvider  cryptoutil.JWTProvider
 	UserRefreshProvider cryptoutil.JWTProvider
 
-	DoctorJWTProvider     cryptoutil.JWTProvider
+	DoctorAccessProvider  cryptoutil.JWTProvider
 	DoctorRefreshProvider cryptoutil.JWTProvider
 
-	PharmacyManagerJWTProvider     cryptoutil.JWTProvider
+	PharmacyManagerAccessProvider  cryptoutil.JWTProvider
 	PharmacyManagerRefreshProvider cryptoutil.JWTProvider
+
+	RPTProvider cryptoutil.RandomTokenProvider
+	RPTLifespan time.Duration
 }
 
 func NewAccountService(opts AccountServiceOpts) *accountService {
@@ -47,17 +54,20 @@ func NewAccountService(opts AccountServiceOpts) *accountService {
 		dataRepository: opts.DataRepository,
 		passwordHasher: opts.PasswordHasher,
 
-		adminAccessProvider:  opts.AdminJWTProvider,
+		adminAccessProvider:  opts.AdminAccessProvider,
 		adminRefreshProvider: opts.AdminRefreshProvider,
 
-		userAccessProvider:  opts.UserJWTProvider,
+		userAccessProvider:  opts.UserAccessProvider,
 		userRefreshProvider: opts.UserRefreshProvider,
 
-		doctorAccessProvider:  opts.DoctorJWTProvider,
+		doctorAccessProvider:  opts.DoctorAccessProvider,
 		doctorRefreshProvider: opts.DoctorRefreshProvider,
 
-		pharmacyManagerAccessProvider:  opts.PharmacyManagerJWTProvider,
+		pharmacyManagerAccessProvider:  opts.PharmacyManagerAccessProvider,
 		pharmacyManagerRefreshProvider: opts.PharmacyManagerRefreshProvider,
+
+		rptProvider: opts.RPTProvider,
+		rptLifespan: opts.RPTLifespan,
 	}
 }
 
@@ -168,4 +178,89 @@ func (s *accountService) createTokensForAccount(
 	}
 
 	return tokens, nil
+}
+
+func (s *accountService) GetResetPasswordToken(
+	ctx context.Context,
+	email string,
+) (string, error) {
+	accountRepo := s.dataRepository.AccountRepository()
+	rptRepo := s.dataRepository.ResetPasswordTokenRepository()
+
+	account, err := accountRepo.GetByEmail(ctx, email)
+	if err != nil {
+		return "", apperror.Wrap(err)
+	}
+
+	tokenStr, err := s.rptProvider.GenerateToken()
+	if err != nil {
+		return "", apperror.Wrap(err)
+	}
+
+	token := domain.ResetPasswordToken{
+		Account:   account,
+		Token:     tokenStr,
+		ExpiredAt: time.Now().Add(s.rptLifespan),
+	}
+
+	_, err = rptRepo.Add(ctx, token)
+	if err != nil {
+		return "", apperror.Wrap(err)
+	}
+
+	return tokenStr, nil
+}
+
+func (s *accountService) ResetPasswordClosure(
+	ctx context.Context,
+	creds domain.AccountResetPasswordCredentials,
+) domain.AtomicFunc[any] {
+	return func(dr domain.DataRepository) (any, error) {
+		accountRepo := dr.AccountRepository()
+		rptRepo := dr.ResetPasswordTokenRepository()
+
+		token, err := rptRepo.GetByTokenStrAndLock(ctx, creds.ResetPasswordToken)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		account, err := accountRepo.GetByIDAndLock(ctx, token.Account.ID)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		if account.Email != creds.Email {
+			return nil, apperror.NewForbidden(nil)
+		}
+
+		hashedPassword, err := s.passwordHasher.HashPassword(creds.NewPassword)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		err = accountRepo.UpdatePasswordByID(ctx, account.ID, hashedPassword)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		err = rptRepo.SoftDeleteByID(ctx, token.ID)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		return nil, nil
+	}
+}
+
+func (s *accountService) ResetPassword(
+	ctx context.Context,
+	creds domain.AccountResetPasswordCredentials,
+) error {
+	_, err := domain.RunAtomic(
+		s.dataRepository,
+		ctx,
+		s.ResetPasswordClosure(ctx, creds),
+	)
+
+	return err
 }
