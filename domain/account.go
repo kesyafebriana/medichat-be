@@ -31,7 +31,8 @@ type AccountLoginCredentials struct {
 }
 
 type AccountRegisterCredentials struct {
-	Email string
+	Account  Account
+	Password string
 }
 
 type AccountRepository interface {
