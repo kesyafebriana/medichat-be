@@ -62,6 +62,14 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/reset-password",
 		opts.AccountHandler.ResetPassword,
 	)
+	authGroup.POST(
+		"/verify-token",
+		opts.AccountHandler.GetVerifyEmailToken,
+	)
+	authGroup.POST(
+		"/verify-email",
+		opts.AccountHandler.VerifyEmail,
+	)
 
 	googleGroup := apiV1Group.Group("/google")
 	googleGroup.GET(
