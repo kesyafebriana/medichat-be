@@ -194,6 +194,23 @@ func (r *accountRepository) UpdatePasswordByID(
 	)
 }
 
+func (r *accountRepository) VerifyEmailByID(
+	ctx context.Context,
+	id int64,
+) error {
+	q := `
+		UPDATE accounts
+		SET email_verified = true,
+			updated_at = now()
+		WHERE id = $1
+	`
+
+	return exec(
+		r.querier, ctx, q,
+		id,
+	)
+}
+
 var (
 	accountColumns                = " id, email, email_verified, role, account_type "
 	accountWithCredentialsColumns = " id, email, email_verified, role, account_type, hashed_password "

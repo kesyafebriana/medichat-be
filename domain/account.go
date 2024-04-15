@@ -41,6 +41,12 @@ type AccountResetPasswordCredentials struct {
 	ResetPasswordToken string
 }
 
+type AccountVerifyEmailCredentials struct {
+	Email            string
+	Password         string
+	VerifyEmailToken string
+}
+
 type AccountRepository interface {
 	GetByEmail(ctx context.Context, email string) (Account, error)
 	GetByEmailAndLock(ctx context.Context, email string) (Account, error)
@@ -54,6 +60,7 @@ type AccountRepository interface {
 
 	Add(ctx context.Context, creds AccountWithCredentials) (Account, error)
 	UpdatePasswordByID(ctx context.Context, id int64, newHashedPassword string) error
+	VerifyEmailByID(ctx context.Context, id int64) error
 }
 
 type AccountService interface {
