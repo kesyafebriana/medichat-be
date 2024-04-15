@@ -84,8 +84,11 @@ func main() {
 
 	passwordHasher := cryptoutil.NewPasswordHasherBcrypt(constants.HashCost)
 
-	resetPasswordToken := cryptoutil.NewRandomTokenProvider(
+	resetPasswordTokenProvider := cryptoutil.NewRandomTokenProvider(
 		constants.ResetPasswordTokenByteLength,
+	)
+	verifyEmailTokenProvider := cryptoutil.NewRandomTokenProvider(
+		constants.VerifyEmailTokenByteLength,
 	)
 
 	googleAuthProvider := cryptoutil.NewGoogleAuthProvider(cryptoutil.GoogleAuthProviderOpts{
@@ -110,8 +113,10 @@ func main() {
 		DoctorRefreshProvider:          doctorRefreshProvider,
 		PharmacyManagerAccessProvider:  pharmacyManagerAccessProvider,
 		PharmacyManagerRefreshProvider: pharmacyManagerRefreshProvider,
-		RPTProvider:                    resetPasswordToken,
-		RPTLifespan:                    conf.RefreshTokenLifespan,
+		RPTProvider:                    resetPasswordTokenProvider,
+		RPTLifespan:                    conf.ResetPasswordTokenLifespan,
+		VETProvider:                    verifyEmailTokenProvider,
+		VETLifespan:                    conf.VerifyEmailTokenLifespan,
 	})
 
 	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{
