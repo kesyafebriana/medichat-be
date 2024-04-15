@@ -60,7 +60,9 @@ func (r *dataRepository) Sleep(ctx context.Context, duration time.Duration) erro
 }
 
 func (r *dataRepository) AccountRepository() domain.AccountRepository {
-	return nil
+	return &accountRepository{
+		querier: r.querier,
+	}
 }
 
 func (r *dataRepository) ResetPasswordTokenRepository() domain.ResetPasswordTokenRepository {

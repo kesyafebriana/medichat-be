@@ -43,6 +43,7 @@ type AccountResetPasswordCredentials struct {
 
 type AccountRepository interface {
 	GetByEmail(ctx context.Context, email string) (Account, error)
+	GetByEmailAndLock(ctx context.Context, email string) (Account, error)
 	GetWithCredentialsByEmail(ctx context.Context, email string) (AccountWithCredentials, error)
 	IsExistByEmail(ctx context.Context, email string) (bool, error)
 
