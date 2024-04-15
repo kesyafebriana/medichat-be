@@ -4,11 +4,13 @@ import (
 	"context"
 	"log"
 	"medichat-be/config"
+	"medichat-be/constants"
 	"medichat-be/cryptoutil"
 	"medichat-be/database"
 	"medichat-be/handler"
 	"medichat-be/logger"
 	"medichat-be/middleware"
+	"medichat-be/repository/postgres"
 	"medichat-be/server"
 	"medichat-be/service"
 	"net/http"
@@ -36,22 +38,89 @@ func main() {
 	}
 	defer db.Close()
 
-	jwtProvider := cryptoutil.NewJWTProviderHS256(
+	adminAccessProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
-		conf.JWTSecret,
-		conf.JWTLifespan,
+		conf.AdminAccessSecret,
+		conf.AccessTokenLifespan,
 	)
+	adminRefreshProvider := cryptoutil.NewJWTProviderHS256(
+		conf.JWTIssuer,
+		conf.AdminRefreshSecret,
+		conf.RefreshTokenLifespan,
+	)
+
+	userAccessProvider := cryptoutil.NewJWTProviderHS256(
+		conf.JWTIssuer,
+		conf.UserAccessSecret,
+		conf.AccessTokenLifespan,
+	)
+	userRefreshProvider := cryptoutil.NewJWTProviderHS256(
+		conf.JWTIssuer,
+		conf.AdminRefreshSecret,
+		conf.RefreshTokenLifespan,
+	)
+
+	doctorAccessProvider := cryptoutil.NewJWTProviderHS256(
+		conf.JWTIssuer,
+		conf.DoctorAccessSecret,
+		conf.AccessTokenLifespan,
+	)
+	doctorRefreshProvider := cryptoutil.NewJWTProviderHS256(
+		conf.JWTIssuer,
+		conf.AdminRefreshSecret,
+		conf.RefreshTokenLifespan,
+	)
+
+	pharmacyManagerAccessProvider := cryptoutil.NewJWTProviderHS256(
+		conf.JWTIssuer,
+		conf.PharmacyManagerAccessSecret,
+		conf.AccessTokenLifespan,
+	)
+	pharmacyManagerRefreshProvider := cryptoutil.NewJWTProviderHS256(
+		conf.JWTIssuer,
+		conf.AdminRefreshSecret,
+		conf.RefreshTokenLifespan,
+	)
+
+	passwordHasher := cryptoutil.NewPasswordHasherBcrypt(constants.HashCost)
+
+	resetPasswordToken := cryptoutil.NewRandomTokenProvider(
+		constants.ResetPasswordTokenByteLength,
+	)
+
 	googleAuthProvider := cryptoutil.NewGoogleAuthProvider(cryptoutil.GoogleAuthProviderOpts{
 		RedirectURL:  conf.GoogleAPIRedirectURL,
 		ClientID:     conf.GoogleAPIClientID,
 		ClientSecret: conf.GoogleAPIClientSecret,
 	})
-	googleAuthStateProvider := cryptoutil.NewRandomTokenProvider(16)
+	googleAuthStateProvider := cryptoutil.NewRandomTokenProvider(
+		constants.GoogleAuthStateByteLength,
+	)
+
+	dataRepository := postgres.NewDataRepository(db)
+
+	accountService := service.NewAccountService(service.AccountServiceOpts{
+		DataRepository:                 dataRepository,
+		PasswordHasher:                 passwordHasher,
+		AdminAccessProvider:            adminAccessProvider,
+		AdminRefreshProvider:           adminRefreshProvider,
+		UserAccessProvider:             userAccessProvider,
+		UserRefreshProvider:            userRefreshProvider,
+		DoctorAccessProvider:           doctorAccessProvider,
+		DoctorRefreshProvider:          doctorRefreshProvider,
+		PharmacyManagerAccessProvider:  pharmacyManagerAccessProvider,
+		PharmacyManagerRefreshProvider: pharmacyManagerRefreshProvider,
+		RPTProvider:                    resetPasswordToken,
+		RPTLifespan:                    conf.RefreshTokenLifespan,
+	})
 
 	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{
 		OAuth2Provider: googleAuthProvider,
 	})
 
+	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
+		AccountSrv: accountService,
+	})
 	pingHandler := handler.NewPingHandler()
 	googleAuthHandler := handler.NewOAuth2Handler(handler.OAuth2HandlerOpts{
 		OAuth2Service:       googleAuthService,
@@ -62,9 +131,10 @@ func main() {
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler()
 	errorHandler := middleware.ErrorHandler()
-	authenticator := middleware.Authenticator(jwtProvider)
+	authenticator := middleware.Authenticator(userAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
+		AccountHandler:    accountHandler,
 		PingHandler:       pingHandler,
 		GoogleAuthHandler: googleAuthHandler,
 
