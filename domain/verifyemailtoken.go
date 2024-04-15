@@ -13,7 +13,7 @@ type VerifyEmailToken struct {
 }
 
 type VerifyEmailTokenRepository interface {
-	Add(ctx context.Context, token VerifyEmailToken) (ResetPasswordToken, error)
+	Add(ctx context.Context, token VerifyEmailToken) (VerifyEmailToken, error)
 	GetByID(ctx context.Context, id int64) (VerifyEmailToken, error)
 	GetByTokenStr(ctx context.Context, tokenStr string) (VerifyEmailToken, error)
 	GetByTokenStrAndLock(ctx context.Context, tokenStr string) (VerifyEmailToken, error)

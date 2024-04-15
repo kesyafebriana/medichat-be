@@ -7,9 +7,10 @@ import (
 )
 
 type AtomicFunc[T any] func(DataRepository) (T, error)
+type AtomicFuncAny AtomicFunc[any]
 
 type DataRepository interface {
-	Atomic(ctx context.Context, fn AtomicFunc[any]) (any, error)
+	Atomic(ctx context.Context, fn AtomicFuncAny) (any, error)
 	Sleep(ctx context.Context, duration time.Duration) error
 
 	AccountRepository() AccountRepository
