@@ -120,3 +120,51 @@ func (h *AccountHandler) ResetPassword(ctx *gin.Context) {
 		dto.ResponseCreated(nil),
 	)
 }
+
+func (h *AccountHandler) GetVerifyEmailToken(ctx *gin.Context) {
+	var req dto.AccountGetVerifyEmailTokenRequest
+
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	token, err := h.accountSrv.GetVerifyEmailToken(ctx, req.Email)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusCreated,
+		dto.ResponseCreated(token),
+	)
+}
+
+func (h *AccountHandler) VerifyEmail(ctx *gin.Context) {
+	var req dto.AccountVerifyEmailRequest
+
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	creds := req.ToCredentials()
+
+	err = h.accountSrv.VerifyEmail(ctx, creds)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusCreated,
+		dto.ResponseCreated(nil),
+	)
+}
