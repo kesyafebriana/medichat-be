@@ -14,6 +14,7 @@ type DataRepository interface {
 
 	AccountRepository() AccountRepository
 	ResetPasswordTokenRepository() ResetPasswordTokenRepository
+	VerifyEmailTokenRepository() VerifyEmailTokenRepository
 }
 
 func RunAtomic[T any](

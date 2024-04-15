@@ -70,3 +70,7 @@ func (r *dataRepository) ResetPasswordTokenRepository() domain.ResetPasswordToke
 		querier: r.querier,
 	}
 }
+
+func (r *dataRepository) VerifyEmailTokenRepository() domain.VerifyEmailTokenRepository {
+	return nil
+}
