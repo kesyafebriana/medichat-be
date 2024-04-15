@@ -69,4 +69,7 @@ type AccountService interface {
 
 	GetResetPasswordToken(ctx context.Context, email string) (string, error)
 	ResetPassword(ctx context.Context, creds AccountResetPasswordCredentials) error
+
+	GetVerifyEmailToken(ctx context.Context, email string) (string, error)
+	VerifyEmail(ctx context.Context, creds AccountVerifyEmailCredentials) error
 }

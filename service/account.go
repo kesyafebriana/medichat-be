@@ -27,6 +27,9 @@ type accountService struct {
 
 	rptProvider cryptoutil.RandomTokenProvider
 	rptLifespan time.Duration
+
+	vetProvider cryptoutil.RandomTokenProvider
+	vetLifespan time.Duration
 }
 
 type AccountServiceOpts struct {
@@ -47,6 +50,9 @@ type AccountServiceOpts struct {
 
 	RPTProvider cryptoutil.RandomTokenProvider
 	RPTLifespan time.Duration
+
+	VETProvider cryptoutil.RandomTokenProvider
+	VETLifespan time.Duration
 }
 
 func NewAccountService(opts AccountServiceOpts) *accountService {
@@ -68,6 +74,9 @@ func NewAccountService(opts AccountServiceOpts) *accountService {
 
 		rptProvider: opts.RPTProvider,
 		rptLifespan: opts.RPTLifespan,
+
+		vetProvider: opts.VETProvider,
+		vetLifespan: opts.VETLifespan,
 	}
 }
 
@@ -260,6 +269,104 @@ func (s *accountService) ResetPassword(
 		s.dataRepository,
 		ctx,
 		s.ResetPasswordClosure(ctx, creds),
+	)
+
+	return err
+}
+
+func (s *accountService) GetVerifyEmailToken(
+	ctx context.Context,
+	email string,
+) (string, error) {
+	accountRepo := s.dataRepository.AccountRepository()
+	vetRepo := s.dataRepository.VerifyEmailTokenRepository()
+
+	account, err := accountRepo.GetByEmail(ctx, email)
+	if err != nil {
+		return "", apperror.Wrap(err)
+	}
+
+	if account.EmailVerified {
+		return "", apperror.NewEmailAlreadyVerified(nil)
+	}
+
+	tokenStr, err := s.vetProvider.GenerateToken()
+	if err != nil {
+		return "", apperror.Wrap(err)
+	}
+
+	token := domain.VerifyEmailToken{
+		Account:   account,
+		Token:     tokenStr,
+		ExpiredAt: time.Now().Add(s.rptLifespan),
+	}
+
+	_, err = vetRepo.Add(ctx, token)
+	if err != nil {
+		return "", apperror.Wrap(err)
+	}
+
+	return tokenStr, nil
+}
+
+func (s *accountService) VerifyEmailClosure(
+	ctx context.Context,
+	creds domain.AccountVerifyEmailCredentials,
+) domain.AtomicFunc[any] {
+	return func(dr domain.DataRepository) (any, error) {
+		accountRepo := dr.AccountRepository()
+		rptRepo := dr.VerifyEmailTokenRepository()
+
+		token, err := rptRepo.GetByTokenStrAndLock(ctx, creds.VerifyEmailToken)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		account, err := accountRepo.GetByIDAndLock(ctx, token.Account.ID)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		if account.Email != creds.Email {
+			return nil, apperror.NewForbidden(nil)
+		}
+
+		if account.EmailVerified {
+			return "", apperror.NewEmailAlreadyVerified(nil)
+		}
+
+		hashedPassword, err := s.passwordHasher.HashPassword(creds.Password)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		err = accountRepo.VerifyEmailByID(ctx, account.ID)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		err = accountRepo.UpdatePasswordByID(ctx, account.ID, hashedPassword)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		err = rptRepo.SoftDeleteByID(ctx, token.ID)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		return nil, nil
+	}
+}
+
+func (s *accountService) VerifyEmail(
+	ctx context.Context,
+	creds domain.AccountVerifyEmailCredentials,
+) error {
+	_, err := domain.RunAtomic(
+		s.dataRepository,
+		ctx,
+		s.VerifyEmailClosure(ctx, creds),
 	)
 
 	return err
