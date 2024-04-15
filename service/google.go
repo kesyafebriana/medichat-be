@@ -14,10 +14,13 @@ type googleService struct {
 }
 
 type GoogleServiceOpts struct {
+	DataRepository domain.DataRepository
 }
 
 func NewGoogleService(opts GoogleServiceOpts) *googleService {
-	return &googleService{}
+	return &googleService{
+		dataRepository: opts.DataRepository,
+	}
 }
 
 func (s *googleService) GetProfileByAccessToken(
