@@ -50,11 +50,37 @@ func (s *googleService) EnsureRegisteredClosure(
 	profile domain.GoogleUserProfile,
 ) domain.AtomicFunc[domain.Account] {
 	return func(dr domain.DataRepository) (domain.Account, error) {
-		account := domain.Account{
+		accountRepo := dr.AccountRepository()
+
+		newAccount := domain.Account{
 			Email:         profile.Email,
 			EmailVerified: profile.VerifiedEmail,
 			Role:          domain.AccountRoleUser,
 			AccountType:   domain.AccountTypeGoogle,
+		}
+
+		account, err := accountRepo.GetByEmail(ctx, newAccount.Email)
+		if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
+			return domain.Account{}, apperror.Wrap(err)
+		}
+		if err == nil {
+			if account.Role != domain.AccountTypeGoogle {
+				return domain.Account{}, apperror.NewAppError(
+					apperror.CodeUnauthorized,
+					"not a google account",
+					nil,
+				)
+			}
+
+			return account, nil
+		}
+
+		account, err = accountRepo.Add(ctx, domain.AccountWithCredentials{
+			Account:        newAccount,
+			HashedPassword: "",
+		})
+		if err != nil {
+			return domain.Account{}, apperror.Wrap(err)
 		}
 
 		return account, nil
