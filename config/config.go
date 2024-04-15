@@ -21,9 +21,23 @@ type Config struct {
 
 	SessionKey []byte
 
-	JWTIssuer   string
-	JWTSecret   string
-	JWTLifespan time.Duration
+	JWTIssuer string
+
+	AdminAccessSecret  string
+	AdminRefreshSecret string
+
+	UserAccessSecret  string
+	UserRefreshSecret string
+
+	DoctorAccessSecret  string
+	DoctorRefreshSecret string
+
+	PharmacyManagerAccessSecret  string
+	PharmacyManagerRefreshSecret string
+
+	AccessTokenLifespan        time.Duration
+	RefreshTokenLifespan       time.Duration
+	ResetPasswordTokenLifespan time.Duration
 
 	GoogleAPIClientID     string
 	GoogleAPIClientSecret string
@@ -51,14 +65,38 @@ func LoadConfig() (Config, error) {
 
 	ret.JWTIssuer = os.Getenv("JWT_ISSUER")
 
-	ret.JWTSecret = os.Getenv("JWT_SECRET")
+	ret.AdminAccessSecret = os.Getenv("ADMIN_ACCESS_SECRET")
+	ret.AdminRefreshSecret = os.Getenv("ADMIN_REFRESH_SECRET")
 
-	s = os.Getenv("JWT_LIFESPAN")
+	ret.UserAccessSecret = os.Getenv("USER_ACCESS_SECRET")
+	ret.UserRefreshSecret = os.Getenv("USER_REFRESH_SECRET")
+
+	ret.DoctorAccessSecret = os.Getenv("DOCTOR_ACCESS_SECRET")
+	ret.DoctorRefreshSecret = os.Getenv("DOCTOR_REFRESH_SECRET")
+
+	ret.PharmacyManagerAccessSecret = os.Getenv("PHARMACY_MANAGER_ACCESS_SECRET")
+	ret.PharmacyManagerRefreshSecret = os.Getenv("PHARMACY_MANAGER_REFRESH_SECRET")
+
+	s = os.Getenv("ACCESS_TOKEN_LIFESPAN")
 	i, err := strconv.Atoi(s)
 	if err != nil {
 		return Config{}, err
 	}
-	ret.JWTLifespan = time.Duration(i) * time.Minute
+	ret.AccessTokenLifespan = time.Duration(i) * time.Minute
+
+	s = os.Getenv("REFRESH_TOKEN_LIFESPAN")
+	i, err = strconv.Atoi(s)
+	if err != nil {
+		return Config{}, err
+	}
+	ret.RefreshTokenLifespan = time.Duration(i) * time.Minute
+
+	s = os.Getenv("RESET_PASSWORD_TOKEN_LIFESPAN")
+	i, err = strconv.Atoi(s)
+	if err != nil {
+		return Config{}, err
+	}
+	ret.ResetPasswordTokenLifespan = time.Duration(i) * time.Minute
 
 	ret.GoogleAPIClientID = os.Getenv("GOOGLE_API_CLIENT_ID")
 	ret.GoogleAPIClientSecret = os.Getenv("GOOGLE_API_CLIENT_SECRET")
