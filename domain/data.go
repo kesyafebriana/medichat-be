@@ -11,6 +11,8 @@ type AtomicFunc[T any] func(DataRepository) (T, error)
 type DataRepository interface {
 	Atomic(ctx context.Context, fn AtomicFunc[any]) (any, error)
 	Sleep(ctx context.Context, duration time.Duration) error
+
+	AccountRepository() AccountRepository
 }
 
 func RunAtomic[T any](

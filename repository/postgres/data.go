@@ -58,3 +58,7 @@ func (r *dataRepository) Sleep(ctx context.Context, duration time.Duration) erro
 		duration.Seconds(),
 	)
 }
+
+func (r *dataRepository) AccountRepository() domain.AccountRepository {
+	return nil
+}
