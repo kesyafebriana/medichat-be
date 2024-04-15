@@ -14,7 +14,7 @@ func (r *resetPasswordTokenRepository) Add(
 	token domain.ResetPasswordToken,
 ) (domain.ResetPasswordToken, error) {
 	q := `
-		INSERT INTO reset_password_tokens(user_id, token, expired_at)
+		INSERT INTO reset_password_tokens(account_id, token, expired_at)
 		VALUES
 		($1, $2, $3)
 		RETURNING ` + resetPasswordTokenColumns
