@@ -18,6 +18,7 @@ import (
 	"time"
 
 	firebase "firebase.google.com/go/v4"
+	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
 )
@@ -59,7 +60,12 @@ func main() {
 	defer client.Close()
 
 
-	chatService := service.NewChatServiceImpl(client)
+	
+
+	cld, _ := cloudinary.NewFromParams(conf.CloudinaryName, conf.CloudinaryAPIKey, conf.CloudinaryAPISecret)
+
+
+	chatService := service.NewChatServiceImpl(client,cld)
 
 	chatHandler := handler.NewChatHandler(chatService)
 

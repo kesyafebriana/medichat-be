@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"mime/multipart"
 	"time"
 )
 
@@ -20,5 +21,6 @@ type ChatMessage struct{
 	Type string `json:"type"`
 	UserId int `json:"userId"`
 	UserName string `json:"userName"`
+	File *multipart.File `json:"file"`
 }
 
