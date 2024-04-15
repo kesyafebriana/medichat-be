@@ -10,13 +10,16 @@ import (
 	"medichat-be/logger"
 	"medichat-be/middleware"
 	"medichat-be/server"
+	"medichat-be/service"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	firebase "firebase.google.com/go/v4"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 )
 
 func main() {
@@ -40,6 +43,25 @@ func main() {
 		conf.JWTSecret,
 		conf.JWTLifespan,
 	)
+	ctx := context.Background()
+	sa := option.WithCredentialsFile("./serviceAccount.json")
+	firebaseConfig := &firebase.Config{ProjectID: "rapunzel-medichat"}
+
+	app, err := firebase.NewApp(ctx, firebaseConfig,sa)
+	if err != nil {
+		log.Fatalf("error initializing app: %v\n", err)
+	}
+
+	client, err := app.Firestore(ctx)
+	if err != nil {
+	log.Fatalf("Error connecting to firebase %v", err)
+	}
+	defer client.Close()
+
+
+	chatService := service.NewChatServiceImpl(client)
+
+	chatHandler := handler.NewChatHandler(chatService)
 
 	pingHandler := handler.NewPingHandler()
 
@@ -51,7 +73,7 @@ func main() {
 
 	router := server.SetupServer(server.SetupServerOpts{
 		PingHandler: pingHandler,
-
+		ChatHandler : chatHandler,
 		RequestID:     requestIDMid,
 		Authenticator: authenticator,
 		CorsHandler:   corsHandler,

@@ -9,7 +9,8 @@ import (
 
 type SetupServerOpts struct {
 	PingHandler *handler.PingHandler
-
+	ChatHandler *handler.ChatHandler
+	
 	RequestID     gin.HandlerFunc
 	Authenticator gin.HandlerFunc
 	CorsHandler   gin.HandlerFunc
@@ -34,6 +35,10 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/ping",
 		opts.PingHandler.Ping,
 	)
+
+	chatGroup := apiV1Group.Group("/chat")
+
+	chatGroup.POST("/send", opts.ChatHandler.Chat)
 
 	router.NoRoute(func(ctx *gin.Context) {
 		ctx.Error(apperror.NewAppError(
