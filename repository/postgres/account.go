@@ -166,7 +166,7 @@ func (r *accountRepository) Add(
 	q := `
 		INSERT INTO accounts(email, email_verified, role, account_type, hashed_password)
 		VALUES
-		($1, $2, $3)
+		($1, $2, $3, $4, $5)
 		RETURNING ` + accountColumns
 
 	return queryOne(
