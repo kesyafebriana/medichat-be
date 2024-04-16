@@ -15,9 +15,8 @@ func (r *AccountLoginRequest) ToCredentials() domain.AccountLoginCredentials {
 }
 
 type AccountRegisterRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Role     string `json:"role" binding:"required"`
-	Password string `json:"password" binding:"required,min=8,max=24"`
+	Email string `json:"email" binding:"required,email"`
+	Role  string `json:"role" binding:"required"`
 }
 
 func (r *AccountRegisterRequest) ToCredentials() domain.AccountRegisterCredentials {
@@ -28,7 +27,6 @@ func (r *AccountRegisterRequest) ToCredentials() domain.AccountRegisterCredentia
 			Role:          r.Role,
 			AccountType:   domain.AccountTypeRegular,
 		},
-		Password: r.Password,
 	}
 }
 
