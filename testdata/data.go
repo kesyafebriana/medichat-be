@@ -1,8 +1,11 @@
 package testdata
 
 import (
+	"context"
 	"medichat-be/domain"
 	"medichat-be/mocks/domainmocks"
+
+	"github.com/stretchr/testify/mock"
 )
 
 type DataRepositoryMockOpts struct {
@@ -32,4 +35,13 @@ type Result[T any] struct {
 type WantValue[T any] struct {
 	Val T
 	Err int
+}
+
+func OnDataRepositoryAtomic[T any](
+	dr *domainmocks.DataRepository,
+	ctx context.Context,
+	fn domain.AtomicFunc[T],
+) {
+	ret, err := fn(dr)
+	dr.On("Atomic", ctx, mock.Anything).Return(ret, err)
 }

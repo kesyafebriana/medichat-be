@@ -13,6 +13,185 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_accountService_Register(t *testing.T) {
+	tests := []struct {
+		name string
+
+		isAccountExist testdata.Result[bool]
+		hashPassword   testdata.Result[string]
+		addAccount     testdata.Result[domain.Account]
+
+		ctx   context.Context
+		creds domain.AccountRegisterCredentials
+
+		want testdata.WantValue[domain.Account]
+	}{
+		{
+			name: "should successfully register alice",
+
+			isAccountExist: testdata.Result[bool]{
+				Val: false,
+			},
+			hashPassword: testdata.Result[string]{
+				Val: testdata.AliceHashedPassword,
+			},
+			addAccount: testdata.Result[domain.Account]{
+				Val: testdata.AliceAccount,
+			},
+
+			ctx: context.Background(),
+			creds: domain.AccountRegisterCredentials{
+				Account:  testdata.AliceAccount,
+				Password: testdata.AlicePassword,
+			},
+
+			want: testdata.WantValue[domain.Account]{
+				Val: testdata.AliceAccount,
+			},
+		},
+		{
+			name: "should return already exists when email already used",
+
+			isAccountExist: testdata.Result[bool]{
+				Val: true,
+			},
+
+			ctx: context.Background(),
+			creds: domain.AccountRegisterCredentials{
+				Account:  testdata.AliceAccount,
+				Password: testdata.AlicePassword,
+			},
+
+			want: testdata.WantValue[domain.Account]{
+				Err: apperror.CodeAlreadyExists,
+			},
+		},
+		{
+			name: "should return internal error when check email exists",
+
+			isAccountExist: testdata.Result[bool]{
+				Err: apperror.NewInternal(nil),
+			},
+
+			ctx: context.Background(),
+			creds: domain.AccountRegisterCredentials{
+				Account:  testdata.AliceAccount,
+				Password: testdata.AlicePassword,
+			},
+
+			want: testdata.WantValue[domain.Account]{
+				Err: apperror.CodeInternal,
+			},
+		},
+		{
+			name: "should return internal error when hash password",
+
+			isAccountExist: testdata.Result[bool]{
+				Val: false,
+			},
+			hashPassword: testdata.Result[string]{
+				Err: apperror.NewInternal(nil),
+			},
+
+			ctx: context.Background(),
+			creds: domain.AccountRegisterCredentials{
+				Account:  testdata.AliceAccount,
+				Password: testdata.AlicePassword,
+			},
+
+			want: testdata.WantValue[domain.Account]{
+				Err: apperror.CodeInternal,
+			},
+		},
+		{
+			name: "should return internal error when add account",
+
+			isAccountExist: testdata.Result[bool]{
+				Val: false,
+			},
+			hashPassword: testdata.Result[string]{
+				Val: testdata.AliceHashedPassword,
+			},
+			addAccount: testdata.Result[domain.Account]{
+				Err: apperror.NewInternal(nil),
+			},
+
+			ctx: context.Background(),
+			creds: domain.AccountRegisterCredentials{
+				Account:  testdata.AliceAccount,
+				Password: testdata.AlicePassword,
+			},
+
+			want: testdata.WantValue[domain.Account]{
+				Err: apperror.CodeInternal,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			accountRepo := new(domainmocks.AccountRepository)
+			dataRepo := testdata.NewDataRepositoryMock(testdata.DataRepositoryMockOpts{
+				AccountRepository: accountRepo,
+			})
+			pwdHasher := new(cryptomocks.PasswordHasher)
+
+			accountRepo.On(
+				"IsExistByEmail",
+				tt.ctx,
+				tt.creds.Account.Email,
+			).Return(
+				tt.isAccountExist.Val,
+				tt.isAccountExist.Err,
+			)
+
+			pwdHasher.On(
+				"HashPassword",
+				tt.creds.Password,
+			).Return(
+				tt.hashPassword.Val,
+				tt.hashPassword.Err,
+			)
+
+			accountRepo.On(
+				"Add",
+				tt.ctx,
+				domain.AccountWithCredentials{
+					Account:        tt.creds.Account,
+					HashedPassword: tt.hashPassword.Val,
+				},
+			).Return(
+				tt.addAccount.Val,
+				tt.addAccount.Err,
+			)
+
+			opts := service.AccountServiceOpts{
+				DataRepository: dataRepo,
+				PasswordHasher: pwdHasher,
+			}
+
+			s := service.NewAccountService(opts)
+
+			testdata.OnDataRepositoryAtomic(
+				dataRepo,
+				tt.ctx,
+				s.RegisterClosure(tt.ctx, tt.creds),
+			)
+
+			// when
+			got, err := s.Register(tt.ctx, tt.creds)
+
+			// then
+			assert.Equal(t, tt.want.Val, got)
+			if tt.want.Err != 0 {
+				apperror.AssertErrorIsCode(t, err, tt.want.Err)
+				return
+			}
+			assert.Nil(t, err)
+		})
+	}
+}
+
 func Test_accountService_Login(t *testing.T) {
 	tests := []struct {
 		name string
@@ -256,7 +435,6 @@ func Test_accountService_Login(t *testing.T) {
 			pwdHasher := new(cryptomocks.PasswordHasher)
 			accessProv := new(cryptomocks.JWTProvider)
 			refreshProv := new(cryptomocks.JWTProvider)
-			ctx := context.Background()
 
 			accountRepo.On(
 				"GetWithCredentialsByEmail",
@@ -314,7 +492,7 @@ func Test_accountService_Login(t *testing.T) {
 			s := service.NewAccountService(opts)
 
 			// when
-			got, err := s.Login(ctx, tt.creds)
+			got, err := s.Login(tt.ctx, tt.creds)
 
 			// then
 			assert.Equal(t, tt.want.Val, got)
