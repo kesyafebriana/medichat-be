@@ -1,2 +1,5 @@
 .env
 c.out
+
+coverage.out
+coverage.html

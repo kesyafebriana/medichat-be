@@ -4,6 +4,14 @@ all:
 run:
 	go run .
 
+test:
+	go test ./...
+
+test-coverage:
+	go test ./... -coverprofile=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+	@xdg-open coverage.html
+
 docker:
 	docker build --tag manenfu/medichat-be:latest .
 
