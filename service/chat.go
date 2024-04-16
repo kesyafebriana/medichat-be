@@ -14,7 +14,7 @@ import (
 
 type ChatService interface {
 	PostMessage(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error)
-	PostFile(fileType string,req *domain.ChatMessage,roomId string,ctx *gin.Context) (error)
+	PostFile(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error)
 }
 
 type chatServiceImpl struct {
@@ -38,6 +38,7 @@ func (u *chatServiceImpl) PostMessage(req *domain.ChatMessage,roomId string,ctx 
         "userId": req.UserId,
         "userName": req.UserName,
         "message": req.Message,
+		"url" : "",
         "createdAt": req.CreatedAt,
         "type": "message/text",
 	}
@@ -49,20 +50,29 @@ func (u *chatServiceImpl) PostMessage(req *domain.ChatMessage,roomId string,ctx 
 
 }
 
-func (u *chatServiceImpl) PostFile(fileType string,req *domain.ChatMessage,roomId string,ctx *gin.Context) (error) {
+func (u *chatServiceImpl) PostFile(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error) {
 
 	fmt.Println("Upload File")
 
+	fileType := req.File.Header.Get("Content-Type")
+
+	file,err := req.File.Open()
+	if err!= nil {
+        return err
+    }
+
+	fileName := req.File.Filename
+
 	now := time.Now()
-	resp, err := u.cloud.Upload.Upload(ctx,*req.File,uploader.UploadParams{
-		DisplayName: roomId+now.Format("2006_01_02_T15:04:05"),
-		UseFilename:    api.Bool(true),
-		UniqueFilename: api.Bool(true),
+	resp, err := u.cloud.Upload.Upload(ctx,file,uploader.UploadParams{
+		Type: api.Upload,
+		ResourceType: "auto",
+		DisplayName: fileName,
+		FilenameOverride: fileName,
+		PublicID: roomId+now.Format("2006_01_02_T15_04_05"),
 	})
 	if err != nil {
-		fmt.Println(err.Error())
 		return err
-		
 	}
 	stringType := ""
 	if (fileType == "application/pdf"){
@@ -70,11 +80,14 @@ func (u *chatServiceImpl) PostFile(fileType string,req *domain.ChatMessage,roomI
 	}else if (fileType == "image/png" || fileType == "image/jpeg" || fileType == "image/webp"){
 		stringType = "message/image"
 	}
+
 	colRef := u.client.Collection("rooms");
+
 	content := map[string]interface{}{
         "userId": req.UserId,
         "userName": req.UserName,
-        "message": resp.SecureURL,
+        "message": fileName,
+		"url" : resp.SecureURL,
         "createdAt": req.CreatedAt,
         "type": stringType,
 	}

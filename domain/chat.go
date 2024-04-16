@@ -21,6 +21,6 @@ type ChatMessage struct{
 	Type string `json:"type"`
 	UserId int `json:"userId"`
 	UserName string `json:"userName"`
-	File *multipart.File `json:"file"`
+	File *multipart.FileHeader `json:"file"`
 }
 

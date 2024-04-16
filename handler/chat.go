@@ -61,19 +61,10 @@ func (h *ChatHandler) Chat(ctx *gin.Context) {
             ctx.Abort()
             return
         }
-		fileType := fileHeader.Header.Get("Content-Type")
 		
-		file ,err:=fileHeader.Open()
+		req.File= fileHeader
 
-		if err!= nil {
-            ctx.Error(apperror.NewBadRequest(err))
-            ctx.Abort()
-            return
-        }
-
-		req.File= &file
-
-		err = h.chatService.PostFile(fileType,&req,roomId,ctx)
+		err = h.chatService.PostFile(&req,roomId,ctx)
 		if err!= nil {
             ctx.Error(apperror.NewBadRequest(err))
             ctx.Abort()
