@@ -82,3 +82,60 @@ func (h *ChatHandler) Chat(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "message sent"})
 
 }
+
+func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
+	var req domain.ChatRoom
+
+	req.UserName = ctx.PostForm("userName")
+	userId,err := strconv.Atoi(ctx.PostForm("userId"))
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+        ctx.Abort()
+        return
+	}
+	req.UserId = userId
+
+	req.DoctorName = ctx.PostForm("doctorName")
+	doctorId,err := strconv.Atoi(ctx.PostForm("doctorId"))
+	if err != nil{
+		ctx.Error(apperror.NewBadRequest(err))
+        ctx.Abort()
+        return
+	}
+	req.DoctorId = doctorId
+
+	date,err := time.Parse("2006-01-02T15:04:05Z07:00",ctx.PostForm("date"))
+	if err != nil {
+		ctx.Error(err)
+        ctx.Abort()
+        return
+	}
+	req.Date = date
+
+	req.Open = true
+
+	err = h.chatService.CreateRoom(&req,ctx)
+	if err!= nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "message sent"})
+
+}
+
+func (h *ChatHandler) CloseRoom(ctx *gin.Context) {
+
+	roomId := ctx.Query("roomId")
+
+	err := h.chatService.CloseRoom(roomId,ctx)
+	if err!= nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "message sent"})
+
+}

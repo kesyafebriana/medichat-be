@@ -39,6 +39,8 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	chatGroup := apiV1Group.Group("/chat")
 
 	chatGroup.POST("/send", opts.ChatHandler.Chat)
+	chatGroup.PATCH("/close", opts.ChatHandler.CloseRoom)
+	chatGroup.POST("/create", opts.ChatHandler.CreateRoom)
 
 	router.NoRoute(func(ctx *gin.Context) {
 		ctx.Error(apperror.NewAppError(

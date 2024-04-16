@@ -15,6 +15,8 @@ import (
 type ChatService interface {
 	PostMessage(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error)
 	PostFile(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error)
+	CreateRoom(req *domain.ChatRoom,ctx *gin.Context) (error)
+	CloseRoom(roomId string,ctx *gin.Context) (error)
 }
 
 type chatServiceImpl struct {
@@ -29,6 +31,36 @@ func NewChatServiceImpl(client  *firestore.Client, cloud *cloudinary.Cloudinary)
 		cloud: cloud,
 	}
 }
+
+func (u *chatServiceImpl) CreateRoom(req *domain.ChatRoom,ctx *gin.Context) (error) {
+
+	colRef := u.client.Collection("rooms");
+	_, _,err := colRef.Add(ctx,req)
+
+	if err!= nil {
+        return err
+    }
+
+	return nil
+
+}
+
+func (u *chatServiceImpl) CloseRoom(roomId string,ctx *gin.Context) (error) {
+
+	colRef := u.client.Collection("rooms");
+	_,err := colRef.Doc(roomId).Update(ctx,[]firestore.Update{
+		{Path: "open", Value: false},
+	})
+
+	if err!= nil {
+        return err
+    }
+
+	return nil
+
+}
+
+
 
 func (u *chatServiceImpl) PostMessage(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error) {
 
@@ -51,8 +83,6 @@ func (u *chatServiceImpl) PostMessage(req *domain.ChatMessage,roomId string,ctx 
 }
 
 func (u *chatServiceImpl) PostFile(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error) {
-
-	fmt.Println("Upload File")
 
 	fileType := req.File.Header.Get("Content-Type")
 
