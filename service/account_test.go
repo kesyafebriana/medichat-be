@@ -18,7 +18,6 @@ func Test_accountService_Register(t *testing.T) {
 		name string
 
 		isAccountExist testdata.Result[bool]
-		hashPassword   testdata.Result[string]
 		addAccount     testdata.Result[domain.Account]
 
 		ctx   context.Context
@@ -31,9 +30,6 @@ func Test_accountService_Register(t *testing.T) {
 
 			isAccountExist: testdata.Result[bool]{
 				Val: false,
-			},
-			hashPassword: testdata.Result[string]{
-				Val: testdata.AliceHashedPassword,
 			},
 			addAccount: testdata.Result[domain.Account]{
 				Val: testdata.AliceAccount,
@@ -84,33 +80,10 @@ func Test_accountService_Register(t *testing.T) {
 			},
 		},
 		{
-			name: "should return internal error when hash password",
-
-			isAccountExist: testdata.Result[bool]{
-				Val: false,
-			},
-			hashPassword: testdata.Result[string]{
-				Err: apperror.NewInternal(nil),
-			},
-
-			ctx: context.Background(),
-			creds: domain.AccountRegisterCredentials{
-				Account:  testdata.AliceAccount,
-				Password: testdata.AlicePassword,
-			},
-
-			want: testdata.WantValue[domain.Account]{
-				Err: apperror.CodeInternal,
-			},
-		},
-		{
 			name: "should return internal error when add account",
 
 			isAccountExist: testdata.Result[bool]{
 				Val: false,
-			},
-			hashPassword: testdata.Result[string]{
-				Val: testdata.AliceHashedPassword,
 			},
 			addAccount: testdata.Result[domain.Account]{
 				Err: apperror.NewInternal(nil),
@@ -145,20 +118,11 @@ func Test_accountService_Register(t *testing.T) {
 				tt.isAccountExist.Err,
 			)
 
-			pwdHasher.On(
-				"HashPassword",
-				tt.creds.Password,
-			).Return(
-				tt.hashPassword.Val,
-				tt.hashPassword.Err,
-			)
-
 			accountRepo.On(
 				"Add",
 				tt.ctx,
 				domain.AccountWithCredentials{
-					Account:        tt.creds.Account,
-					HashedPassword: tt.hashPassword.Val,
+					Account: tt.creds.Account,
 				},
 			).Return(
 				tt.addAccount.Val,

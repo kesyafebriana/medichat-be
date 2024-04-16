@@ -95,14 +95,8 @@ func (s *accountService) RegisterClosure(
 			return domain.Account{}, apperror.NewAlreadyExists(constants.EntityEmail)
 		}
 
-		hashedPassword, err := s.passwordHasher.HashPassword(creds.Password)
-		if err != nil {
-			return domain.Account{}, apperror.Wrap(err)
-		}
-
 		account, err := accountRepo.Add(ctx, domain.AccountWithCredentials{
-			Account:        creds.Account,
-			HashedPassword: hashedPassword,
+			Account: creds.Account,
 		})
 		if err != nil {
 			return domain.Account{}, apperror.Wrap(err)
