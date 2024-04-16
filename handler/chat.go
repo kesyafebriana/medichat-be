@@ -25,6 +25,7 @@ func (h *ChatHandler) Chat(ctx *gin.Context) {
 
 	req.Type = ctx.PostForm("type")
 	req.UserName = ctx.PostForm("userName")
+
 	timeChat,err := time.Parse("2006-01-02T15:04:05Z07:00",ctx.PostForm("createdAt"))
 	if err != nil {
 		ctx.Error(err)
@@ -55,7 +56,7 @@ func (h *ChatHandler) Chat(ctx *gin.Context) {
 		}
 		err = h.chatService.PostMessage(&req,roomId,ctx)
 	} else if(req.Type == "files"){
-		fileHeader,err := ctx.FormFile("image")
+		fileHeader,err := ctx.FormFile("file")
 		if err!= nil {
 			ctx.Error(apperror.NewBadRequest(err))
             ctx.Abort()

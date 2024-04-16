@@ -64,13 +64,24 @@ func (u *chatServiceImpl) PostFile(req *domain.ChatMessage,roomId string,ctx *gi
 	fileName := req.File.Filename
 
 	now := time.Now()
-	resp, err := u.cloud.Upload.Upload(ctx,file,uploader.UploadParams{
-		Type: api.Upload,
-		ResourceType: "auto",
-		DisplayName: fileName,
-		FilenameOverride: fileName,
-		PublicID: roomId+now.Format("2006_01_02_T15_04_05"),
-	})
+	resp := make(chan *uploader.UploadResult)
+
+	go func() {
+		res, err := u.cloud.Upload.Upload(ctx,file,uploader.UploadParams{
+			Type: api.Upload,
+			ResourceType: "auto",
+			DisplayName: fileName,
+			FilenameOverride: fileName,
+			PublicID: roomId+now.Format("2006_01_02_T15_04_05"),
+		})
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		resp<- res
+	}()
+
+	response := <-resp
 	if err != nil {
 		return err
 	}
@@ -87,7 +98,7 @@ func (u *chatServiceImpl) PostFile(req *domain.ChatMessage,roomId string,ctx *gi
         "userId": req.UserId,
         "userName": req.UserName,
         "message": fileName,
-		"url" : resp.SecureURL,
+		"url" : response.SecureURL,
         "createdAt": req.CreatedAt,
         "type": stringType,
 	}
