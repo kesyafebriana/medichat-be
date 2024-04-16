@@ -87,6 +87,15 @@ func (s *accountService) RegisterClosure(
 	return func(dr domain.DataRepository) (domain.Account, error) {
 		accountRepo := dr.AccountRepository()
 
+		if creds.Account.Role == domain.AccountRoleAdmin ||
+			creds.Account.Role == domain.AccountRolePharmacyManager {
+			return domain.Account{}, apperror.NewAppError(
+				apperror.CodeBadRequest,
+				"cannot register privileged account",
+				nil,
+			)
+		}
+
 		exists, err := accountRepo.IsExistByEmail(ctx, creds.Account.Email)
 		if err != nil {
 			return domain.Account{}, apperror.Wrap(err)
