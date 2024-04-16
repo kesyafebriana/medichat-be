@@ -54,7 +54,7 @@ func (r *AccountResetPasswordRequest) ToCredentials() domain.AccountResetPasswor
 
 type AccountVerifyEmailRequest struct {
 	Email            string `json:"email" binding:"required,email"`
-	Password         string `json:"assword" binding:"required,min=8,max=24"`
+	Password         string `json:"password" binding:"required,min=8,max=24"`
 	VerifyEmailToken string `json:"verify_email_token" binding:"required"`
 }
 
