@@ -23,3 +23,13 @@ func NewDataRepositoryMock(opts DataRepositoryMockOpts) *domainmocks.DataReposit
 
 	return dataRepo
 }
+
+type Result[T any] struct {
+	Val T
+	Err error
+}
+
+type WantValue[T any] struct {
+	Val T
+	Err int
+}
