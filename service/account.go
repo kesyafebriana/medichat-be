@@ -124,58 +124,9 @@ func (s *accountService) Login(
 		return domain.AuthTokens{}, apperror.Wrap(err)
 	}
 
-	tokens, err := s.createTokensForAccount(ac.Account.ID, ac.Account.Role)
+	tokens, err := s.CreateTokensForAccount(ac.Account.ID, ac.Account.Role)
 	if err != nil {
 		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-
-	return tokens, nil
-}
-
-func (s *accountService) createTokensForAccount(
-	accountID int64,
-	role string,
-) (domain.AuthTokens, error) {
-	var accessProvider cryptoutil.JWTProvider
-	var refreshProvider cryptoutil.JWTProvider
-
-	switch role {
-	case domain.AccountRoleAdmin:
-		accessProvider = s.adminAccessProvider
-	case domain.AccountRoleUser:
-		accessProvider = s.userAccessProvider
-	case domain.AccountRoleDoctor:
-		accessProvider = s.doctorAccessProvider
-	case domain.AccountRolePharmacyManager:
-		accessProvider = s.pharmacyManagerAccessProvider
-	default:
-		return domain.AuthTokens{}, apperror.NewInternalFmt("unknown role")
-	}
-	refreshProvider = s.refreshProvider
-
-	accessToken, err := accessProvider.CreateToken(accountID)
-	if err != nil {
-		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-	accessClaims, err := accessProvider.VerifyToken(accessToken)
-	if err != nil {
-		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-
-	refreshToken, err := refreshProvider.CreateToken(accountID)
-	if err != nil {
-		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-	refreshClaims, err := refreshProvider.VerifyToken(refreshToken)
-	if err != nil {
-		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-
-	tokens := domain.AuthTokens{
-		AccessToken:     accessToken,
-		RefreshToken:    refreshToken,
-		AccessExpiresAt: accessClaims.ExpiresAt.Time,
-		RefreshExpireAt: refreshClaims.ExpiresAt.Time,
 	}
 
 	return tokens, nil
@@ -416,9 +367,58 @@ func (s *accountService) RefreshTokens(
 		return domain.AuthTokens{}, apperror.Wrap(err)
 	}
 
-	tokens, err := s.createTokensForAccount(account.ID, account.Role)
+	tokens, err := s.CreateTokensForAccount(account.ID, account.Role)
 	if err != nil {
 		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+
+	return tokens, nil
+}
+
+func (s *accountService) CreateTokensForAccount(
+	accountID int64,
+	role string,
+) (domain.AuthTokens, error) {
+	var accessProvider cryptoutil.JWTProvider
+	var refreshProvider cryptoutil.JWTProvider
+
+	switch role {
+	case domain.AccountRoleAdmin:
+		accessProvider = s.adminAccessProvider
+	case domain.AccountRoleUser:
+		accessProvider = s.userAccessProvider
+	case domain.AccountRoleDoctor:
+		accessProvider = s.doctorAccessProvider
+	case domain.AccountRolePharmacyManager:
+		accessProvider = s.pharmacyManagerAccessProvider
+	default:
+		return domain.AuthTokens{}, apperror.NewInternalFmt("unknown role")
+	}
+	refreshProvider = s.refreshProvider
+
+	accessToken, err := accessProvider.CreateToken(accountID)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+	accessClaims, err := accessProvider.VerifyToken(accessToken)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+
+	refreshToken, err := refreshProvider.CreateToken(accountID)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+	refreshClaims, err := refreshProvider.VerifyToken(refreshToken)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+
+	tokens := domain.AuthTokens{
+		AccessToken:     accessToken,
+		RefreshToken:    refreshToken,
+		AccessExpiresAt: accessClaims.ExpiresAt.Time,
+		RefreshExpireAt: refreshClaims.ExpiresAt.Time,
 	}
 
 	return tokens, nil

@@ -74,4 +74,6 @@ type AccountService interface {
 	VerifyEmail(ctx context.Context, creds AccountVerifyEmailCredentials) error
 
 	RefreshTokens(ctx context.Context, refreshToken string) (AuthTokens, error)
+
+	CreateTokensForAccount(accountID int64, role string) (AuthTokens, error)
 }
