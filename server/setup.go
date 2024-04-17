@@ -17,11 +17,13 @@ type SetupServerOpts struct {
 
 	SessionKey []byte
 
-	RequestID     gin.HandlerFunc
+	RequestID gin.HandlerFunc
+
 	Authenticator gin.HandlerFunc
-	CorsHandler   gin.HandlerFunc
-	Logger        gin.HandlerFunc
-	ErrorHandler  gin.HandlerFunc
+
+	CorsHandler  gin.HandlerFunc
+	Logger       gin.HandlerFunc
+	ErrorHandler gin.HandlerFunc
 }
 
 func SetupServer(opts SetupServerOpts) *gin.Engine {
@@ -74,6 +76,11 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	authGroup.POST(
 		"/refresh",
 		opts.AccountHandler.RefreshTokens,
+	)
+	authGroup.GET(
+		"/profile",
+		opts.Authenticator,
+		opts.AccountHandler.GetProfile,
 	)
 
 	googleGroup := apiV1Group.Group("/google")

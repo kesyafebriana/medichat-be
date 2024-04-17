@@ -220,3 +220,17 @@ func (h *AccountHandler) RefreshTokens(ctx *gin.Context) {
 		dto.ResponseOk(dto.NewAuthTokensResponse(tokens)),
 	)
 }
+
+func (h *AccountHandler) GetProfile(ctx *gin.Context) {
+	account, err := h.accountSrv.GetProfile(ctx)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewAccountResponse(account)),
+	)
+}
