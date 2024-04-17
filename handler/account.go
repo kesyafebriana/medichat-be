@@ -137,6 +137,29 @@ func (h *AccountHandler) ResetPassword(ctx *gin.Context) {
 	)
 }
 
+func (h *AccountHandler) CheckResetPasswordToken(ctx *gin.Context) {
+	var query dto.AccountCheckResetPasswordQuery
+
+	err := ctx.ShouldBindQuery(&query)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	err = h.accountSrv.CheckResetPasswordToken(ctx, query.Email, query.ResetPasswordToken)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(nil),
+	)
+}
+
 func (h *AccountHandler) GetVerifyEmailToken(ctx *gin.Context) {
 	var req dto.AccountGetVerifyEmailTokenRequest
 
@@ -182,6 +205,29 @@ func (h *AccountHandler) VerifyEmail(ctx *gin.Context) {
 	ctx.JSON(
 		http.StatusCreated,
 		dto.ResponseCreated(nil),
+	)
+}
+
+func (h *AccountHandler) CheckVerifyEmailToken(ctx *gin.Context) {
+	var query dto.AccountCheckVerifyEmailQuery
+
+	err := ctx.ShouldBindQuery(&query)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	err = h.accountSrv.CheckVerifyEmailToken(ctx, query.Email, query.VerifyEmailToken)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(nil),
 	)
 }
 

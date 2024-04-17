@@ -38,6 +38,16 @@ type AccountGetVerifyEmailTokenRequest struct {
 	Email string `json:"email" binding:"required,email"`
 }
 
+type AccountCheckResetPasswordQuery struct {
+	Email              string `form:"email" binding:"required,email"`
+	ResetPasswordToken string `form:"reset_password_token" binding:"required"`
+}
+
+type AccountCheckVerifyEmailQuery struct {
+	Email            string `form:"email" binding:"required,email"`
+	VerifyEmailToken string `form:"verify_email_token" binding:"required"`
+}
+
 type AccountResetPasswordRequest struct {
 	Email              string `json:"email" binding:"required,email"`
 	NewPassword        string `json:"new_password" binding:"required,min=8,max=24"`

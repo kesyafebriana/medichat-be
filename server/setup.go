@@ -65,6 +65,10 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/reset-password",
 		opts.AccountHandler.ResetPassword,
 	)
+	authGroup.GET(
+		"/check-reset-token",
+		opts.AccountHandler.CheckResetPasswordToken,
+	)
 	authGroup.POST(
 		"/verify-token",
 		opts.AccountHandler.GetVerifyEmailToken,
@@ -72,6 +76,10 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	authGroup.POST(
 		"/verify-email",
 		opts.AccountHandler.VerifyEmail,
+	)
+	authGroup.GET(
+		"/check-verify-token",
+		opts.AccountHandler.CheckVerifyEmailToken,
 	)
 	authGroup.POST(
 		"/refresh",
