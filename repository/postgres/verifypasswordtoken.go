@@ -101,6 +101,23 @@ func (r *verifyEmailTokenRepository) SoftDeleteByID(
 	)
 }
 
+func (r *verifyEmailTokenRepository) SoftDeleteByAccountID(
+	ctx context.Context,
+	id int64,
+) error {
+	q := `
+		UPDATE verify_email_tokens
+		SET deleted_at = now(),
+			updated_at = now()
+		WHERE account_id = $1
+	`
+
+	return exec(
+		r.querier, ctx, q,
+		id,
+	)
+}
+
 var (
 	verifyEmailTokenColumns = " id, account_id, token, expired_at "
 )

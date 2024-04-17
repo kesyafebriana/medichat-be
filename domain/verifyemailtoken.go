@@ -18,4 +18,5 @@ type VerifyEmailTokenRepository interface {
 	GetByTokenStr(ctx context.Context, tokenStr string) (VerifyEmailToken, error)
 	GetByTokenStrAndLock(ctx context.Context, tokenStr string) (VerifyEmailToken, error)
 	SoftDeleteByID(ctx context.Context, id int64) error
+	SoftDeleteByAccountID(ctx context.Context, id int64) error
 }
