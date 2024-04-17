@@ -11,16 +11,45 @@ import (
 
 type googleService struct {
 	dataRepository domain.DataRepository
+	oauth2Service  domain.OAuth2Service
+	accountService domain.AccountService
 }
 
 type GoogleServiceOpts struct {
 	DataRepository domain.DataRepository
+	OAuth2Service  domain.OAuth2Service
+	AccountService domain.AccountService
 }
 
 func NewGoogleService(opts GoogleServiceOpts) *googleService {
 	return &googleService{
 		dataRepository: opts.DataRepository,
+		oauth2Service:  opts.OAuth2Service,
+		accountService: opts.AccountService,
 	}
+}
+
+func (s *googleService) OAuth2Callback(
+	ctx context.Context,
+	state string,
+	opts domain.OAuth2CallbackOpts,
+) (domain.AuthTokens, error) {
+	gTokens, err := s.oauth2Service.Callback(ctx, state, opts)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+
+	account, err := s.EnsureRegisteredByToken(ctx, gTokens.AccessToken)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+
+	tokens, err := s.accountService.CreateTokensForAccount(account.ID, account.Role)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+
+	return tokens, nil
 }
 
 func (s *googleService) GetProfileByAccessToken(
@@ -67,7 +96,7 @@ func (s *googleService) EnsureRegisteredClosure(
 			return domain.Account{}, apperror.Wrap(err)
 		}
 		if err == nil {
-			if account.Role != domain.AccountTypeGoogle {
+			if account.AccountType != domain.AccountTypeGoogle {
 				return domain.Account{}, apperror.NewAppError(
 					apperror.CodeUnauthorized,
 					"not a google account",
