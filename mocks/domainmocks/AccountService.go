@@ -77,6 +77,27 @@ func (_m *AccountService) Login(ctx context.Context, creds domain.AccountLoginCr
 	return r0, r1
 }
 
+// RefreshTokens provides a mock function with given fields: ctx, refreshToken
+func (_m *AccountService) RefreshTokens(ctx context.Context, refreshToken string) (domain.AuthTokens, error) {
+	ret := _m.Called(ctx, refreshToken)
+
+	var r0 domain.AuthTokens
+	if rf, ok := ret.Get(0).(func(context.Context, string) domain.AuthTokens); ok {
+		r0 = rf(ctx, refreshToken)
+	} else {
+		r0 = ret.Get(0).(domain.AuthTokens)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, refreshToken)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Register provides a mock function with given fields: ctx, creds
 func (_m *AccountService) Register(ctx context.Context, creds domain.AccountRegisterCredentials) (domain.Account, error) {
 	ret := _m.Called(ctx, creds)

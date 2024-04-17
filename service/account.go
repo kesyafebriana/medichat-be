@@ -25,6 +25,8 @@ type accountService struct {
 	pharmacyManagerAccessProvider  cryptoutil.JWTProvider
 	pharmacyManagerRefreshProvider cryptoutil.JWTProvider
 
+	refreshProvider cryptoutil.JWTProvider
+
 	rptProvider cryptoutil.RandomTokenProvider
 	rptLifespan time.Duration
 
@@ -47,6 +49,8 @@ type AccountServiceOpts struct {
 
 	PharmacyManagerAccessProvider  cryptoutil.JWTProvider
 	PharmacyManagerRefreshProvider cryptoutil.JWTProvider
+
+	RefreshProvider cryptoutil.JWTProvider
 
 	RPTProvider cryptoutil.RandomTokenProvider
 	RPTLifespan time.Duration
@@ -409,4 +413,28 @@ func (s *accountService) VerifyEmail(
 	)
 
 	return err
+}
+
+func (s *accountService) RefreshTokens(
+	ctx context.Context,
+	refreshToken string,
+) (domain.AuthTokens, error) {
+	accountRepo := s.dataRepository.AccountRepository()
+
+	claims, err := s.refreshProvider.VerifyToken(refreshToken)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+
+	account, err := accountRepo.GetByID(ctx, claims.UserID)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+
+	tokens, err := s.createTokensForAccount(account.ID, account.Role)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+
+	return tokens, nil
 }
