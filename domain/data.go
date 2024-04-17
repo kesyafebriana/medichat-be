@@ -31,6 +31,11 @@ func RunAtomic[T any](
 		return t, apperror.Wrap(err)
 	}
 
+	if temp == nil {
+		var t T
+		return t, nil
+	}
+
 	ret, ok := temp.(T)
 	if !ok {
 		var t T
