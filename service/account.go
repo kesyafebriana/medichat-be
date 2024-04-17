@@ -157,15 +157,25 @@ func (s *accountService) createTokensForAccount(
 	if err != nil {
 		return domain.AuthTokens{}, apperror.Wrap(err)
 	}
+	accessClaims, err := accessProvider.VerifyToken(accessToken)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
 
 	refreshToken, err := refreshProvider.CreateToken(accountID)
 	if err != nil {
 		return domain.AuthTokens{}, apperror.Wrap(err)
 	}
+	refreshClaims, err := refreshProvider.VerifyToken(refreshToken)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
 
 	tokens := domain.AuthTokens{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken:     accessToken,
+		RefreshToken:    refreshToken,
+		AccessExpiresAt: accessClaims.ExpiresAt.Time,
+		RefreshExpireAt: refreshClaims.ExpiresAt.Time,
 	}
 
 	return tokens, nil

@@ -60,7 +60,7 @@ func (h *AccountHandler) Login(ctx *gin.Context) {
 
 	creds := req.ToCredentials()
 
-	token, err := h.accountSrv.Login(ctx, creds)
+	tokens, err := h.accountSrv.Login(ctx, creds)
 	if err != nil {
 		ctx.Error(apperror.Wrap(err))
 		ctx.Abort()
@@ -69,7 +69,7 @@ func (h *AccountHandler) Login(ctx *gin.Context) {
 
 	ctx.JSON(
 		http.StatusOK,
-		dto.ResponseOk(token),
+		dto.ResponseOk(dto.NewAuthTokensResponse(tokens)),
 	)
 }
 

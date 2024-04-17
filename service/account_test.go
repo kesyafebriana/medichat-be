@@ -3,13 +3,16 @@ package service_test
 import (
 	"context"
 	"medichat-be/apperror"
+	"medichat-be/cryptoutil"
 	"medichat-be/domain"
 	"medichat-be/mocks/cryptomocks"
 	"medichat-be/mocks/domainmocks"
 	"medichat-be/service"
 	"medichat-be/testdata"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -425,12 +428,36 @@ func Test_accountService_Login(t *testing.T) {
 				tt.createAccessToken.Err,
 			)
 
+			accessProv.On(
+				"VerifyToken",
+				tt.createAccessToken.Val,
+			).Return(
+				cryptoutil.JWTClaims{
+					RegisteredClaims: jwt.RegisteredClaims{
+						ExpiresAt: jwt.NewNumericDate(time.Time{}),
+					},
+				},
+				nil,
+			)
+
 			refreshProv.On(
 				"CreateToken",
 				tt.getAccountWithCreds.Val.Account.ID,
 			).Return(
 				tt.createRefreshToken.Val,
 				tt.createRefreshToken.Err,
+			)
+
+			refreshProv.On(
+				"VerifyToken",
+				tt.createRefreshToken.Val,
+			).Return(
+				cryptoutil.JWTClaims{
+					RegisteredClaims: jwt.RegisteredClaims{
+						ExpiresAt: jwt.NewNumericDate(time.Time{}),
+					},
+				},
+				nil,
 			)
 
 			opts := service.AccountServiceOpts{

@@ -41,8 +41,8 @@ func (s *oAuth2Service) Callback(ctx context.Context, state string, opts domain.
 	}
 
 	return domain.AuthTokens{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-		ExpiresAt:    token.Expiry,
+		AccessToken:     token.AccessToken,
+		RefreshToken:    token.RefreshToken,
+		AccessExpiresAt: token.Expiry,
 	}, nil
 }
