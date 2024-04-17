@@ -72,3 +72,30 @@ func (p *jwtProviderHS256) VerifyToken(tokenstr string) (JWTClaims, error) {
 
 	return *claims, nil
 }
+
+type jwtProviderAny struct {
+	providers []JWTProvider
+}
+
+func NewJWTProviderAny(providers []JWTProvider) *jwtProviderAny {
+	return &jwtProviderAny{
+		providers: providers,
+	}
+}
+
+func (p *jwtProviderAny) CreateToken(userID int64) (string, error) {
+	return "", apperror.NewInternalFmt("uninplemented")
+}
+
+func (p *jwtProviderAny) VerifyToken(tokenstr string) (JWTClaims, error) {
+	var err error
+
+	for _, prov := range p.providers {
+		claims, err := prov.VerifyToken(tokenstr)
+		if err == nil {
+			return claims, nil
+		}
+	}
+
+	return JWTClaims{}, err
+}

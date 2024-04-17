@@ -62,6 +62,13 @@ func main() {
 		conf.AccessTokenLifespan,
 	)
 
+	anyAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+		adminAccessProvider,
+		userAccessProvider,
+		doctorAccessProvider,
+		pharmacyManagerAccessProvider,
+	})
+
 	refreshProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
 		conf.RefreshSecret,
@@ -129,7 +136,8 @@ func main() {
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler()
 	errorHandler := middleware.ErrorHandler()
-	authenticator := middleware.Authenticator(userAccessProvider)
+
+	authenticator := middleware.Authenticator(anyAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
 		AccountHandler:    accountHandler,
