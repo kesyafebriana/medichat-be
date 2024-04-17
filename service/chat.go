@@ -1,7 +1,9 @@
 package service
 
 import (
+	"errors"
 	"fmt"
+	"medichat-be/constants"
 	"medichat-be/domain"
 	"time"
 
@@ -86,6 +88,10 @@ func (u *chatServiceImpl) PostFile(req *domain.ChatMessage,roomId string,ctx *gi
 
 	fileType := req.File.Header.Get("Content-Type")
 
+	if(req.File.Size >= constants.MaxFileSize){
+		return errors.New("file size exceeded 5 Mb")
+	}
+
 	file,err := req.File.Open()
 	if err!= nil {
         return err
@@ -95,47 +101,53 @@ func (u *chatServiceImpl) PostFile(req *domain.ChatMessage,roomId string,ctx *gi
 
 	now := time.Now()
 	resp := make(chan *uploader.UploadResult)
-
-	go func() {
-		res, err := u.cloud.Upload.Upload(ctx,file,uploader.UploadParams{
-			Type: api.Upload,
-			ResourceType: "auto",
-			DisplayName: fileName,
-			FilenameOverride: fileName,
-			PublicID: roomId+now.Format("2006_01_02_T15_04_05"),
-		})
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		resp<- res
-	}()
-
-	response := <-resp
-	if err != nil {
-		return err
-	}
 	stringType := ""
+
 	if (fileType == "application/pdf"){
 		stringType = "message/pdf"
 	}else if (fileType == "image/png" || fileType == "image/jpeg" || fileType == "image/webp"){
 		stringType = "message/image"
 	}
 
-	colRef := u.client.Collection("rooms");
+	if(fileType == "application/pdf" || fileType == "image/png" || fileType == "image/jpeg" || fileType == "image/webp"){
+		go func() {
+			res, err := u.cloud.Upload.Upload(ctx,file,uploader.UploadParams{
+				Type: api.Upload,
+				ResourceType: "auto",
+				DisplayName: fileName,
+				FilenameOverride: fileName,
+				PublicID: roomId+now.Format("2006_01_02_T15_04_05"),
+			})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			resp<- res
+		}()
 
-	content := map[string]interface{}{
-        "userId": req.UserId,
-        "userName": req.UserName,
-        "message": fileName,
-		"url" : response.SecureURL,
-        "createdAt": req.CreatedAt,
-        "type": stringType,
+		response := <-resp
+		if err != nil {
+			return err
+		}
+
+		colRef := u.client.Collection("rooms");
+
+		content := map[string]interface{}{
+			"userId": req.UserId,
+			"userName": req.UserName,
+			"message": fileName,
+			"url" : response.SecureURL,
+			"createdAt": req.CreatedAt,
+			"type": stringType,
+		}
+		_,_,err = colRef.Doc(roomId).Collection("chats").Add(ctx, content)
+		if err!= nil {
+			return err
+		}
+	} else{
+		return errors.New("invalid file type")
 	}
-	_,_,err = colRef.Doc(roomId).Collection("chats").Add(ctx, content)
-	if err!= nil {
-        return err
-    }
+
 	return nil
 
 }

@@ -57,11 +57,14 @@ func (h *ChatHandler) Chat(ctx *gin.Context) {
 		err = h.chatService.PostMessage(&req,roomId,ctx)
 	} else if(req.Type == "files"){
 		fileHeader,err := ctx.FormFile("file")
+
+		
 		if err!= nil {
 			ctx.Error(apperror.NewBadRequest(err))
             ctx.Abort()
             return
         }
+		
 		
 		req.File= fileHeader
 
