@@ -43,21 +43,11 @@ func main() {
 		conf.AdminAccessSecret,
 		conf.AccessTokenLifespan,
 	)
-	adminRefreshProvider := cryptoutil.NewJWTProviderHS256(
-		conf.JWTIssuer,
-		conf.AdminRefreshSecret,
-		conf.RefreshTokenLifespan,
-	)
 
 	userAccessProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
 		conf.UserAccessSecret,
 		conf.AccessTokenLifespan,
-	)
-	userRefreshProvider := cryptoutil.NewJWTProviderHS256(
-		conf.JWTIssuer,
-		conf.AdminRefreshSecret,
-		conf.RefreshTokenLifespan,
 	)
 
 	doctorAccessProvider := cryptoutil.NewJWTProviderHS256(
@@ -65,22 +55,13 @@ func main() {
 		conf.DoctorAccessSecret,
 		conf.AccessTokenLifespan,
 	)
-	doctorRefreshProvider := cryptoutil.NewJWTProviderHS256(
-		conf.JWTIssuer,
-		conf.AdminRefreshSecret,
-		conf.RefreshTokenLifespan,
-	)
 
 	pharmacyManagerAccessProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
 		conf.PharmacyManagerAccessSecret,
 		conf.AccessTokenLifespan,
 	)
-	pharmacyManagerRefreshProvider := cryptoutil.NewJWTProviderHS256(
-		conf.JWTIssuer,
-		conf.AdminRefreshSecret,
-		conf.RefreshTokenLifespan,
-	)
+
 	refreshProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
 		conf.RefreshSecret,
@@ -108,21 +89,17 @@ func main() {
 	dataRepository := postgres.NewDataRepository(db)
 
 	accountService := service.NewAccountService(service.AccountServiceOpts{
-		DataRepository:                 dataRepository,
-		PasswordHasher:                 passwordHasher,
-		AdminAccessProvider:            adminAccessProvider,
-		AdminRefreshProvider:           adminRefreshProvider,
-		UserAccessProvider:             userAccessProvider,
-		UserRefreshProvider:            userRefreshProvider,
-		DoctorAccessProvider:           doctorAccessProvider,
-		DoctorRefreshProvider:          doctorRefreshProvider,
-		PharmacyManagerAccessProvider:  pharmacyManagerAccessProvider,
-		PharmacyManagerRefreshProvider: pharmacyManagerRefreshProvider,
-		RefreshProvider:                refreshProvider,
-		RPTProvider:                    resetPasswordTokenProvider,
-		RPTLifespan:                    conf.ResetPasswordTokenLifespan,
-		VETProvider:                    verifyEmailTokenProvider,
-		VETLifespan:                    conf.VerifyEmailTokenLifespan,
+		DataRepository:                dataRepository,
+		PasswordHasher:                passwordHasher,
+		AdminAccessProvider:           adminAccessProvider,
+		UserAccessProvider:            userAccessProvider,
+		DoctorAccessProvider:          doctorAccessProvider,
+		PharmacyManagerAccessProvider: pharmacyManagerAccessProvider,
+		RefreshProvider:               refreshProvider,
+		RPTProvider:                   resetPasswordTokenProvider,
+		RPTLifespan:                   conf.ResetPasswordTokenLifespan,
+		VETProvider:                   verifyEmailTokenProvider,
+		VETLifespan:                   conf.VerifyEmailTokenLifespan,
 	})
 
 	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{

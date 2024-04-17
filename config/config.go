@@ -23,19 +23,11 @@ type Config struct {
 
 	JWTIssuer string
 
-	AdminAccessSecret  string
-	AdminRefreshSecret string
-
-	UserAccessSecret  string
-	UserRefreshSecret string
-
-	DoctorAccessSecret  string
-	DoctorRefreshSecret string
-
-	PharmacyManagerAccessSecret  string
-	PharmacyManagerRefreshSecret string
-
-	RefreshSecret string
+	AdminAccessSecret           string
+	UserAccessSecret            string
+	DoctorAccessSecret          string
+	PharmacyManagerAccessSecret string
+	RefreshSecret               string
 
 	AccessTokenLifespan        time.Duration
 	RefreshTokenLifespan       time.Duration
@@ -69,17 +61,9 @@ func LoadConfig() (Config, error) {
 	ret.JWTIssuer = os.Getenv("JWT_ISSUER")
 
 	ret.AdminAccessSecret = os.Getenv("ADMIN_ACCESS_SECRET")
-	ret.AdminRefreshSecret = os.Getenv("ADMIN_REFRESH_SECRET")
-
 	ret.UserAccessSecret = os.Getenv("USER_ACCESS_SECRET")
-	ret.UserRefreshSecret = os.Getenv("USER_REFRESH_SECRET")
-
 	ret.DoctorAccessSecret = os.Getenv("DOCTOR_ACCESS_SECRET")
-	ret.DoctorRefreshSecret = os.Getenv("DOCTOR_REFRESH_SECRET")
-
 	ret.PharmacyManagerAccessSecret = os.Getenv("PHARMACY_MANAGER_ACCESS_SECRET")
-	ret.PharmacyManagerRefreshSecret = os.Getenv("PHARMACY_MANAGER_REFRESH_SECRET")
-
 	ret.RefreshSecret = os.Getenv("REFRESH_SECRET")
 
 	s = os.Getenv("ACCESS_TOKEN_LIFESPAN")

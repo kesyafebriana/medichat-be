@@ -434,23 +434,20 @@ func Test_accountService_Login(t *testing.T) {
 			)
 
 			opts := service.AccountServiceOpts{
-				DataRepository: dataRepo,
-				PasswordHasher: pwdHasher,
+				DataRepository:  dataRepo,
+				PasswordHasher:  pwdHasher,
+				RefreshProvider: refreshProv,
 			}
 
 			switch tt.getAccountWithCreds.Val.Account.Role {
 			case domain.AccountRoleAdmin:
 				opts.AdminAccessProvider = accessProv
-				opts.AdminRefreshProvider = refreshProv
 			case domain.AccountRoleUser:
 				opts.UserAccessProvider = accessProv
-				opts.UserRefreshProvider = refreshProv
 			case domain.AccountRoleDoctor:
 				opts.DoctorAccessProvider = accessProv
-				opts.DoctorRefreshProvider = refreshProv
 			case domain.AccountRolePharmacyManager:
 				opts.PharmacyManagerAccessProvider = accessProv
-				opts.PharmacyManagerRefreshProvider = refreshProv
 			}
 
 			s := service.NewAccountService(opts)

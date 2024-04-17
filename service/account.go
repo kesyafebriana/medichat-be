@@ -13,19 +13,11 @@ type accountService struct {
 	dataRepository domain.DataRepository
 	passwordHasher cryptoutil.PasswordHasher
 
-	adminAccessProvider  cryptoutil.JWTProvider
-	adminRefreshProvider cryptoutil.JWTProvider
-
-	userAccessProvider  cryptoutil.JWTProvider
-	userRefreshProvider cryptoutil.JWTProvider
-
-	doctorAccessProvider  cryptoutil.JWTProvider
-	doctorRefreshProvider cryptoutil.JWTProvider
-
-	pharmacyManagerAccessProvider  cryptoutil.JWTProvider
-	pharmacyManagerRefreshProvider cryptoutil.JWTProvider
-
-	refreshProvider cryptoutil.JWTProvider
+	adminAccessProvider           cryptoutil.JWTProvider
+	userAccessProvider            cryptoutil.JWTProvider
+	doctorAccessProvider          cryptoutil.JWTProvider
+	pharmacyManagerAccessProvider cryptoutil.JWTProvider
+	refreshProvider               cryptoutil.JWTProvider
 
 	rptProvider cryptoutil.RandomTokenProvider
 	rptLifespan time.Duration
@@ -38,19 +30,11 @@ type AccountServiceOpts struct {
 	DataRepository domain.DataRepository
 	PasswordHasher cryptoutil.PasswordHasher
 
-	AdminAccessProvider  cryptoutil.JWTProvider
-	AdminRefreshProvider cryptoutil.JWTProvider
-
-	UserAccessProvider  cryptoutil.JWTProvider
-	UserRefreshProvider cryptoutil.JWTProvider
-
-	DoctorAccessProvider  cryptoutil.JWTProvider
-	DoctorRefreshProvider cryptoutil.JWTProvider
-
-	PharmacyManagerAccessProvider  cryptoutil.JWTProvider
-	PharmacyManagerRefreshProvider cryptoutil.JWTProvider
-
-	RefreshProvider cryptoutil.JWTProvider
+	AdminAccessProvider           cryptoutil.JWTProvider
+	UserAccessProvider            cryptoutil.JWTProvider
+	DoctorAccessProvider          cryptoutil.JWTProvider
+	PharmacyManagerAccessProvider cryptoutil.JWTProvider
+	RefreshProvider               cryptoutil.JWTProvider
 
 	RPTProvider cryptoutil.RandomTokenProvider
 	RPTLifespan time.Duration
@@ -64,17 +48,11 @@ func NewAccountService(opts AccountServiceOpts) *accountService {
 		dataRepository: opts.DataRepository,
 		passwordHasher: opts.PasswordHasher,
 
-		adminAccessProvider:  opts.AdminAccessProvider,
-		adminRefreshProvider: opts.AdminRefreshProvider,
-
-		userAccessProvider:  opts.UserAccessProvider,
-		userRefreshProvider: opts.UserRefreshProvider,
-
-		doctorAccessProvider:  opts.DoctorAccessProvider,
-		doctorRefreshProvider: opts.DoctorRefreshProvider,
-
-		pharmacyManagerAccessProvider:  opts.PharmacyManagerAccessProvider,
-		pharmacyManagerRefreshProvider: opts.PharmacyManagerRefreshProvider,
+		adminAccessProvider:           opts.AdminAccessProvider,
+		userAccessProvider:            opts.UserAccessProvider,
+		doctorAccessProvider:          opts.DoctorAccessProvider,
+		pharmacyManagerAccessProvider: opts.PharmacyManagerAccessProvider,
+		refreshProvider:               opts.RefreshProvider,
 
 		rptProvider: opts.RPTProvider,
 		rptLifespan: opts.RPTLifespan,
@@ -164,19 +142,16 @@ func (s *accountService) createTokensForAccount(
 	switch role {
 	case domain.AccountRoleAdmin:
 		accessProvider = s.adminAccessProvider
-		refreshProvider = s.adminRefreshProvider
 	case domain.AccountRoleUser:
 		accessProvider = s.userAccessProvider
-		refreshProvider = s.userRefreshProvider
 	case domain.AccountRoleDoctor:
 		accessProvider = s.doctorAccessProvider
-		refreshProvider = s.doctorRefreshProvider
 	case domain.AccountRolePharmacyManager:
 		accessProvider = s.pharmacyManagerAccessProvider
-		refreshProvider = s.pharmacyManagerRefreshProvider
 	default:
 		return domain.AuthTokens{}, apperror.NewInternalFmt("unknown role")
 	}
+	refreshProvider = s.refreshProvider
 
 	accessToken, err := accessProvider.CreateToken(accountID)
 	if err != nil {
