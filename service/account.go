@@ -108,28 +108,54 @@ func (s *accountService) Register(
 	)
 }
 
+func (s *accountService) LoginClosure(
+	ctx context.Context,
+	creds domain.AccountLoginCredentials,
+) domain.AtomicFunc[domain.AuthTokens] {
+	return func(dr domain.DataRepository) (domain.AuthTokens, error) {
+		accountRepo := s.dataRepository.AccountRepository()
+		rtRepo := s.dataRepository.RefreshTokenRepository()
+
+		ac, err := accountRepo.GetWithCredentialsByEmail(ctx, creds.Email)
+		if err != nil {
+			return domain.AuthTokens{}, apperror.Wrap(err)
+		}
+
+		err = s.passwordHasher.CheckPassword(ac.HashedPassword, creds.Password)
+		if err != nil {
+			return domain.AuthTokens{}, apperror.Wrap(err)
+		}
+
+		tokens, err := s.CreateTokensForAccount(ac.Account.ID, ac.Account.Role)
+		if err != nil {
+			return domain.AuthTokens{}, apperror.Wrap(err)
+		}
+
+		rToken := domain.RefreshToken{
+			Account:   ac.Account,
+			Token:     tokens.RefreshToken,
+			ClientIP:  creds.ClientIP,
+			ExpiredAt: tokens.RefreshExpireAt,
+		}
+
+		_, err = rtRepo.Add(ctx, rToken)
+		if err != nil {
+			return domain.AuthTokens{}, apperror.Wrap(err)
+		}
+
+		return tokens, nil
+	}
+}
+
 func (s *accountService) Login(
 	ctx context.Context,
 	creds domain.AccountLoginCredentials,
 ) (domain.AuthTokens, error) {
-	accountRepo := s.dataRepository.AccountRepository()
-
-	ac, err := accountRepo.GetWithCredentialsByEmail(ctx, creds.Email)
-	if err != nil {
-		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-
-	err = s.passwordHasher.CheckPassword(ac.HashedPassword, creds.Password)
-	if err != nil {
-		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-
-	tokens, err := s.CreateTokensForAccount(ac.Account.ID, ac.Account.Role)
-	if err != nil {
-		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-
-	return tokens, nil
+	return domain.RunAtomic(
+		s.dataRepository,
+		ctx,
+		s.LoginClosure(ctx, creds),
+	)
 }
 
 func (s *accountService) GetResetPasswordTokenClosure(
@@ -351,28 +377,64 @@ func (s *accountService) VerifyEmail(
 	return err
 }
 
+func (s *accountService) RefreshTokensClosure(
+	ctx context.Context,
+	creds domain.AccountRefreshTokensCredentials,
+) domain.AtomicFunc[domain.AuthTokens] {
+	return func(dr domain.DataRepository) (domain.AuthTokens, error) {
+		accountRepo := s.dataRepository.AccountRepository()
+		rtRepo := s.dataRepository.RefreshTokenRepository()
+
+		claims, err := s.refreshProvider.VerifyToken(creds.RefreshToken)
+		if err != nil {
+			return domain.AuthTokens{}, apperror.Wrap(err)
+		}
+
+		rToken, err := rtRepo.GetByTokenStrAndLock(ctx, creds.RefreshToken)
+		if err != nil {
+			return domain.AuthTokens{}, apperror.Wrap(err)
+		}
+
+		account, err := accountRepo.GetByID(ctx, claims.UserID)
+		if err != nil {
+			return domain.AuthTokens{}, apperror.Wrap(err)
+		}
+
+		tokens, err := s.CreateTokensForAccount(account.ID, account.Role)
+		if err != nil {
+			return domain.AuthTokens{}, apperror.Wrap(err)
+		}
+
+		err = rtRepo.SoftDeleteByID(ctx, rToken.ID)
+		if err != nil {
+			return domain.AuthTokens{}, apperror.Wrap(err)
+		}
+
+		rToken = domain.RefreshToken{
+			Account:   account,
+			Token:     tokens.RefreshToken,
+			ClientIP:  creds.ClientIP,
+			ExpiredAt: tokens.RefreshExpireAt,
+		}
+
+		_, err = rtRepo.Add(ctx, rToken)
+		if err != nil {
+			return domain.AuthTokens{}, apperror.Wrap(err)
+		}
+
+		return tokens, nil
+	}
+}
+
 func (s *accountService) RefreshTokens(
 	ctx context.Context,
-	refreshToken string,
+	creds domain.AccountRefreshTokensCredentials,
 ) (domain.AuthTokens, error) {
-	accountRepo := s.dataRepository.AccountRepository()
-
-	claims, err := s.refreshProvider.VerifyToken(refreshToken)
-	if err != nil {
-		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-
-	account, err := accountRepo.GetByID(ctx, claims.UserID)
-	if err != nil {
-		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-
-	tokens, err := s.CreateTokensForAccount(account.ID, account.Role)
-	if err != nil {
-		return domain.AuthTokens{}, apperror.Wrap(err)
-	}
-
-	return tokens, nil
+	return domain.RunAtomic(
+		s.dataRepository,
+		ctx,
+		s.RefreshTokensClosure(ctx, creds),
+	)
 }
 
 func (s *accountService) CreateTokensForAccount(

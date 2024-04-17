@@ -28,6 +28,7 @@ type AccountWithCredentials struct {
 type AccountLoginCredentials struct {
 	Email    string
 	Password string
+	ClientIP string
 }
 
 type AccountRegisterCredentials struct {
@@ -45,6 +46,11 @@ type AccountVerifyEmailCredentials struct {
 	Email            string
 	Password         string
 	VerifyEmailToken string
+}
+
+type AccountRefreshTokensCredentials struct {
+	RefreshToken string
+	ClientIP     string
 }
 
 type AccountRepository interface {
@@ -73,7 +79,7 @@ type AccountService interface {
 	GetVerifyEmailToken(ctx context.Context, email string) (string, error)
 	VerifyEmail(ctx context.Context, creds AccountVerifyEmailCredentials) error
 
-	RefreshTokens(ctx context.Context, refreshToken string) (AuthTokens, error)
+	RefreshTokens(ctx context.Context, creds AccountRefreshTokensCredentials) (AuthTokens, error)
 
 	CreateTokensForAccount(accountID int64, role string) (AuthTokens, error)
 }

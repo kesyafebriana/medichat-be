@@ -61,6 +61,7 @@ func (h *AccountHandler) Login(ctx *gin.Context) {
 	}
 
 	creds := req.ToCredentials()
+	creds.ClientIP = ctx.ClientIP()
 
 	tokens, err := h.accountSrv.Login(ctx, creds)
 	if err != nil {
@@ -189,7 +190,12 @@ func (h *AccountHandler) RefreshTokens(ctx *gin.Context) {
 		return
 	}
 
-	tokens, err := h.accountSrv.RefreshTokens(ctx, refreshToken)
+	creds := domain.AccountRefreshTokensCredentials{
+		RefreshToken: refreshToken,
+		ClientIP:     ctx.ClientIP(),
+	}
+
+	tokens, err := h.accountSrv.RefreshTokens(ctx, creds)
 	if err != nil {
 		ctx.Error(apperror.Wrap(err))
 		ctx.Abort()
