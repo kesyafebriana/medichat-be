@@ -81,6 +81,11 @@ func main() {
 		conf.AdminRefreshSecret,
 		conf.RefreshTokenLifespan,
 	)
+	refreshProvider := cryptoutil.NewJWTProviderHS256(
+		conf.JWTIssuer,
+		conf.RefreshSecret,
+		conf.RefreshTokenLifespan,
+	)
 
 	passwordHasher := cryptoutil.NewPasswordHasherBcrypt(constants.HashCost)
 
@@ -113,6 +118,7 @@ func main() {
 		DoctorRefreshProvider:          doctorRefreshProvider,
 		PharmacyManagerAccessProvider:  pharmacyManagerAccessProvider,
 		PharmacyManagerRefreshProvider: pharmacyManagerRefreshProvider,
+		RefreshProvider:                refreshProvider,
 		RPTProvider:                    resetPasswordTokenProvider,
 		RPTLifespan:                    conf.ResetPasswordTokenLifespan,
 		VETProvider:                    verifyEmailTokenProvider,

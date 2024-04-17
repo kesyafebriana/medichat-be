@@ -35,6 +35,8 @@ type Config struct {
 	PharmacyManagerAccessSecret  string
 	PharmacyManagerRefreshSecret string
 
+	RefreshSecret string
+
 	AccessTokenLifespan        time.Duration
 	RefreshTokenLifespan       time.Duration
 	ResetPasswordTokenLifespan time.Duration
@@ -77,6 +79,8 @@ func LoadConfig() (Config, error) {
 
 	ret.PharmacyManagerAccessSecret = os.Getenv("PHARMACY_MANAGER_ACCESS_SECRET")
 	ret.PharmacyManagerRefreshSecret = os.Getenv("PHARMACY_MANAGER_REFRESH_SECRET")
+
+	ret.RefreshSecret = os.Getenv("REFRESH_SECRET")
 
 	s = os.Getenv("ACCESS_TOKEN_LIFESPAN")
 	i, err := strconv.Atoi(s)
