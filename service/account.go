@@ -171,6 +171,10 @@ func (s *accountService) GetResetPasswordTokenClosure(
 			return "", apperror.Wrap(err)
 		}
 
+		if !account.EmailVerified {
+			return "", apperror.NewEmailNotVerified(nil)
+		}
+
 		err = rptRepo.SoftDeleteByAccountID(ctx, account.ID)
 		if err != nil {
 			return "", apperror.Wrap(err)
@@ -223,6 +227,10 @@ func (s *accountService) ResetPasswordClosure(
 		account, err := accountRepo.GetByIDAndLock(ctx, token.Account.ID)
 		if err != nil {
 			return nil, apperror.Wrap(err)
+		}
+
+		if !account.EmailVerified {
+			return "", apperror.NewEmailNotVerified(nil)
 		}
 
 		if account.Email != creds.Email {
