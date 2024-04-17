@@ -82,4 +82,6 @@ type AccountService interface {
 	RefreshTokens(ctx context.Context, creds AccountRefreshTokensCredentials) (AuthTokens, error)
 
 	CreateTokensForAccount(accountID int64, role string) (AuthTokens, error)
+
+	GetProfile(ctx context.Context) (Account, error)
 }

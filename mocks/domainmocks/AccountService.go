@@ -35,6 +35,27 @@ func (_m *AccountService) CreateTokensForAccount(accountID int64, role string) (
 	return r0, r1
 }
 
+// GetProfile provides a mock function with given fields: ctx
+func (_m *AccountService) GetProfile(ctx context.Context) (domain.Account, error) {
+	ret := _m.Called(ctx)
+
+	var r0 domain.Account
+	if rf, ok := ret.Get(0).(func(context.Context) domain.Account); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(domain.Account)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetResetPasswordToken provides a mock function with given fields: ctx, email
 func (_m *AccountService) GetResetPasswordToken(ctx context.Context, email string) (string, error) {
 	ret := _m.Called(ctx, email)
@@ -98,20 +119,20 @@ func (_m *AccountService) Login(ctx context.Context, creds domain.AccountLoginCr
 	return r0, r1
 }
 
-// RefreshTokens provides a mock function with given fields: ctx, refreshToken
-func (_m *AccountService) RefreshTokens(ctx context.Context, refreshToken string) (domain.AuthTokens, error) {
-	ret := _m.Called(ctx, refreshToken)
+// RefreshTokens provides a mock function with given fields: ctx, creds
+func (_m *AccountService) RefreshTokens(ctx context.Context, creds domain.AccountRefreshTokensCredentials) (domain.AuthTokens, error) {
+	ret := _m.Called(ctx, creds)
 
 	var r0 domain.AuthTokens
-	if rf, ok := ret.Get(0).(func(context.Context, string) domain.AuthTokens); ok {
-		r0 = rf(ctx, refreshToken)
+	if rf, ok := ret.Get(0).(func(context.Context, domain.AccountRefreshTokensCredentials) domain.AuthTokens); ok {
+		r0 = rf(ctx, creds)
 	} else {
 		r0 = ret.Get(0).(domain.AuthTokens)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, refreshToken)
+	if rf, ok := ret.Get(1).(func(context.Context, domain.AccountRefreshTokensCredentials) error); ok {
+		r1 = rf(ctx, creds)
 	} else {
 		r1 = ret.Error(1)
 	}

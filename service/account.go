@@ -6,6 +6,7 @@ import (
 	"medichat-be/constants"
 	"medichat-be/cryptoutil"
 	"medichat-be/domain"
+	"medichat-be/util"
 	"time"
 )
 
@@ -492,4 +493,20 @@ func (s *accountService) CreateTokensForAccount(
 	}
 
 	return tokens, nil
+}
+
+func (s *accountService) GetProfile(ctx context.Context) (domain.Account, error) {
+	accountRepo := s.dataRepository.AccountRepository()
+
+	accountID, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return domain.Account{}, apperror.Wrap(err)
+	}
+
+	account, err := accountRepo.GetByID(ctx, accountID)
+	if err != nil {
+		return domain.Account{}, apperror.Wrap(err)
+	}
+
+	return account, nil
 }
