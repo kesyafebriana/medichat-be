@@ -21,6 +21,7 @@ docker-push:
 mock:
 	mockery --dir=./domain --outpkg=domainmocks --output=./mocks/domainmocks --name=DataRepository
 	mockery --dir=./domain --outpkg=domainmocks --output=./mocks/domainmocks --name=AccountRepository
+	mockery --dir=./domain --outpkg=domainmocks --output=./mocks/domainmocks --name=RefreshTokenRepository
 	mockery --dir=./domain --outpkg=domainmocks --output=./mocks/domainmocks --name=ResetPasswordTokenRepository
 	mockery --dir=./domain --outpkg=domainmocks --output=./mocks/domainmocks --name=VerifyEmailTokenRepository
 	
