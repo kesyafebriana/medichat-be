@@ -14,6 +14,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func Test_accountService_Register(t *testing.T) {
@@ -396,8 +397,10 @@ func Test_accountService_Login(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			accountRepo := new(domainmocks.AccountRepository)
+			rtRepo := new(domainmocks.RefreshTokenRepository)
 			dataRepo := testdata.NewDataRepositoryMock(testdata.DataRepositoryMockOpts{
-				AccountRepository: accountRepo,
+				AccountRepository:      accountRepo,
+				RefreshTokenRepository: rtRepo,
 			})
 			pwdHasher := new(cryptomocks.PasswordHasher)
 			accessProv := new(cryptomocks.JWTProvider)
@@ -460,6 +463,15 @@ func Test_accountService_Login(t *testing.T) {
 				nil,
 			)
 
+			rtRepo.On(
+				"Add",
+				tt.ctx,
+				mock.AnythingOfType("domain.RefreshToken"),
+			).Return(
+				domain.RefreshToken{},
+				nil,
+			)
+
 			opts := service.AccountServiceOpts{
 				DataRepository:  dataRepo,
 				PasswordHasher:  pwdHasher,
@@ -478,6 +490,12 @@ func Test_accountService_Login(t *testing.T) {
 			}
 
 			s := service.NewAccountService(opts)
+
+			testdata.OnDataRepositoryAtomic(
+				dataRepo,
+				tt.ctx,
+				s.LoginClosure(tt.ctx, tt.creds),
+			)
 
 			// when
 			got, err := s.Login(tt.ctx, tt.creds)

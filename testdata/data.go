@@ -10,6 +10,7 @@ import (
 
 type DataRepositoryMockOpts struct {
 	AccountRepository            domain.AccountRepository
+	RefreshTokenRepository       domain.RefreshTokenRepository
 	ResetPasswordTokenRepository domain.ResetPasswordTokenRepository
 	VerifyEmailTokenRepository   domain.VerifyEmailTokenRepository
 }
@@ -19,6 +20,8 @@ func NewDataRepositoryMock(opts DataRepositoryMockOpts) *domainmocks.DataReposit
 
 	dataRepo.On("AccountRepository").
 		Return(opts.AccountRepository)
+	dataRepo.On("RefreshTokenRepository").
+		Return(opts.RefreshTokenRepository)
 	dataRepo.On("ResetPasswordTokenRepository").
 		Return(opts.ResetPasswordTokenRepository)
 	dataRepo.On("VerifyEmailTokenRepository").
