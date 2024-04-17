@@ -3,8 +3,9 @@ package domain
 import "context"
 
 type OAuth2CallbackOpts struct {
-	Code  string
-	State string
+	Code     string
+	State    string
+	ClientIP string
 }
 
 type OAuth2Service interface {

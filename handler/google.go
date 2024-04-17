@@ -44,6 +44,7 @@ func (h *GoogleHandler) OAuth2Callback(ctx *gin.Context) {
 	}
 
 	opts := query.ToOpts()
+	opts.ClientIP = ctx.ClientIP()
 
 	token, err := h.googleSrv.OAuth2Callback(ctx, state, opts)
 	if err != nil {

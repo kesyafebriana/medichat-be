@@ -34,6 +34,8 @@ func (s *googleService) OAuth2Callback(
 	state string,
 	opts domain.OAuth2CallbackOpts,
 ) (domain.AuthTokens, error) {
+	rtRepo := s.dataRepository.RefreshTokenRepository()
+
 	gTokens, err := s.oauth2Service.Callback(ctx, state, opts)
 	if err != nil {
 		return domain.AuthTokens{}, apperror.Wrap(err)
@@ -45,6 +47,18 @@ func (s *googleService) OAuth2Callback(
 	}
 
 	tokens, err := s.accountService.CreateTokensForAccount(account.ID, account.Role)
+	if err != nil {
+		return domain.AuthTokens{}, apperror.Wrap(err)
+	}
+
+	rToken := domain.RefreshToken{
+		Account:   account,
+		Token:     tokens.RefreshToken,
+		ClientIP:  opts.ClientIP,
+		ExpiredAt: tokens.RefreshExpireAt,
+	}
+
+	_, err = rtRepo.Add(ctx, rToken)
 	if err != nil {
 		return domain.AuthTokens{}, apperror.Wrap(err)
 	}
