@@ -2,9 +2,11 @@ package handler
 
 import (
 	"medichat-be/apperror"
+	"medichat-be/constants"
 	"medichat-be/domain"
 	"medichat-be/dto"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -66,6 +68,16 @@ func (h *AccountHandler) Login(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
+
+	ctx.SetCookie(
+		constants.CookieRefreshToken,
+		tokens.RefreshToken,
+		tokens.RefreshExpireAt.Second()-time.Now().Second(),
+		"/api",
+		"localhost",
+		false,
+		true,
+	)
 
 	ctx.JSON(
 		http.StatusOK,
@@ -166,5 +178,36 @@ func (h *AccountHandler) VerifyEmail(ctx *gin.Context) {
 	ctx.JSON(
 		http.StatusCreated,
 		dto.ResponseCreated(nil),
+	)
+}
+
+func (h *AccountHandler) RefreshTokens(ctx *gin.Context) {
+	refreshToken, err := ctx.Cookie(constants.CookieRefreshToken)
+	if err != nil {
+		ctx.Error(apperror.NewUnauthorized(err))
+		ctx.Abort()
+		return
+	}
+
+	tokens, err := h.accountSrv.RefreshTokens(ctx, refreshToken)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.SetCookie(
+		constants.CookieRefreshToken,
+		tokens.RefreshToken,
+		tokens.RefreshExpireAt.Second()-time.Now().Second(),
+		"/api",
+		"localhost",
+		false,
+		true,
+	)
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewAuthTokensResponse(tokens)),
 	)
 }
