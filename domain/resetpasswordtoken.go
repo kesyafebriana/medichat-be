@@ -18,4 +18,5 @@ type ResetPasswordTokenRepository interface {
 	GetByTokenStr(ctx context.Context, tokenStr string) (ResetPasswordToken, error)
 	GetByTokenStrAndLock(ctx context.Context, tokenStr string) (ResetPasswordToken, error)
 	SoftDeleteByID(ctx context.Context, id int64) error
+	SoftDeleteByAccountID(ctx context.Context, id int64) error
 }

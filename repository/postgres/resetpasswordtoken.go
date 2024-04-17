@@ -101,6 +101,23 @@ func (r *resetPasswordTokenRepository) SoftDeleteByID(
 	)
 }
 
+func (r *resetPasswordTokenRepository) SoftDeleteByAccountID(
+	ctx context.Context,
+	id int64,
+) error {
+	q := `
+		UPDATE reset_password_tokens
+		SET deleted_at = now(),
+			updated_at = now()
+		WHERE account_id = $1
+	`
+
+	return exec(
+		r.querier, ctx, q,
+		id,
+	)
+}
+
 var (
 	resetPasswordTokenColumns = " id, account_id, token, expired_at "
 )
