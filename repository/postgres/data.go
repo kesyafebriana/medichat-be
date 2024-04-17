@@ -65,6 +65,10 @@ func (r *dataRepository) AccountRepository() domain.AccountRepository {
 	}
 }
 
+func (r *dataRepository) RefreshTokenRepository() domain.RefreshTokenRepository {
+	return nil
+}
+
 func (r *dataRepository) ResetPasswordTokenRepository() domain.ResetPasswordTokenRepository {
 	return &resetPasswordTokenRepository{
 		querier: r.querier,

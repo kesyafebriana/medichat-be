@@ -76,3 +76,24 @@ func (_m *GoogleService) GetProfileByAccessToken(ctx context.Context, accessToke
 
 	return r0, r1
 }
+
+// OAuth2Callback provides a mock function with given fields: ctx, state, opts
+func (_m *GoogleService) OAuth2Callback(ctx context.Context, state string, opts domain.OAuth2CallbackOpts) (domain.AuthTokens, error) {
+	ret := _m.Called(ctx, state, opts)
+
+	var r0 domain.AuthTokens
+	if rf, ok := ret.Get(0).(func(context.Context, string, domain.OAuth2CallbackOpts) domain.AuthTokens); ok {
+		r0 = rf(ctx, state, opts)
+	} else {
+		r0 = ret.Get(0).(domain.AuthTokens)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, domain.OAuth2CallbackOpts) error); ok {
+		r1 = rf(ctx, state, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}

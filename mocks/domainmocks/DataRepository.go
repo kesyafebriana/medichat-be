@@ -55,6 +55,22 @@ func (_m *DataRepository) Atomic(ctx context.Context, fn domain.AtomicFuncAny) (
 	return r0, r1
 }
 
+// RefreshTokenRepository provides a mock function with given fields:
+func (_m *DataRepository) RefreshTokenRepository() domain.RefreshTokenRepository {
+	ret := _m.Called()
+
+	var r0 domain.RefreshTokenRepository
+	if rf, ok := ret.Get(0).(func() domain.RefreshTokenRepository); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.RefreshTokenRepository)
+		}
+	}
+
+	return r0
+}
+
 // ResetPasswordTokenRepository provides a mock function with given fields:
 func (_m *DataRepository) ResetPasswordTokenRepository() domain.ResetPasswordTokenRepository {
 	ret := _m.Called()
