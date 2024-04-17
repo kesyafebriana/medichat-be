@@ -13,6 +13,7 @@ type SetupServerOpts struct {
 	AccountHandler    *handler.AccountHandler
 	PingHandler       *handler.PingHandler
 	GoogleAuthHandler *handler.OAuth2Handler
+	GoogleHandler     *handler.GoogleHandler
 
 	SessionKey []byte
 
@@ -82,7 +83,7 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	)
 	googleGroup.GET(
 		"/callback",
-		opts.GoogleAuthHandler.Callback,
+		opts.GoogleHandler.OAuth2Callback,
 	)
 
 	router.NoRoute(func(ctx *gin.Context) {

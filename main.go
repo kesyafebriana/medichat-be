@@ -105,6 +105,11 @@ func main() {
 	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{
 		OAuth2Provider: googleAuthProvider,
 	})
+	googleService := service.NewGoogleService(service.GoogleServiceOpts{
+		DataRepository: dataRepository,
+		OAuth2Service:  googleAuthService,
+		AccountService: accountService,
+	})
 
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
@@ -113,6 +118,9 @@ func main() {
 	googleAuthHandler := handler.NewOAuth2Handler(handler.OAuth2HandlerOpts{
 		OAuth2Service:       googleAuthService,
 		RandomTokenProvider: googleAuthStateProvider,
+	})
+	googleHandler := handler.NewGoogleHandler(handler.GoogleHandlerOpts{
+		GoogleSrv: googleService,
 	})
 
 	requestIDMid := middleware.RequestIDHandler()
@@ -125,6 +133,7 @@ func main() {
 		AccountHandler:    accountHandler,
 		PingHandler:       pingHandler,
 		GoogleAuthHandler: googleAuthHandler,
+		GoogleHandler:     googleHandler,
 
 		SessionKey: conf.SessionKey,
 
