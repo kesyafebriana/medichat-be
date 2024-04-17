@@ -69,17 +69,9 @@ func exec(
 	query string,
 	args ...any,
 ) error {
-	res, err := querier.ExecContext(ctx, query, args...)
+	_, err := querier.ExecContext(ctx, query, args...)
 	if err != nil {
 		return apperror.Wrap(err)
-	}
-
-	n, err := res.RowsAffected()
-	if err != nil {
-		return apperror.Wrap(err)
-	}
-	if n == 0 {
-		return apperror.NewNotFound()
 	}
 
 	return nil
