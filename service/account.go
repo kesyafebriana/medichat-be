@@ -212,6 +212,35 @@ func (s *accountService) GetResetPasswordToken(
 	)
 }
 
+func (s *accountService) CheckResetPasswordToken(
+	ctx context.Context,
+	email string,
+	tokenStr string,
+) error {
+	accountRepo := s.dataRepository.AccountRepository()
+	rptRepo := s.dataRepository.ResetPasswordTokenRepository()
+
+	token, err := rptRepo.GetByTokenStr(ctx, tokenStr)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	account, err := accountRepo.GetByIDAndLock(ctx, token.Account.ID)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	if !account.EmailVerified {
+		return apperror.NewEmailNotVerified(nil)
+	}
+
+	if account.Email != email {
+		return apperror.NewForbidden(nil)
+	}
+
+	return nil
+}
+
 func (s *accountService) ResetPasswordClosure(
 	ctx context.Context,
 	creds domain.AccountResetPasswordCredentials,
@@ -300,7 +329,7 @@ func (s *accountService) GetVerifyEmailTokenClosure(
 		token := domain.VerifyEmailToken{
 			Account:   account,
 			Token:     tokenStr,
-			ExpiredAt: time.Now().Add(s.rptLifespan),
+			ExpiredAt: time.Now().Add(s.vetLifespan),
 		}
 
 		_, err = vetRepo.Add(ctx, token)
@@ -323,15 +352,44 @@ func (s *accountService) GetVerifyEmailToken(
 	)
 }
 
+func (s *accountService) CheckVerifyEmailToken(
+	ctx context.Context,
+	email string,
+	tokenStr string,
+) error {
+	accountRepo := s.dataRepository.AccountRepository()
+	vetRepo := s.dataRepository.VerifyEmailTokenRepository()
+
+	token, err := vetRepo.GetByTokenStr(ctx, tokenStr)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	account, err := accountRepo.GetByIDAndLock(ctx, token.Account.ID)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	if account.EmailVerified {
+		return apperror.NewEmailAlreadyVerified(nil)
+	}
+
+	if account.Email != email {
+		return apperror.NewForbidden(nil)
+	}
+
+	return nil
+}
+
 func (s *accountService) VerifyEmailClosure(
 	ctx context.Context,
 	creds domain.AccountVerifyEmailCredentials,
 ) domain.AtomicFunc[any] {
 	return func(dr domain.DataRepository) (any, error) {
 		accountRepo := dr.AccountRepository()
-		rptRepo := dr.VerifyEmailTokenRepository()
+		vetRepo := dr.VerifyEmailTokenRepository()
 
-		token, err := rptRepo.GetByTokenStrAndLock(ctx, creds.VerifyEmailToken)
+		token, err := vetRepo.GetByTokenStrAndLock(ctx, creds.VerifyEmailToken)
 		if err != nil {
 			return nil, apperror.Wrap(err)
 		}
@@ -364,7 +422,7 @@ func (s *accountService) VerifyEmailClosure(
 			return nil, apperror.Wrap(err)
 		}
 
-		err = rptRepo.SoftDeleteByID(ctx, token.ID)
+		err = vetRepo.SoftDeleteByID(ctx, token.ID)
 		if err != nil {
 			return nil, apperror.Wrap(err)
 		}

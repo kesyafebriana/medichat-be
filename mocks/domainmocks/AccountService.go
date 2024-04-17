@@ -14,6 +14,34 @@ type AccountService struct {
 	mock.Mock
 }
 
+// CheckResetPasswordToken provides a mock function with given fields: ctx, email, tokenStr
+func (_m *AccountService) CheckResetPasswordToken(ctx context.Context, email string, tokenStr string) error {
+	ret := _m.Called(ctx, email, tokenStr)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, email, tokenStr)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CheckVerifyEmailToken provides a mock function with given fields: ctx, email, tokenStr
+func (_m *AccountService) CheckVerifyEmailToken(ctx context.Context, email string, tokenStr string) error {
+	ret := _m.Called(ctx, email, tokenStr)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, email, tokenStr)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateTokensForAccount provides a mock function with given fields: accountID, role
 func (_m *AccountService) CreateTokensForAccount(accountID int64, role string) (domain.AuthTokens, error) {
 	ret := _m.Called(accountID, role)
