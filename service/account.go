@@ -192,35 +192,53 @@ func (s *accountService) createTokensForAccount(
 	return tokens, nil
 }
 
+func (s *accountService) GetResetPasswordTokenClosure(
+	ctx context.Context,
+	email string,
+) domain.AtomicFunc[string] {
+	return func(dr domain.DataRepository) (string, error) {
+		accountRepo := s.dataRepository.AccountRepository()
+		rptRepo := s.dataRepository.ResetPasswordTokenRepository()
+
+		account, err := accountRepo.GetByEmail(ctx, email)
+		if err != nil {
+			return "", apperror.Wrap(err)
+		}
+
+		err = rptRepo.SoftDeleteByAccountID(ctx, account.ID)
+		if err != nil {
+			return "", apperror.Wrap(err)
+		}
+
+		tokenStr, err := s.rptProvider.GenerateToken()
+		if err != nil {
+			return "", apperror.Wrap(err)
+		}
+
+		token := domain.ResetPasswordToken{
+			Account:   account,
+			Token:     tokenStr,
+			ExpiredAt: time.Now().Add(s.rptLifespan),
+		}
+
+		_, err = rptRepo.Add(ctx, token)
+		if err != nil {
+			return "", apperror.Wrap(err)
+		}
+
+		return tokenStr, nil
+	}
+}
+
 func (s *accountService) GetResetPasswordToken(
 	ctx context.Context,
 	email string,
 ) (string, error) {
-	accountRepo := s.dataRepository.AccountRepository()
-	rptRepo := s.dataRepository.ResetPasswordTokenRepository()
-
-	account, err := accountRepo.GetByEmail(ctx, email)
-	if err != nil {
-		return "", apperror.Wrap(err)
-	}
-
-	tokenStr, err := s.rptProvider.GenerateToken()
-	if err != nil {
-		return "", apperror.Wrap(err)
-	}
-
-	token := domain.ResetPasswordToken{
-		Account:   account,
-		Token:     tokenStr,
-		ExpiredAt: time.Now().Add(s.rptLifespan),
-	}
-
-	_, err = rptRepo.Add(ctx, token)
-	if err != nil {
-		return "", apperror.Wrap(err)
-	}
-
-	return tokenStr, nil
+	return domain.RunAtomic(
+		s.dataRepository,
+		ctx,
+		s.GetResetPasswordTokenClosure(ctx, email),
+	)
 }
 
 func (s *accountService) ResetPasswordClosure(
@@ -277,39 +295,57 @@ func (s *accountService) ResetPassword(
 	return err
 }
 
+func (s *accountService) GetVerifyEmailTokenClosure(
+	ctx context.Context,
+	email string,
+) domain.AtomicFunc[string] {
+	return func(dr domain.DataRepository) (string, error) {
+		accountRepo := s.dataRepository.AccountRepository()
+		vetRepo := s.dataRepository.VerifyEmailTokenRepository()
+
+		account, err := accountRepo.GetByEmail(ctx, email)
+		if err != nil {
+			return "", apperror.Wrap(err)
+		}
+
+		if account.EmailVerified {
+			return "", apperror.NewEmailAlreadyVerified(nil)
+		}
+
+		err = vetRepo.SoftDeleteByAccountID(ctx, account.ID)
+		if err != nil {
+			return "", apperror.Wrap(err)
+		}
+
+		tokenStr, err := s.vetProvider.GenerateToken()
+		if err != nil {
+			return "", apperror.Wrap(err)
+		}
+
+		token := domain.VerifyEmailToken{
+			Account:   account,
+			Token:     tokenStr,
+			ExpiredAt: time.Now().Add(s.rptLifespan),
+		}
+
+		_, err = vetRepo.Add(ctx, token)
+		if err != nil {
+			return "", apperror.Wrap(err)
+		}
+
+		return tokenStr, nil
+	}
+}
+
 func (s *accountService) GetVerifyEmailToken(
 	ctx context.Context,
 	email string,
 ) (string, error) {
-	accountRepo := s.dataRepository.AccountRepository()
-	vetRepo := s.dataRepository.VerifyEmailTokenRepository()
-
-	account, err := accountRepo.GetByEmail(ctx, email)
-	if err != nil {
-		return "", apperror.Wrap(err)
-	}
-
-	if account.EmailVerified {
-		return "", apperror.NewEmailAlreadyVerified(nil)
-	}
-
-	tokenStr, err := s.vetProvider.GenerateToken()
-	if err != nil {
-		return "", apperror.Wrap(err)
-	}
-
-	token := domain.VerifyEmailToken{
-		Account:   account,
-		Token:     tokenStr,
-		ExpiredAt: time.Now().Add(s.rptLifespan),
-	}
-
-	_, err = vetRepo.Add(ctx, token)
-	if err != nil {
-		return "", apperror.Wrap(err)
-	}
-
-	return tokenStr, nil
+	return domain.RunAtomic(
+		s.dataRepository,
+		ctx,
+		s.GetVerifyEmailTokenClosure(ctx, email),
+	)
 }
 
 func (s *accountService) VerifyEmailClosure(
