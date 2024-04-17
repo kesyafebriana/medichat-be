@@ -13,15 +13,18 @@ import (
 
 type AccountHandler struct {
 	accountSrv domain.AccountService
+	domain     string
 }
 
 type AccountHandlerOpts struct {
 	AccountSrv domain.AccountService
+	Domain     string
 }
 
 func NewAccountHandler(opts AccountHandlerOpts) *AccountHandler {
 	return &AccountHandler{
 		accountSrv: opts.AccountSrv,
+		domain:     opts.Domain,
 	}
 }
 
@@ -74,8 +77,8 @@ func (h *AccountHandler) Login(ctx *gin.Context) {
 		constants.CookieRefreshToken,
 		tokens.RefreshToken,
 		tokens.RefreshExpireAt.Second()-time.Now().Second(),
-		"/api",
-		"localhost",
+		"/",
+		h.domain,
 		false,
 		true,
 	)
@@ -206,8 +209,8 @@ func (h *AccountHandler) RefreshTokens(ctx *gin.Context) {
 		constants.CookieRefreshToken,
 		tokens.RefreshToken,
 		tokens.RefreshExpireAt.Second()-time.Now().Second(),
-		"/api",
-		"localhost",
+		"/",
+		h.domain,
 		false,
 		true,
 	)

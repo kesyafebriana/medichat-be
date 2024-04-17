@@ -6,6 +6,7 @@ import (
 	"medichat-be/domain"
 	"medichat-be/dto"
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -13,15 +14,18 @@ import (
 
 type GoogleHandler struct {
 	googleSrv domain.GoogleService
+	domain    string
 }
 
 type GoogleHandlerOpts struct {
 	GoogleSrv domain.GoogleService
+	Domain    string
 }
 
 func NewGoogleHandler(opts GoogleHandlerOpts) *GoogleHandler {
 	return &GoogleHandler{
 		googleSrv: opts.GoogleSrv,
+		domain:    opts.Domain,
 	}
 }
 
@@ -46,12 +50,22 @@ func (h *GoogleHandler) OAuth2Callback(ctx *gin.Context) {
 	opts := query.ToOpts()
 	opts.ClientIP = ctx.ClientIP()
 
-	token, err := h.googleSrv.OAuth2Callback(ctx, state, opts)
+	tokens, err := h.googleSrv.OAuth2Callback(ctx, state, opts)
 	if err != nil {
 		ctx.Error(err)
 		ctx.Abort()
 		return
 	}
 
-	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewAuthTokensResponse(token)))
+	ctx.SetCookie(
+		constants.CookieRefreshToken,
+		tokens.RefreshToken,
+		tokens.RefreshExpireAt.Second()-time.Now().Second(),
+		"/",
+		h.domain,
+		false,
+		true,
+	)
+
+	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewAuthTokensResponse(tokens)))
 }
