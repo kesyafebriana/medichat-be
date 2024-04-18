@@ -13,6 +13,7 @@ import (
 	"medichat-be/repository/postgres"
 	"medichat-be/server"
 	"medichat-be/service"
+	"medichat-be/util"
 	"net/http"
 	"os"
 	"os/signal"
@@ -37,6 +38,8 @@ func main() {
 		log.Fatalf("Error connecting to database %v", err)
 	}
 	defer db.Close()
+
+	util.InitValidators()
 
 	adminAccessProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
