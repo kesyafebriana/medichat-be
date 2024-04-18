@@ -16,7 +16,7 @@ func (r *AccountLoginRequest) ToCredentials() domain.AccountLoginCredentials {
 
 type AccountRegisterRequest struct {
 	Email string `json:"email" binding:"required,email"`
-	Role  string `json:"role" binding:"required"`
+	Role  string `json:"role" binding:"required,account_role"`
 }
 
 func (r *AccountRegisterRequest) ToCredentials() domain.AccountRegisterCredentials {
@@ -50,7 +50,7 @@ type AccountCheckVerifyEmailQuery struct {
 
 type AccountResetPasswordRequest struct {
 	Email              string `json:"email" binding:"required,email"`
-	NewPassword        string `json:"new_password" binding:"required,min=8,max=24"`
+	NewPassword        string `json:"new_password" binding:"required,password"`
 	ResetPasswordToken string `json:"reset_password_token" binding:"required"`
 }
 
@@ -64,7 +64,7 @@ func (r *AccountResetPasswordRequest) ToCredentials() domain.AccountResetPasswor
 
 type AccountVerifyEmailRequest struct {
 	Email            string `json:"email" binding:"required,email"`
-	Password         string `json:"password" binding:"required,min=8,max=24"`
+	Password         string `json:"password" binding:"required,password"`
 	VerifyEmailToken string `json:"verify_email_token" binding:"required"`
 }
 
