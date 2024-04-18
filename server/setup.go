@@ -36,8 +36,8 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		opts.RequestID,
 		opts.Logger,
 		gin.Recovery(),
-		sessions.Sessions("session", sessionStore),
 		opts.CorsHandler,
+		sessions.Sessions("session", sessionStore),
 		opts.ErrorHandler,
 	)
 

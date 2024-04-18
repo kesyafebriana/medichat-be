@@ -17,6 +17,7 @@ var (
 type Config struct {
 	ServerAddr  string
 	WebDomain   string
+	FEDomain    string
 	DatabaseURL string
 
 	SessionKey []byte
@@ -50,6 +51,7 @@ func LoadConfig() (Config, error) {
 
 	ret.ServerAddr = os.Getenv("SERVER_ADDR")
 	ret.WebDomain = os.Getenv("WEB_DOMAIN")
+	ret.FEDomain = os.Getenv("FE_DOMAIN")
 	ret.DatabaseURL = os.Getenv("DATABASE_URL")
 
 	s := os.Getenv("SESSION_KEY")

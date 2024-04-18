@@ -147,7 +147,7 @@ func main() {
 
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
-	corsHandler := middleware.CorsHandler()
+	corsHandler := middleware.CorsHandler(conf.FEDomain)
 	errorHandler := middleware.ErrorHandler()
 
 	authenticator := middleware.Authenticator(anyAccessProvider)
