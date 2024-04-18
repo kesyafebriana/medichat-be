@@ -14,11 +14,14 @@ var (
 )
 
 type Config struct {
-	ServerAddr  string
-	DatabaseURL string
-	JWTIssuer   string
-	JWTSecret   string
-	JWTLifespan time.Duration
+	ServerAddr        string
+	DatabaseURL       string
+	JWTIssuer         string
+	JWTSecret         string
+	JWTLifespan       time.Duration
+	AuthEmail         string
+	AuthEmailPassword string
+	EmailSender       string
 }
 
 func InitConfig() error {
@@ -35,6 +38,12 @@ func LoadConfig() (Config, error) {
 	ret.JWTIssuer = os.Getenv("JWT_ISSUER")
 
 	ret.JWTSecret = os.Getenv("JWT_SECRET")
+
+	ret.AuthEmail = os.Getenv("AUTH_EMAIL")
+
+	ret.AuthEmailPassword = os.Getenv("AUTH_EMAIL_PASSWORD")
+
+	ret.EmailSender = os.Getenv("EMAIL_SENDER")
 
 	s := os.Getenv("JWT_LIFESPAN")
 	i, err := strconv.Atoi(s)
