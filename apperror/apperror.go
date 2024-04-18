@@ -14,7 +14,17 @@ type AppError struct {
 	stack   []byte
 }
 
+var includeStackTrace = false
+
+func SetIncludeStackTrace(v bool) {
+	includeStackTrace = v
+}
+
 func NewAppError(code int, message string, err error) *AppError {
+	if includeStackTrace {
+		return NewAppErrorWithTrace(code, message, err)
+	}
+
 	return &AppError{
 		Code:    code,
 		Message: message,
