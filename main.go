@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"medichat-be/apperror"
 	"medichat-be/config"
 	"medichat-be/constants"
 	"medichat-be/cryptoutil"
@@ -20,6 +21,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,6 +42,14 @@ func main() {
 	defer db.Close()
 
 	util.InitValidators()
+
+	apperror.SetIncludeStackTrace(!conf.IsRelease)
+
+	if conf.IsRelease {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
 
 	adminAccessProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
@@ -162,11 +172,15 @@ func main() {
 		Handler: router,
 	}
 
+	log.Info("Starting Server...")
+
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Error running server: %v", err)
 		}
 	}()
+
+	log.Infof("Server started at %s", conf.ServerAddr)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

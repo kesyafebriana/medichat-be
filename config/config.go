@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/base64"
 	"errors"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -38,6 +37,8 @@ type Config struct {
 	GoogleAPIClientID     string
 	GoogleAPIClientSecret string
 	GoogleAPIRedirectURL  string
+
+	IsRelease bool
 }
 
 func InitConfig() error {
@@ -52,7 +53,6 @@ func LoadConfig() (Config, error) {
 	ret.DatabaseURL = os.Getenv("DATABASE_URL")
 
 	s := os.Getenv("SESSION_KEY")
-	log.Println(s)
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return Config{}, err
@@ -98,6 +98,8 @@ func LoadConfig() (Config, error) {
 	ret.GoogleAPIClientID = os.Getenv("GOOGLE_API_CLIENT_ID")
 	ret.GoogleAPIClientSecret = os.Getenv("GOOGLE_API_CLIENT_SECRET")
 	ret.GoogleAPIRedirectURL = os.Getenv("GOOGLE_API_REDIRECT_URL")
+
+	ret.IsRelease = os.Getenv("MEDICHAT_RELEASE") != ""
 
 	return ret, nil
 }
