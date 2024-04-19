@@ -3,7 +3,8 @@ package domain
 import "context"
 
 type Admin struct {
-	ID int64
+	ID      int64
+	Account Account
 }
 
 type AdminRepository interface {

@@ -3,7 +3,8 @@ package domain
 import "context"
 
 type User struct {
-	ID int64
+	ID      int64
+	Account Account
 
 	DateOfBirth int64
 }
