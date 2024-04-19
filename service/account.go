@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"medichat-be/apperror"
 	"medichat-be/constants"
 	"medichat-be/cryptoutil"
@@ -122,7 +123,11 @@ func (s *accountService) LoginClosure(
 			return domain.AuthTokens{}, apperror.Wrap(err)
 		}
 
-		err = s.passwordHasher.CheckPassword(ac.HashedPassword, creds.Password)
+		if ac.HashedPassword == nil {
+			return domain.AuthTokens{}, apperror.NewWrongPassword(errors.New("account password not set"))
+		}
+
+		err = s.passwordHasher.CheckPassword(*ac.HashedPassword, creds.Password)
 		if err != nil {
 			return domain.AuthTokens{}, apperror.Wrap(err)
 		}

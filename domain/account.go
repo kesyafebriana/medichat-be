@@ -22,7 +22,7 @@ type Account struct {
 
 type AccountWithCredentials struct {
 	Account        Account
-	HashedPassword string
+	HashedPassword *string
 }
 
 type AccountLoginCredentials struct {

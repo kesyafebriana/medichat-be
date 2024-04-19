@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"medichat-be/domain"
 )
 
@@ -57,9 +58,9 @@ func (r *accountRepository) GetWithCredentialsByEmail(
 			AND deleted_at IS NULL
 	`
 
-	return queryOne(
+	return queryOneFull(
 		r.querier, ctx, q,
-		accountWithCredentialsScanDests,
+		scanAccountWithCredentials,
 		email,
 	)
 }
@@ -132,9 +133,9 @@ func (r *accountRepository) GetWithCredentialsByID(
 			AND deleted_at IS NULL
 	`
 
-	return queryOne(
+	return queryOneFull(
 		r.querier, ctx, q,
-		accountWithCredentialsScanDests,
+		scanAccountWithCredentials,
 		id,
 	)
 }
@@ -172,7 +173,9 @@ func (r *accountRepository) Add(
 	return queryOne(
 		r.querier, ctx, q,
 		accountScanDests,
-		creds.Account.Email, creds.Account.EmailVerified, creds.Account.Role, creds.Account.AccountType, creds.HashedPassword,
+		creds.Account.Email, creds.Account.EmailVerified,
+		creds.Account.Role, creds.Account.AccountType,
+		fromStringPtr(creds.HashedPassword),
 	)
 }
 
@@ -222,9 +225,14 @@ func accountScanDests(u *domain.Account) []any {
 	}
 }
 
-func accountWithCredentialsScanDests(a *domain.AccountWithCredentials) []any {
-	return []any{
+func scanAccountWithCredentials(r RowScanner, a *domain.AccountWithCredentials) error {
+	var nullHashedPassword sql.NullString
+	if err := r.Scan(
 		&a.Account.ID, &a.Account.Email, &a.Account.EmailVerified,
-		&a.Account.Role, &a.Account.AccountType, &a.HashedPassword,
+		&a.Account.Role, &a.Account.AccountType, &nullHashedPassword,
+	); err != nil {
+		return err
 	}
+	a.HashedPassword = toStringPtr(nullHashedPassword)
+	return nil
 }

@@ -123,7 +123,7 @@ func (s *googleService) EnsureRegisteredClosure(
 
 		account, err = accountRepo.Add(ctx, domain.AccountWithCredentials{
 			Account:        newAccount,
-			HashedPassword: "",
+			HashedPassword: nil,
 		})
 		if err != nil {
 			return domain.Account{}, apperror.Wrap(err)

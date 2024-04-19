@@ -180,7 +180,7 @@ func Test_accountService_Login(t *testing.T) {
 			getAccountWithCreds: testdata.Result[domain.AccountWithCredentials]{
 				Val: domain.AccountWithCredentials{
 					Account:        testdata.AliceAccount,
-					HashedPassword: testdata.AliceHashedPassword,
+					HashedPassword: &testdata.AliceHashedPassword,
 				},
 			},
 			checkPwdErr: nil,
@@ -207,7 +207,7 @@ func Test_accountService_Login(t *testing.T) {
 			getAccountWithCreds: testdata.Result[domain.AccountWithCredentials]{
 				Val: domain.AccountWithCredentials{
 					Account:        testdata.AdminAccount,
-					HashedPassword: testdata.AdminHashedPassword,
+					HashedPassword: &testdata.AdminHashedPassword,
 				},
 			},
 			checkPwdErr: nil,
@@ -234,7 +234,7 @@ func Test_accountService_Login(t *testing.T) {
 			getAccountWithCreds: testdata.Result[domain.AccountWithCredentials]{
 				Val: domain.AccountWithCredentials{
 					Account:        testdata.DrBobAccount,
-					HashedPassword: testdata.DrBobHashedPassword,
+					HashedPassword: &testdata.DrBobHashedPassword,
 				},
 			},
 			checkPwdErr: nil,
@@ -261,7 +261,7 @@ func Test_accountService_Login(t *testing.T) {
 			getAccountWithCreds: testdata.Result[domain.AccountWithCredentials]{
 				Val: domain.AccountWithCredentials{
 					Account:        testdata.PhBillAccount,
-					HashedPassword: testdata.PhBillHashedPassword,
+					HashedPassword: &testdata.PhBillHashedPassword,
 				},
 			},
 			checkPwdErr: nil,
@@ -305,7 +305,7 @@ func Test_accountService_Login(t *testing.T) {
 			getAccountWithCreds: testdata.Result[domain.AccountWithCredentials]{
 				Val: domain.AccountWithCredentials{
 					Account:        testdata.AliceAccount,
-					HashedPassword: testdata.AliceHashedPassword,
+					HashedPassword: &testdata.AliceHashedPassword,
 				},
 			},
 			checkPwdErr: apperror.NewWrongPassword(nil),
@@ -326,7 +326,7 @@ func Test_accountService_Login(t *testing.T) {
 			getAccountWithCreds: testdata.Result[domain.AccountWithCredentials]{
 				Val: domain.AccountWithCredentials{
 					Account:        testdata.AliceAccount,
-					HashedPassword: testdata.AliceHashedPassword,
+					HashedPassword: &testdata.AliceHashedPassword,
 				},
 			},
 			checkPwdErr: apperror.NewInternal(nil),
@@ -347,7 +347,7 @@ func Test_accountService_Login(t *testing.T) {
 			getAccountWithCreds: testdata.Result[domain.AccountWithCredentials]{
 				Val: domain.AccountWithCredentials{
 					Account:        testdata.AliceAccount,
-					HashedPassword: testdata.AliceHashedPassword,
+					HashedPassword: &testdata.AliceHashedPassword,
 				},
 			},
 			checkPwdErr: nil,
@@ -371,7 +371,7 @@ func Test_accountService_Login(t *testing.T) {
 			getAccountWithCreds: testdata.Result[domain.AccountWithCredentials]{
 				Val: domain.AccountWithCredentials{
 					Account:        testdata.AliceAccount,
-					HashedPassword: testdata.AliceHashedPassword,
+					HashedPassword: &testdata.AliceHashedPassword,
 				},
 			},
 			checkPwdErr: nil,
@@ -415,9 +415,13 @@ func Test_accountService_Login(t *testing.T) {
 				tt.getAccountWithCreds.Err,
 			)
 
+			hashedPassword := ""
+			if tt.getAccountWithCreds.Val.HashedPassword != nil {
+				hashedPassword = *tt.getAccountWithCreds.Val.HashedPassword
+			}
 			pwdHasher.On(
 				"CheckPassword",
-				tt.getAccountWithCreds.Val.HashedPassword,
+				hashedPassword,
 				tt.creds.Password,
 			).Return(
 				tt.checkPwdErr,
