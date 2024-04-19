@@ -7,6 +7,7 @@ import (
 
 type Doctor struct {
 	ID             int64
+	Account        Account
 	Specialization Specialization
 
 	STR           string
