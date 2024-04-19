@@ -88,10 +88,11 @@ func (p *jwtProviderAny) CreateToken(userID int64) (string, error) {
 }
 
 func (p *jwtProviderAny) VerifyToken(tokenstr string) (JWTClaims, error) {
+	var claims JWTClaims
 	var err error
 
 	for _, prov := range p.providers {
-		claims, err := prov.VerifyToken(tokenstr)
+		claims, err = prov.VerifyToken(tokenstr)
 		if err == nil {
 			return claims, nil
 		}
