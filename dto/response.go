@@ -17,6 +17,13 @@ func ResponseOk(data any) Response {
 	}
 }
 
+func ResponseSeeOther(data any) Response {
+	return Response{
+		Message: constants.MessageSeeOther,
+		Data:    data,
+	}
+}
+
 func ResponseCreated(data any) Response {
 	return Response{
 		Message: constants.MessageCreated,
