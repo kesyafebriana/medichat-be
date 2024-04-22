@@ -26,6 +26,9 @@ type accountService struct {
 
 	vetProvider cryptoutil.RandomTokenProvider
 	vetLifespan time.Duration
+
+	appEmail      util.AppEmail
+	emailProvider util.EmailProvider
 }
 
 type AccountServiceOpts struct {
@@ -43,6 +46,9 @@ type AccountServiceOpts struct {
 
 	VETProvider cryptoutil.RandomTokenProvider
 	VETLifespan time.Duration
+
+	AppEmail      util.AppEmail
+	EmailProvider util.EmailProvider
 }
 
 func NewAccountService(opts AccountServiceOpts) *accountService {
@@ -61,6 +67,9 @@ func NewAccountService(opts AccountServiceOpts) *accountService {
 
 		vetProvider: opts.VETProvider,
 		vetLifespan: opts.VETLifespan,
+
+		appEmail:      opts.AppEmail,
+		emailProvider: opts.EmailProvider,
 	}
 }
 
@@ -202,6 +211,11 @@ func (s *accountService) GetResetPasswordTokenClosure(
 			return "", apperror.Wrap(err)
 		}
 
+		err = s.emailProvider.SendEmail(account.Email, s.appEmail.NewPasswordResetEmail(account.Email, tokenStr))
+		if err != nil {
+			return "", apperror.Wrap(err)
+		}
+
 		return tokenStr, nil
 	}
 }
@@ -338,6 +352,11 @@ func (s *accountService) GetVerifyEmailTokenClosure(
 		}
 
 		_, err = vetRepo.Add(ctx, token)
+		if err != nil {
+			return "", apperror.Wrap(err)
+		}
+
+		err = s.emailProvider.SendEmail(account.Email, s.appEmail.NewVerifyAccountEmail("Fullname", account.Email, tokenStr))
 		if err != nil {
 			return "", apperror.Wrap(err)
 		}

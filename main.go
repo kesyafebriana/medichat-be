@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"medichat-be/apperror"
 	"medichat-be/config"
@@ -106,6 +107,19 @@ func main() {
 		constants.GoogleAuthStateByteLength,
 	)
 
+	appEmail, err := util.NewAppEmail(util.AppEmailOpts{
+		FEVerivicationURL:  conf.FEVerificationURL,
+		FEResetPasswordURL: conf.FEResetPasswordURL,
+	})
+	if err != nil {
+		log.Fatalf("Error creating app email: %v", err)
+	}
+	emailProvider := util.NewGmailProvider(util.EmailProviderOpts{
+		Username:    conf.AuthEmailUsername,
+		Password:    conf.AuthEmailPassword,
+		EmailSender: fmt.Sprintf(conf.EmailSender, conf.AuthEmailUsername),
+	})
+
 	dataRepository := postgres.NewDataRepository(db)
 
 	accountService := service.NewAccountService(service.AccountServiceOpts{
@@ -120,6 +134,8 @@ func main() {
 		RPTLifespan:                   conf.ResetPasswordTokenLifespan,
 		VETProvider:                   verifyEmailTokenProvider,
 		VETLifespan:                   conf.VerifyEmailTokenLifespan,
+		AppEmail:                      appEmail,
+		EmailProvider:                 emailProvider,
 	})
 
 	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{
