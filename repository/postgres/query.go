@@ -13,6 +13,25 @@ func query[T any](
 	scanDestsFunc func(*T) []any,
 	args ...any,
 ) ([]T, error) {
+	return queryFull(
+		querier,
+		ctx,
+		query,
+		func(rs RowScanner, t *T) error {
+			scanDests := scanDestsFunc(t)
+			return rs.Scan(scanDests...)
+		},
+		args...,
+	)
+}
+
+func queryFull[T any](
+	querier Querier,
+	ctx context.Context,
+	query string,
+	scanFunc func(RowScanner, *T) error,
+	args ...any,
+) ([]T, error) {
 	rows, err := querier.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, apperror.Wrap(err)
@@ -23,9 +42,8 @@ func query[T any](
 
 	for rows.Next() {
 		var t T
-		scanDests := scanDestsFunc(&t)
 
-		err = rows.Scan(scanDests...)
+		err = scanFunc(rows, &t)
 		if err != nil {
 			return nil, apperror.Wrap(err)
 		}
@@ -48,11 +66,29 @@ func queryOne[T any](
 	scanDestsFunc func(*T) []any,
 	args ...any,
 ) (T, error) {
+	return queryOneFull(
+		querier,
+		ctx,
+		query,
+		func(rs RowScanner, t *T) error {
+			scanDests := scanDestsFunc(t)
+			return rs.Scan(scanDests...)
+		},
+		args...,
+	)
+}
+
+func queryOneFull[T any](
+	querier Querier,
+	ctx context.Context,
+	query string,
+	scanFunc func(RowScanner, *T) error,
+	args ...any,
+) (T, error) {
 	var ret T
 	var empty T
-	scanDests := scanDestsFunc(&ret)
 
-	err := querier.QueryRowContext(ctx, query, args...).Scan(scanDests...)
+	err := scanFunc(querier.QueryRowContext(ctx, query, args...), &ret)
 	if err == sql.ErrNoRows {
 		return empty, apperror.NewNotFound()
 	}
@@ -69,17 +105,9 @@ func exec(
 	query string,
 	args ...any,
 ) error {
-	res, err := querier.ExecContext(ctx, query, args...)
+	_, err := querier.ExecContext(ctx, query, args...)
 	if err != nil {
 		return apperror.Wrap(err)
-	}
-
-	n, err := res.RowsAffected()
-	if err != nil {
-		return apperror.Wrap(err)
-	}
-	if n == 0 {
-		return apperror.NewNotFound()
 	}
 
 	return nil

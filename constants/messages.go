@@ -1,6 +1,7 @@
 package constants
 
 const (
-	MessageOK      = "ok"
-	MessageCreated = "created"
+	MessageOK       = "ok"
+	MessageCreated  = "created"
+	MessageSeeOther = "see other"
 )
