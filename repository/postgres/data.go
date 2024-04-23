@@ -88,7 +88,9 @@ func (r *dataRepository) AdminRepository() domain.AdminRepository {
 }
 
 func (r *dataRepository) UserRepository() domain.UserRepository {
-	return nil
+	return &userRepository{
+		querier: r.querier,
+	}
 }
 
 func (r *dataRepository) DoctorRepository() domain.DoctorRepository {
