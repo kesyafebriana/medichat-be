@@ -17,6 +17,11 @@ type DataRepository interface {
 	RefreshTokenRepository() RefreshTokenRepository
 	ResetPasswordTokenRepository() ResetPasswordTokenRepository
 	VerifyEmailTokenRepository() VerifyEmailTokenRepository
+
+	AdminRepository() AdminRepository
+	UserRepository() UserRepository
+	DoctorRepository() DoctorRepository
+	PharmacyManagerRepository() PharmacyManagerRepository
 }
 
 func RunAtomic[T any](
