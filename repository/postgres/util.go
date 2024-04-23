@@ -40,3 +40,31 @@ func scanAccountWithCredentials(r RowScanner, a *domain.AccountWithCredentials) 
 	a.HashedPassword = toStringPtr(nullHashedPassword)
 	return nil
 }
+
+var (
+	userColumns = `
+		id, account_id, date_of_birth
+	`
+
+	userJoinedColumns = `
+		u.id,
+		u.account_id, a.email, a.email_verified, a.role, a.account_type,
+		a.name, a.photo_url, u.date_of_birth
+	`
+)
+
+func scanUser(r RowScanner, u *domain.User) error {
+	a := &u.Account
+	return r.Scan(
+		&u.ID, &a.ID, &u.DateOfBirth,
+	)
+}
+
+func scanUserJoined(r RowScanner, u *domain.User) error {
+	a := &u.Account
+	return r.Scan(
+		&u.ID,
+		&a.ID, &a.Email, &a.EmailVerified, &a.Role, &a.AccountType,
+		&a.Name, &a.PhotoURL, &u.DateOfBirth,
+	)
+}
