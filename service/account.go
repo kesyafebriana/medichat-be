@@ -577,7 +577,7 @@ func (s *accountService) CreateTokensForAccount(
 	return tokens, nil
 }
 
-func (s *accountService) GetProfile(ctx context.Context) (domain.Account, error) {
+func (s *accountService) GetProfile(ctx context.Context) (any, error) {
 	accountRepo := s.dataRepository.AccountRepository()
 
 	accountID, err := util.GetAccountIDFromContext(ctx)

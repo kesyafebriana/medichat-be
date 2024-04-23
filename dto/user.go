@@ -6,13 +6,10 @@ import (
 )
 
 type UserResponse struct {
-	Account AccountResponse `json:"account"`
-	User    struct {
-		ID          int64  `json:"id"`
-		Name        string `json:"name"`
-		PhotoURL    string `json:"photo_url"`
-		DateOfBirth string `json:"date_of_birth,omitempty"`
-	} `json:"user"`
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	PhotoURL    string `json:"photo_url"`
+	DateOfBirth string `json:"date_of_birth,omitempty"`
 }
 
 func NewUserResponse(u domain.User) UserResponse {
@@ -21,18 +18,10 @@ func NewUserResponse(u domain.User) UserResponse {
 		dob = u.DateOfBirth.Format("2006-01-02")
 	}
 	return UserResponse{
-		Account: NewAccountResponse(u.Account),
-		User: struct {
-			ID          int64  "json:\"id\""
-			Name        string "json:\"name\""
-			PhotoURL    string "json:\"photo_url\""
-			DateOfBirth string "json:\"date_of_birth,omitempty\""
-		}{
-			ID:          u.ID,
-			Name:        u.Name,
-			PhotoURL:    u.PhotoURL,
-			DateOfBirth: dob,
-		},
+		ID:          u.ID,
+		Name:        u.Name,
+		PhotoURL:    u.PhotoURL,
+		DateOfBirth: dob,
 	}
 }
 

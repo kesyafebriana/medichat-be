@@ -101,8 +101,11 @@ func (s *googleService) EnsureRegisteredClosure(
 		newAccount := domain.Account{
 			Email:         profile.Email,
 			EmailVerified: profile.VerifiedEmail,
+			Name:          profile.Name,
+			PhotoURL:      profile.Picture,
 			Role:          domain.AccountRoleUser,
 			AccountType:   domain.AccountTypeGoogle,
+			ProfileSet:    false,
 		}
 
 		account, err := accountRepo.GetByEmail(ctx, newAccount.Email)

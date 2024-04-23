@@ -92,6 +92,8 @@ type AccountResponse struct {
 	Role          string `json:"role"`
 	AccountType   string `json:"account_type"`
 	ProfileSet    bool   `json:"profile_set"`
+
+	User *UserResponse `json:"user,omitempty"`
 }
 
 func NewAccountResponse(u domain.Account) AccountResponse {
@@ -104,5 +106,19 @@ func NewAccountResponse(u domain.Account) AccountResponse {
 		Role:          u.Role,
 		AccountType:   u.AccountType,
 		ProfileSet:    u.ProfileSet,
+	}
+}
+
+func NewProfileResponse(a any) AccountResponse {
+	switch v := a.(type) {
+	case domain.Account:
+		return NewAccountResponse(v)
+	case domain.User:
+		ret := NewAccountResponse(v.Account)
+		u := NewUserResponse(v)
+		ret.User = &u
+		return ret
+	default:
+		return AccountResponse{}
 	}
 }

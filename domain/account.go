@@ -89,5 +89,5 @@ type AccountService interface {
 
 	CreateTokensForAccount(accountID int64, role string) (AuthTokens, error)
 
-	GetProfile(ctx context.Context) (Account, error)
+	GetProfile(ctx context.Context) (any, error)
 }
