@@ -9,6 +9,11 @@ type User struct {
 	ID      int64
 	Account Account
 
+	DateOfBirth time.Time
+}
+
+type UserCreateDetails struct {
+	AccountID   int64
 	Name        string
 	PhotoURL    string
 	DateOfBirth time.Time
@@ -35,6 +40,6 @@ type UserRepository interface {
 }
 
 type UserService interface {
-	CreateProfile(ctx context.Context, u User) (User, error)
+	CreateProfile(ctx context.Context, u UserCreateDetails) (User, error)
 	UpdateProfile(ctx context.Context, u UserUpdateDetails) (User, error)
 }
