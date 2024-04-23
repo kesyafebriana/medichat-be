@@ -7,9 +7,7 @@ import (
 
 type UserResponse struct {
 	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	PhotoURL    string `json:"photo_url"`
-	DateOfBirth string `json:"date_of_birth,omitempty"`
+	DateOfBirth string `json:"date_of_birth"`
 }
 
 func NewUserResponse(u domain.User) UserResponse {
@@ -19,16 +17,34 @@ func NewUserResponse(u domain.User) UserResponse {
 	}
 	return UserResponse{
 		ID:          u.ID,
-		Name:        u.Name,
-		PhotoURL:    u.PhotoURL,
 		DateOfBirth: dob,
 	}
+}
+
+type UserCreateRequest struct {
+	AccountID   int64  `json:"account_id" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	DateOfBirth string `json:"date_of_birth" binding:"required"`
+}
+
+func (r *UserCreateRequest) ToDetails() (domain.UserCreateDetails, error) {
+	dob, err := time.Parse("2006-01-02", r.DateOfBirth)
+	if err != nil {
+		return domain.UserCreateDetails{}, err
+	}
+
+	ret := domain.UserCreateDetails{
+		AccountID:   r.AccountID,
+		Name:        r.Name,
+		DateOfBirth: dob,
+	}
+
+	return ret, nil
 }
 
 type UserUpdateRequest struct {
 	ID          int64   `json:"id" binding:"required"`
 	Name        *string `json:"name"`
-	PhotoURL    *string `json:"photo_url"`
 	DateOfBirth *string `json:"date_of_birth"`
 }
 
@@ -36,7 +52,6 @@ func (r *UserUpdateRequest) ToDetails() (domain.UserUpdateDetails, error) {
 	ret := domain.UserUpdateDetails{
 		ID:          r.ID,
 		Name:        r.Name,
-		PhotoURL:    r.PhotoURL,
 		DateOfBirth: nil,
 	}
 
