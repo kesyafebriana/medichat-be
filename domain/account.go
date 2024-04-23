@@ -16,6 +16,8 @@ type Account struct {
 	ID            int64
 	Email         string
 	EmailVerified bool
+	Name          string
+	PhotoURL      string
 	Role          string
 	AccountType   string
 	ProfileSet    bool
