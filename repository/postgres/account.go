@@ -179,6 +179,23 @@ func (r *accountRepository) Add(
 	)
 }
 
+func (r *accountRepository) Update(
+	ctx context.Context,
+	a domain.Account,
+) (domain.Account, error) {
+	q := `
+		UPDATE accounts
+		SET name = $1,
+			photo_url = $2
+		RETURNING ` + accountColumns
+
+	return queryOne(
+		r.querier, ctx, q,
+		accountScanDests,
+		a.Name, a.PhotoURL,
+	)
+}
+
 func (r *accountRepository) UpdatePasswordByID(
 	ctx context.Context,
 	id int64,

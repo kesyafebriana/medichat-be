@@ -64,14 +64,16 @@ func (_m *AccountService) CreateTokensForAccount(accountID int64, role string) (
 }
 
 // GetProfile provides a mock function with given fields: ctx
-func (_m *AccountService) GetProfile(ctx context.Context) (domain.Account, error) {
+func (_m *AccountService) GetProfile(ctx context.Context) (interface{}, error) {
 	ret := _m.Called(ctx)
 
-	var r0 domain.Account
-	if rf, ok := ret.Get(0).(func(context.Context) domain.Account); ok {
+	var r0 interface{}
+	if rf, ok := ret.Get(0).(func(context.Context) interface{}); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(domain.Account)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(interface{})
+		}
 	}
 
 	var r1 error

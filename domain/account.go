@@ -68,6 +68,7 @@ type AccountRepository interface {
 	IsExistByID(ctx context.Context, id int64) (bool, error)
 
 	Add(ctx context.Context, creds AccountWithCredentials) (Account, error)
+	Update(ctx context.Context, a Account) (Account, error)
 	UpdatePasswordByID(ctx context.Context, id int64, newHashedPassword string) error
 	VerifyEmailByID(ctx context.Context, id int64) error
 	ProfileSetByID(ctx context.Context, id int64) error
