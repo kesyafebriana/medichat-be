@@ -15,10 +15,16 @@ var (
 )
 
 type Config struct {
-	ServerAddr  string
-	WebDomain   string
-	FEDomain    string
-	DatabaseURL string
+	ServerAddr         string
+	WebDomain          string
+	FEDomain           string
+	DatabaseURL        string
+	FEVerificationURL  string
+	FEResetPasswordURL string
+
+	AuthEmailUsername string
+	AuthEmailPassword string
+	EmailSender       string
 
 	SessionKey []byte
 
@@ -53,6 +59,12 @@ func LoadConfig() (Config, error) {
 	ret.WebDomain = os.Getenv("WEB_DOMAIN")
 	ret.FEDomain = os.Getenv("FE_DOMAIN")
 	ret.DatabaseURL = os.Getenv("DATABASE_URL")
+	ret.FEVerificationURL = os.Getenv("FE_VERIFICATION_URL")
+	ret.FEResetPasswordURL = os.Getenv("FE_RESET_PASSWORD_URL")
+
+	ret.AuthEmailUsername = os.Getenv("AUTH_EMAIL_USERNAME")
+	ret.AuthEmailPassword = os.Getenv("AUTH_EMAIL_PASSWORD")
+	ret.EmailSender = os.Getenv("EMAIL_SENDER")
 
 	s := os.Getenv("SESSION_KEY")
 	b, err := base64.StdEncoding.DecodeString(s)
