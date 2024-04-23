@@ -212,3 +212,20 @@ func (r *accountRepository) VerifyEmailByID(
 		id,
 	)
 }
+
+func (r *accountRepository) ProfileSetByID(
+	ctx context.Context,
+	id int64,
+) error {
+	q := `
+		UPDATE accounts
+		SET profile = true,
+			updated_at = now()
+		WHERE id = $1
+	`
+
+	return exec(
+		r.querier, ctx, q,
+		id,
+	)
+}
