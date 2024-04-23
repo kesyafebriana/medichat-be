@@ -164,7 +164,7 @@ func (r *accountRepository) Add(
 	creds domain.AccountWithCredentials,
 ) (domain.Account, error) {
 	q := `
-		INSERT INTO accounts(email, email_verified, role, account_type, hashed_password, name, profile_url, profile_set)
+		INSERT INTO accounts(email, email_verified, role, account_type, hashed_password, name, photo_url, profile_set)
 		VALUES
 		($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING ` + accountColumns
@@ -174,8 +174,8 @@ func (r *accountRepository) Add(
 		accountScanDests,
 		creds.Account.Email, creds.Account.EmailVerified,
 		creds.Account.Role, creds.Account.AccountType,
-		creds.Account.Name, creds.Account.ProfileSet, creds.Account.ProfileSet,
 		fromStringPtr(creds.HashedPassword),
+		creds.Account.Name, creds.Account.PhotoURL, creds.Account.ProfileSet,
 	)
 }
 
