@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"medichat-be/apperror"
 	"medichat-be/domain"
 )
 
@@ -149,11 +150,15 @@ func (r *userRepository) Update(
 		SET date_of_birth = $2,
 			updated_at = now()
 		WHERE id = $1
-		RETURNING ` + userColumns
+	`
 
-	return queryOneFull(
+	err := execOne(
 		r.querier, ctx, q,
-		scanUser,
 		u.ID, u.DateOfBirth,
 	)
+	if err != nil {
+		return domain.User{}, apperror.Wrap(err)
+	}
+
+	return u, nil
 }

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"medichat-be/apperror"
 	"medichat-be/domain"
 )
 
@@ -188,13 +189,17 @@ func (r *accountRepository) Update(
 		SET name = $2,
 			photo_url = $3
 		WHERE id = $1
-		RETURNING ` + accountColumns
+	`
 
-	return queryOne(
+	err := execOne(
 		r.querier, ctx, q,
-		accountScanDests,
 		a.ID, a.Name, a.PhotoURL,
 	)
+	if err != nil {
+		return domain.Account{}, apperror.Wrap(err)
+	}
+
+	return a, nil
 }
 
 func (r *accountRepository) UpdatePasswordByID(
@@ -209,7 +214,7 @@ func (r *accountRepository) UpdatePasswordByID(
 		WHERE id = $2
 	`
 
-	return exec(
+	return execOne(
 		r.querier, ctx, q,
 		newHashedPassword, id,
 	)
@@ -226,7 +231,7 @@ func (r *accountRepository) VerifyEmailByID(
 		WHERE id = $1
 	`
 
-	return exec(
+	return execOne(
 		r.querier, ctx, q,
 		id,
 	)
@@ -243,7 +248,7 @@ func (r *accountRepository) ProfileSetByID(
 		WHERE id = $1
 	`
 
-	return exec(
+	return execOne(
 		r.querier, ctx, q,
 		id,
 	)
