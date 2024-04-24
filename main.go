@@ -147,6 +147,10 @@ func main() {
 		AccountService: accountService,
 	})
 
+	userService := service.NewUserService(service.UserServiceOpts{
+		DataRepository: dataRepository,
+	})
+
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
@@ -159,6 +163,10 @@ func main() {
 	googleHandler := handler.NewGoogleHandler(handler.GoogleHandlerOpts{
 		GoogleSrv: googleService,
 		Domain:    conf.WebDomain,
+	})
+
+	userHandler := handler.NewUserHandler(handler.UserHandlerOpts{
+		UserSrv: userService,
 	})
 
 	requestIDMid := middleware.RequestIDHandler()
@@ -174,6 +182,7 @@ func main() {
 		PingHandler:       pingHandler,
 		GoogleAuthHandler: googleAuthHandler,
 		GoogleHandler:     googleHandler,
+		UserHandler:       userHandler,
 
 		SessionKey: conf.SessionKey,
 

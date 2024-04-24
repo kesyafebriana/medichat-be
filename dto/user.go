@@ -23,8 +23,8 @@ func NewUserResponse(u domain.User) UserResponse {
 
 type UserCreateRequest struct {
 	AccountID   int64  `json:"account_id" binding:"required"`
-	Name        string `json:"name" binding:"required"`
-	DateOfBirth string `json:"date_of_birth" binding:"required"`
+	Name        string `json:"name" binding:"required,no_leading_trailing_space"`
+	DateOfBirth string `json:"date_of_birth" binding:"required,no_leading_trailing_space"`
 }
 
 func (r *UserCreateRequest) ToDetails() (domain.UserCreateDetails, error) {
@@ -44,8 +44,8 @@ func (r *UserCreateRequest) ToDetails() (domain.UserCreateDetails, error) {
 
 type UserUpdateRequest struct {
 	ID          int64   `json:"id" binding:"required"`
-	Name        *string `json:"name"`
-	DateOfBirth *string `json:"date_of_birth"`
+	Name        *string `json:"name" binding:"omitempty,no_leading_trailing_space"`
+	DateOfBirth *string `json:"date_of_birth" binding:"omitempty,no_leading_trailing_space"`
 }
 
 func (r *UserUpdateRequest) ToDetails() (domain.UserUpdateDetails, error) {
