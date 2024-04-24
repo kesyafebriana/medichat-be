@@ -13,7 +13,7 @@ type categoryRepository struct {
 	querier Querier
 }
 
-func (r *categoryRepository) GetCategories(ctx context.Context, query domain.CategoriesQuery) ([]domain.CategoryWithParentName, error) {
+func (r *categoryRepository) GetCategoriesWithParentName(ctx context.Context, query domain.CategoriesQuery) ([]domain.CategoryWithParentName, error) {
 	sb := strings.Builder{}
 	args := pgx.NamedArgs{}
 	offset := (query.Page - 1) * query.Limit
@@ -54,6 +54,89 @@ func (r *categoryRepository) GetCategories(ctx context.Context, query domain.Cat
 		scanCategoryWithParentName,
 		args,
 	)
+}
+
+func (r *categoryRepository) GetCategories(ctx context.Context, query domain.CategoriesQuery) ([]domain.Category, error) {
+	sb := strings.Builder{}
+	args := pgx.NamedArgs{}
+	offset := (query.Page - 1) * query.Limit
+
+	sb.WriteString(`
+		SELECT ` + categoryColumns + `
+		FROM categories 
+		WHERE deleted_at IS NULL
+	`)
+
+	sb.WriteString(` AND name ILIKE '%' || @name || '%' `)
+	args["name"] = query.Term
+
+	if query.Level != 0 {
+		var key string
+		if query.Level == 2 {
+			key = "NOT"
+		}
+		fmt.Fprintf(&sb, `AND parent_id IS %s NULL `, key)
+	}
+
+	if query.ParentId != nil {
+		sb.WriteString(` AND parent_id = @parentId `)
+		args["parentId"] = *query.ParentId
+	}
+
+	if query.SortBy != domain.CategorySortByParent {
+		fmt.Fprintf(&sb, " ORDER BY %s %s", query.SortBy, query.SortType)
+	}
+
+	if query.Limit != 0 {
+		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
+	}
+
+	return queryFull(
+		r.querier, ctx, sb.String(),
+		scanCategory,
+		args,
+	)
+}
+
+func (r *categoryRepository) GetPageInfo(ctx context.Context, query domain.CategoriesQuery) (domain.PageInfo, error) {
+	sb := strings.Builder{}
+	args := pgx.NamedArgs{}
+
+	sb.WriteString(`
+		SELECT COUNT(*) as total_data 
+		FROM categories c LEFT JOIN categories c2 
+			ON c.parent_id = c2.id
+		WHERE c.deleted_at IS NULL
+	`)
+
+	sb.WriteString(` AND c.name ILIKE '%' || @name || '%' `)
+	args["name"] = query.Term
+
+	if query.Level != 0 {
+		var key string
+		if query.Level == 2 {
+			key = "NOT"
+		}
+		fmt.Fprintf(&sb, `AND c.parent_id IS %s NULL `, key)
+	}
+
+	if query.ParentId != nil {
+		sb.WriteString(` AND c.parent_id = @parentId `)
+		args["parentId"] = *query.ParentId
+	}
+
+	var totalData int64
+	row := r.querier.QueryRowContext(ctx, sb.String(), args)
+	err := row.Scan(&totalData)
+
+	if err != nil {
+		return domain.PageInfo{}, nil
+	}
+
+	return domain.PageInfo{
+		CurrentPage: int(query.Page),
+		ItemCount:   totalData,
+	}, nil
 }
 
 func (r *categoryRepository) GetByName(ctx context.Context, name string) (domain.Category, error) {
