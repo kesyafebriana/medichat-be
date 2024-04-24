@@ -45,10 +45,9 @@ type UserCreateRequest = MultipartForm[
 		Photo *multipart.FileHeader `form:"photo"`
 	},
 	struct {
-		AccountID   int64                       `json:"account_id" binding:"required"`
 		Name        string                      `json:"name" binding:"required,no_leading_trailing_space"`
 		DateOfBirth string                      `json:"date_of_birth" binding:"required,no_leading_trailing_space"`
-		Locations   []UserLocationCreateRequest `json:"locations" binding:"required,min=1"`
+		Locations   []UserLocationCreateRequest `json:"locations" binding:"required,min=1,dive,required"`
 	},
 ]
 
@@ -59,7 +58,6 @@ func UserCreateRequestToDetails(r UserCreateRequest) (domain.UserCreateDetails, 
 	}
 
 	ret := domain.UserCreateDetails{
-		AccountID:   r.Data.AccountID,
 		Name:        r.Data.Name,
 		DateOfBirth: dob,
 		Locations: util.MapSlice(
@@ -83,7 +81,6 @@ type UserUpdateRequest = MultipartForm[
 		Photo *multipart.FileHeader `form:"photo"`
 	},
 	struct {
-		ID          int64   `json:"id" binding:"required"`
 		Name        *string `json:"name" binding:"omitempty,no_leading_trailing_space"`
 		DateOfBirth *string `json:"date_of_birth" binding:"omitempty,no_leading_trailing_space"`
 	},
@@ -91,7 +88,6 @@ type UserUpdateRequest = MultipartForm[
 
 func UserUpdateRequestToDetails(r UserUpdateRequest) (domain.UserUpdateDetails, error) {
 	ret := domain.UserUpdateDetails{
-		ID:          r.Data.ID,
 		Name:        r.Data.Name,
 		DateOfBirth: nil,
 	}

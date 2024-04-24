@@ -34,10 +34,6 @@ func (s *userService) CreateClosure(
 			return domain.User{}, apperror.Wrap(err)
 		}
 
-		if accountID != dets.AccountID {
-			return domain.User{}, apperror.NewForbidden(nil)
-		}
-
 		exists, err := userRepo.IsExistByAccountID(ctx, accountID)
 		if err != nil {
 			return domain.User{}, apperror.Wrap(err)
@@ -56,7 +52,7 @@ func (s *userService) CreateClosure(
 
 		user := domain.User{
 			Account: domain.Account{
-				ID: dets.AccountID,
+				ID: accountID,
 			},
 			DateOfBirth: dets.DateOfBirth,
 		}
@@ -130,10 +126,6 @@ func (s *userService) UpdateClosure(
 		user, err := userRepo.GetByAccountIDAndLock(ctx, accountID)
 		if err != nil {
 			return domain.User{}, apperror.Wrap(err)
-		}
-
-		if u.ID != user.ID {
-			return domain.User{}, apperror.NewForbidden(nil)
 		}
 
 		if u.Name != nil {

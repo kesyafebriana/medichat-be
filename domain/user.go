@@ -24,7 +24,6 @@ type UserLocation struct {
 }
 
 type UserCreateDetails struct {
-	AccountID   int64
 	Name        string
 	PhotoURL    string
 	DateOfBirth time.Time
@@ -32,7 +31,6 @@ type UserCreateDetails struct {
 }
 
 type UserUpdateDetails struct {
-	ID          int64
 	Name        *string
 	PhotoURL    *string
 	DateOfBirth *time.Time
