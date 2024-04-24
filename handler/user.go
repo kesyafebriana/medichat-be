@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"medichat-be/apperror"
 	"medichat-be/domain"
 	"medichat-be/dto"
@@ -41,8 +40,6 @@ func (h *UserHandler) CreateProfile(ctx *gin.Context) {
 		return
 	}
 
-	log.Println(dets)
-
 	_, err = h.userSrv.CreateProfile(ctx, dets)
 	if err != nil {
 		ctx.Error(apperror.Wrap(err))
@@ -72,8 +69,6 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
-
-	log.Println(dets)
 
 	_, err = h.userSrv.UpdateProfile(ctx, dets)
 	if err != nil {

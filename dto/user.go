@@ -45,9 +45,10 @@ type UserCreateRequest = MultipartForm[
 		Photo *multipart.FileHeader `form:"photo"`
 	},
 	struct {
-		AccountID   int64  `json:"account_id" binding:"required"`
-		Name        string `json:"name" binding:"required,no_leading_trailing_space"`
-		DateOfBirth string `json:"date_of_birth" binding:"required,no_leading_trailing_space"`
+		AccountID   int64                       `json:"account_id" binding:"required"`
+		Name        string                      `json:"name" binding:"required,no_leading_trailing_space"`
+		DateOfBirth string                      `json:"date_of_birth" binding:"required,no_leading_trailing_space"`
+		Locations   []UserLocationCreateRequest `json:"locations" binding:"required,min=1"`
 	},
 ]
 
@@ -61,6 +62,17 @@ func UserCreateRequestToDetails(r UserCreateRequest) (domain.UserCreateDetails, 
 		AccountID:   r.Data.AccountID,
 		Name:        r.Data.Name,
 		DateOfBirth: dob,
+		Locations: util.MapSlice(
+			r.Data.Locations,
+			func(ul UserLocationCreateRequest) domain.UserLocation {
+				return domain.UserLocation{
+					Alias:      ul.Alias,
+					Address:    ul.Address,
+					Coordinate: ul.Coordinate.ToCoordinate(),
+					IsActive:   ul.IsActive,
+				}
+			},
+		),
 	}
 
 	return ret, nil
@@ -93,4 +105,11 @@ func UserUpdateRequestToDetails(r UserUpdateRequest) (domain.UserUpdateDetails, 
 	}
 
 	return ret, nil
+}
+
+type UserLocationCreateRequest struct {
+	Alias      string        `json:"alias" binding:"required"`
+	Address    string        `json:"address" binding:"required"`
+	Coordinate CoordinateDTO `json:"coordinate" binding:"required"`
+	IsActive   bool          `json:"is_active" binding:"required"`
 }
