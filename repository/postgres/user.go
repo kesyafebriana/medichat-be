@@ -278,3 +278,48 @@ func (r *userRepository) AddLocations(
 		args...,
 	)
 }
+
+func (r *userRepository) UpdateLocation(
+	ctx context.Context,
+	ul domain.UserLocation,
+) (domain.UserLocation, error) {
+	q := `
+		UPDATE user_locations
+		SET alias = $2,
+			address = $3,
+			coordinate = $4,
+			is_active = $5
+		WHERE ID = $1
+			AND deleted_at IS NULL
+	`
+
+	err := execOne(
+		r.querier, ctx, q,
+		ul.ID, ul.Alias, ul.Address,
+		postgis.NewPointFromCoordinate(ul.Coordinate),
+		ul.IsActive,
+	)
+	if err != nil {
+		return domain.UserLocation{}, apperror.Wrap(err)
+	}
+
+	return ul, nil
+}
+
+func (r *userRepository) SoftDeleteLocationByID(
+	ctx context.Context,
+	id int64,
+) error {
+	q := `
+		UPDATE user_locations
+		SET deleted_at = now(),
+			updated_at = now()
+		WHERE ID = $1
+			AND deleted_at IS NULL
+	`
+
+	return execOne(
+		r.querier, ctx, q,
+		id,
+	)
+}

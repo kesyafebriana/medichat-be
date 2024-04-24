@@ -184,3 +184,148 @@ func (s *userService) GetProfile(
 
 	return user, nil
 }
+
+func (s *userService) AddLocationClosure(
+	ctx context.Context,
+	ul domain.UserLocation,
+) domain.AtomicFunc[domain.UserLocation] {
+	return func(dr domain.DataRepository) (domain.UserLocation, error) {
+		userRepo := dr.UserRepository()
+
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return domain.UserLocation{}, apperror.Wrap(err)
+		}
+
+		user, err := userRepo.GetByAccountID(ctx, accountID)
+		if err != nil {
+			return domain.UserLocation{}, apperror.Wrap(err)
+		}
+
+		ul.UserID = user.ID
+
+		ul, err = userRepo.AddLocation(ctx, ul)
+		if err != nil {
+			return domain.UserLocation{}, apperror.Wrap(err)
+		}
+
+		return ul, nil
+	}
+}
+
+func (s *userService) AddLocation(
+	ctx context.Context,
+	ul domain.UserLocation,
+) (domain.UserLocation, error) {
+	return domain.RunAtomic(
+		s.dataRepository,
+		ctx,
+		s.AddLocationClosure(ctx, ul),
+	)
+}
+
+func (s *userService) UpdateLocationClosure(
+	ctx context.Context,
+	det domain.UserLocationUpdateDetails,
+) domain.AtomicFunc[domain.UserLocation] {
+	return func(dr domain.DataRepository) (domain.UserLocation, error) {
+		userRepo := dr.UserRepository()
+
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return domain.UserLocation{}, apperror.Wrap(err)
+		}
+
+		user, err := userRepo.GetByAccountID(ctx, accountID)
+		if err != nil {
+			return domain.UserLocation{}, apperror.Wrap(err)
+		}
+
+		ul, err := userRepo.GetLocationByIDAndLock(ctx, det.ID)
+		if err != nil {
+			return domain.UserLocation{}, apperror.Wrap(err)
+		}
+
+		if ul.UserID != user.ID {
+			return domain.UserLocation{}, apperror.NewForbidden(nil)
+		}
+
+		if det.Alias != nil {
+			ul.Alias = *det.Alias
+		}
+		if det.Address != nil {
+			ul.Address = *det.Address
+		}
+		if det.Coordinate != nil {
+			ul.Coordinate = *det.Coordinate
+		}
+		if det.IsActive != nil {
+			ul.IsActive = *det.IsActive
+		}
+
+		ul, err = userRepo.UpdateLocation(ctx, ul)
+		if err != nil {
+			return domain.UserLocation{}, apperror.Wrap(err)
+		}
+
+		return ul, nil
+	}
+}
+
+func (s *userService) UpdateLocation(
+	ctx context.Context,
+	det domain.UserLocationUpdateDetails,
+) (domain.UserLocation, error) {
+	return domain.RunAtomic(
+		s.dataRepository,
+		ctx,
+		s.UpdateLocationClosure(ctx, det),
+	)
+}
+
+func (s *userService) DeleteLocationByIDClosure(
+	ctx context.Context,
+	id int64,
+) domain.AtomicFunc[any] {
+	return func(dr domain.DataRepository) (any, error) {
+		userRepo := dr.UserRepository()
+
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		user, err := userRepo.GetByAccountID(ctx, accountID)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		ul, err := userRepo.GetLocationByIDAndLock(ctx, id)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		if ul.UserID != user.ID {
+			return nil, apperror.NewForbidden(nil)
+		}
+
+		err = userRepo.SoftDeleteLocationByID(ctx, id)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		return nil, nil
+	}
+}
+
+func (s *userService) DeleteLocationByID(
+	ctx context.Context,
+	id int64,
+) error {
+	_, err := domain.RunAtomic(
+		s.dataRepository,
+		ctx,
+		s.DeleteLocationByIDClosure(ctx, id),
+	)
+	return err
+}
