@@ -2,6 +2,7 @@ package dto
 
 import (
 	"medichat-be/domain"
+	"mime/multipart"
 	"time"
 )
 
@@ -21,42 +22,52 @@ func NewUserResponse(u domain.User) UserResponse {
 	}
 }
 
-type UserCreateRequest struct {
-	AccountID   int64  `json:"account_id" binding:"required"`
-	Name        string `json:"name" binding:"required,no_leading_trailing_space"`
-	DateOfBirth string `json:"date_of_birth" binding:"required,no_leading_trailing_space"`
-}
+type UserCreateRequest = MultipartForm[
+	struct {
+		Photo *multipart.FileHeader `form:"photo"`
+	},
+	struct {
+		AccountID   int64  `json:"account_id" binding:"required"`
+		Name        string `json:"name" binding:"required,no_leading_trailing_space"`
+		DateOfBirth string `json:"date_of_birth" binding:"required,no_leading_trailing_space"`
+	},
+]
 
-func (r *UserCreateRequest) ToDetails() (domain.UserCreateDetails, error) {
-	dob, err := time.Parse("2006-01-02", r.DateOfBirth)
+func UserCreateRequestToDetails(r UserCreateRequest) (domain.UserCreateDetails, error) {
+	dob, err := time.Parse("2006-01-02", r.Data.DateOfBirth)
 	if err != nil {
 		return domain.UserCreateDetails{}, err
 	}
 
 	ret := domain.UserCreateDetails{
-		AccountID:   r.AccountID,
-		Name:        r.Name,
+		AccountID:   r.Data.AccountID,
+		Name:        r.Data.Name,
 		DateOfBirth: dob,
 	}
 
 	return ret, nil
 }
 
-type UserUpdateRequest struct {
-	ID          int64   `json:"id" binding:"required"`
-	Name        *string `json:"name" binding:"omitempty,no_leading_trailing_space"`
-	DateOfBirth *string `json:"date_of_birth" binding:"omitempty,no_leading_trailing_space"`
-}
+type UserUpdateRequest = MultipartForm[
+	struct {
+		Photo *multipart.FileHeader `form:"photo"`
+	},
+	struct {
+		ID          int64   `json:"id" binding:"required"`
+		Name        *string `json:"name" binding:"omitempty,no_leading_trailing_space"`
+		DateOfBirth *string `json:"date_of_birth" binding:"omitempty,no_leading_trailing_space"`
+	},
+]
 
-func (r *UserUpdateRequest) ToDetails() (domain.UserUpdateDetails, error) {
+func UserUpdateRequestToDetails(r UserUpdateRequest) (domain.UserUpdateDetails, error) {
 	ret := domain.UserUpdateDetails{
-		ID:          r.ID,
-		Name:        r.Name,
+		ID:          r.Data.ID,
+		Name:        r.Data.Name,
 		DateOfBirth: nil,
 	}
 
-	if r.DateOfBirth != nil {
-		dob, err := time.Parse("2006-01-02", *r.DateOfBirth)
+	if r.Data.DateOfBirth != nil {
+		dob, err := time.Parse("2006-01-02", *r.Data.DateOfBirth)
 		if err != nil {
 			return domain.UserUpdateDetails{}, err
 		}

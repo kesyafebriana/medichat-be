@@ -25,7 +25,7 @@ func NewUserHandler(opts UserHandlerOpts) *UserHandler {
 }
 
 func (h *UserHandler) CreateProfile(ctx *gin.Context) {
-	var req dto.MultipartForm[dto.UserCreateRequest]
+	var req dto.UserCreateRequest
 
 	err := dto.ShouldBindMultipart(ctx, &req)
 	if err != nil {
@@ -34,15 +34,7 @@ func (h *UserHandler) CreateProfile(ctx *gin.Context) {
 		return
 	}
 
-	log.Println(req.Data)
-	for _, file := range req.Files {
-		for k, vals := range file.Header {
-			log.Println(k, "->", vals)
-		}
-		log.Println(file.Size)
-	}
-
-	dets, err := req.Data.ToDetails()
+	dets, err := dto.UserCreateRequestToDetails(req)
 	if err != nil {
 		ctx.Error(apperror.NewBadRequest(err))
 		ctx.Abort()
@@ -65,7 +57,7 @@ func (h *UserHandler) CreateProfile(ctx *gin.Context) {
 }
 
 func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
-	var req dto.MultipartForm[dto.UserUpdateRequest]
+	var req dto.UserUpdateRequest
 
 	err := dto.ShouldBindMultipart(ctx, &req)
 	if err != nil {
@@ -74,15 +66,7 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 		return
 	}
 
-	log.Println(req.Data)
-	for _, file := range req.Files {
-		for k, vals := range file.Header {
-			log.Println(k, "->", vals)
-		}
-		log.Println(file.Size)
-	}
-
-	dets, err := req.Data.ToDetails()
+	dets, err := dto.UserUpdateRequestToDetails(req)
 	if err != nil {
 		ctx.Error(apperror.NewBadRequest(err))
 		ctx.Abort()

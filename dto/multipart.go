@@ -1,34 +1,33 @@
 package dto
 
 import (
-	"mime/multipart"
+	"errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
 
-type MultipartForm[T any] struct {
-	Files []*multipart.FileHeader `form:"file"`
-	Data  T                       `form:"data" binding:"required"`
+type MultipartForm[F any, D any] struct {
+	Form F
+	Data D
 }
 
-type multipartFormInternal struct {
-	Files []*multipart.FileHeader `form:"file"`
-	Data  string                  `form:"data" binding:"required"`
-}
-
-func ShouldBindMultipart[T any](
+func ShouldBindMultipart[F any, D any](
 	ctx *gin.Context,
-	form *MultipartForm[T],
+	obj *MultipartForm[F, D],
 ) error {
-	var tmp multipartFormInternal
-
-	err := ctx.ShouldBind(&tmp)
+	err := ctx.ShouldBind(&obj.Form)
 	if err != nil {
 		return err
 	}
 
-	form.Files = tmp.Files
+	data, ok := ctx.Request.MultipartForm.Value["data"]
+	if !ok {
+		return errors.New("data is required")
+	}
+	if len(data) == 0 {
+		return errors.New("data is required")
+	}
 
-	return binding.JSON.BindBody([]byte(tmp.Data), &form.Data)
+	return binding.JSON.BindBody([]byte(data[0]), &obj.Data)
 }
