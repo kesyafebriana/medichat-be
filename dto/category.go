@@ -28,7 +28,7 @@ func (q *GetCategoriesQuery) ToCategoriesQuery() domain.CategoriesQuery {
 	var page int64 = q.Page
 	var sortBy string = q.SortBy
 	var sortType string = q.SortType
-	if q.Page == 0 {
+	if q.Page == 0 || q.Limit == 0 {
 		page = 1
 	}
 	if q.SortBy == "" {
@@ -72,17 +72,14 @@ type CategoryWithParentNameResponse struct {
 	ParentName *string `json:"parent_name,omitempty"`
 }
 
+type CategoriesWithParentNameResponse struct {
+	Categories []CategoryWithParentNameResponse `json:"categories"`
+	PageInfo   PageInfoResponse                 `json:"page_info"`
+}
+
 type CategoriesResponse struct {
 	Parent    CategoryResponse   `json:"parent"`
 	Childrens []CategoryResponse `json:"childrens"`
-}
-
-func ToCategory(c domain.CategoryWithParentName) domain.Category {
-	return domain.Category{
-		ID:       c.Category.ID,
-		ParentID: c.Category.ParentID,
-		Name:     c.Category.Name,
-	}
 }
 
 func NewCategoryResponse(c domain.Category) CategoryResponse {
@@ -102,14 +99,14 @@ func NewCategoryWithParentNameResponse(c domain.CategoryWithParentName) Category
 	}
 }
 
-func NewCategoriesHierarchyResponse(categories []domain.CategoryWithParentName) []CategoriesResponse {
+func NewCategoriesHierarchyResponse(categories []domain.Category) []CategoriesResponse {
 	res := []CategoriesResponse{}
 	categoriesMap := map[int64][]CategoryResponse{}
 	parentsMap := map[int64]*CategoryResponse{}
 	childs := []CategoryResponse{}
 	for i := 0; i < len(categories); i++ {
-		cR := NewCategoryResponse(ToCategory(categories[i]))
-		if categories[i].Category.ParentID != nil {
+		cR := NewCategoryResponse(categories[i])
+		if categories[i].ParentID != nil {
 			childs = append(childs, cR)
 			continue
 		}
@@ -131,10 +128,13 @@ func NewCategoriesHierarchyResponse(categories []domain.CategoryWithParentName) 
 	return res
 }
 
-func NewCategoriesWithParentNameResponse(categories []domain.CategoryWithParentName) []CategoryWithParentNameResponse {
+func NewCategoriesWithParentNameResponse(categories []domain.CategoryWithParentName, pageInfo domain.PageInfo) CategoriesWithParentNameResponse {
 	res := make([]CategoryWithParentNameResponse, len(categories))
 	for i := 0; i < len(categories); i++ {
 		res[i] = NewCategoryWithParentNameResponse(categories[i])
 	}
-	return res
+	return CategoriesWithParentNameResponse{
+		Categories: res,
+		PageInfo:   NewPageInfoResponse(pageInfo),
+	}
 }
