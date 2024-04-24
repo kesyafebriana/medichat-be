@@ -590,5 +590,19 @@ func (s *accountService) GetProfile(ctx context.Context) (any, error) {
 		return domain.Account{}, apperror.Wrap(err)
 	}
 
+	if account.ProfileSet {
+		switch account.Role {
+		case domain.AccountRoleUser:
+			userRepo := s.dataRepository.UserRepository()
+
+			user, err := userRepo.GetByAccountID(ctx, accountID)
+			if err != nil {
+				return domain.Account{}, apperror.Wrap(err)
+			}
+
+			return user, nil
+		}
+	}
+
 	return account, nil
 }
