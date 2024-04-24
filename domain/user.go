@@ -28,6 +28,7 @@ type UserCreateDetails struct {
 	Name        string
 	PhotoURL    string
 	DateOfBirth time.Time
+	Locations   []UserLocation
 }
 
 type UserUpdateDetails struct {
@@ -53,7 +54,8 @@ type UserRepository interface {
 	GetLocationByID(ctx context.Context, id int64) (UserLocation, error)
 	GetLocationByIDAndLock(ctx context.Context, id int64) (UserLocation, error)
 
-	// AddLocation(ctx context.Context, ul UserLocation) (UserLocation, error)
+	AddLocation(ctx context.Context, ul UserLocation) (UserLocation, error)
+	AddLocations(ctx context.Context, uls []UserLocation) error
 	// UpdateLocation(ctx context.Context, ul UserLocation) (UserLocation, error)
 	// SoftDeleteLocationByID(ctx context.Context, id int64) (UserLocation, error)
 }

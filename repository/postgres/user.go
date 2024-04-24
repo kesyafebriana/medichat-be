@@ -2,8 +2,11 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"medichat-be/apperror"
 	"medichat-be/domain"
+	"medichat-be/repository/postgis"
+	"strings"
 )
 
 type userRepository struct {
@@ -216,5 +219,62 @@ func (r *userRepository) GetLocationByIDAndLock(
 		r.querier, ctx, q,
 		scanUserLocation,
 		id,
+	)
+}
+
+func (r *userRepository) AddLocation(
+	ctx context.Context,
+	ul domain.UserLocation,
+) (domain.UserLocation, error) {
+	q := `
+		INSERT INTO user_locations(user_id, alias, address, coordinate, is_active)
+		VALUES
+		($1, $2, $3, $4, $5)
+		RETURNING ` + userLocationColumns
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanUserLocation,
+		ul.UserID, ul.Alias, ul.Address,
+		postgis.NewPointFromCoordinate(ul.Coordinate),
+		ul.IsActive,
+	)
+}
+
+func (r *userRepository) AddLocations(
+	ctx context.Context,
+	uls []domain.UserLocation,
+) error {
+	var sb strings.Builder
+	l := len(uls)
+	args := make([]any, l*5)
+
+	sb.WriteString(`
+		INSERT INTO user_locations(user_id, alias, address, coordinate, is_active)
+		VALUES
+	`)
+
+	for i, ul := range uls {
+		if i > 0 {
+			sb.WriteString(`,
+			`)
+		}
+		j := i * 5
+
+		fmt.Fprintf(
+			&sb, " ($%d, $%d, $%d, $%d, $%d) ",
+			j+1, j+2, j+3, j+4, j+5,
+		)
+
+		args[j] = ul.UserID
+		args[j+1] = ul.Alias
+		args[j+2] = ul.Address
+		args[j+3] = postgis.NewPointFromCoordinate(ul.Coordinate)
+		args[j+4] = ul.IsActive
+	}
+
+	return exec(
+		r.querier, ctx, sb.String(),
+		args...,
 	)
 }
