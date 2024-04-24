@@ -150,6 +150,7 @@ func (r *userRepository) Update(
 		SET date_of_birth = $2,
 			updated_at = now()
 		WHERE id = $1
+			AND deleted_at IS NULL
 	`
 
 	err := execOne(
@@ -161,4 +162,59 @@ func (r *userRepository) Update(
 	}
 
 	return u, nil
+}
+
+func (r *userRepository) GetLocationsByUserID(
+	ctx context.Context,
+	id int64,
+) ([]domain.UserLocation, error) {
+	q := `
+		SELECT ` + userLocationColumns + `
+		FROM user_locations
+		WHERE user_id = $1
+			AND deleted_at IS NULL
+	`
+
+	return queryFull(
+		r.querier, ctx, q,
+		scanUserLocation,
+		id,
+	)
+}
+
+func (r *userRepository) GetLocationByID(
+	ctx context.Context,
+	id int64,
+) (domain.UserLocation, error) {
+	q := `
+		SELECT ` + userLocationColumns + `
+		FROM user_locations
+		WHERE id = $1
+			AND deleted_at IS NULL
+	`
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanUserLocation,
+		id,
+	)
+}
+
+func (r *userRepository) GetLocationByIDAndLock(
+	ctx context.Context,
+	id int64,
+) (domain.UserLocation, error) {
+	q := `
+		SELECT ` + userLocationColumns + `
+		FROM user_locations
+		WHERE id = $1
+			AND deleted_at IS NULL
+		FOR UPDATE
+	`
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanUserLocation,
+		id,
+	)
 }

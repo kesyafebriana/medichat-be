@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"medichat-be/domain"
+	"medichat-be/repository/postgis"
 )
 
 func int64ScanDest(i *int64) []any {
@@ -51,6 +52,10 @@ var (
 		u.account_id, a.email, a.email_verified, a.role, a.account_type,
 		a.name, a.photo_url, u.date_of_birth
 	`
+
+	userLocationColumns = `
+		id, user_id, alias, address, coordinate, is_active
+	`
 )
 
 func scanUser(r RowScanner, u *domain.User) error {
@@ -67,4 +72,15 @@ func scanUserJoined(r RowScanner, u *domain.User) error {
 		&a.ID, &a.Email, &a.EmailVerified, &a.Role, &a.AccountType,
 		&a.Name, &a.PhotoURL, &u.DateOfBirth,
 	)
+}
+
+func scanUserLocation(r RowScanner, ul *domain.UserLocation) error {
+	var p postgis.Point
+	if err := r.Scan(
+		&ul.ID, &ul.UserID, &ul.Alias, &ul.Address, &p, &ul.IsActive,
+	); err != nil {
+		return err
+	}
+	ul.Coordinate = p.ToCoordinate()
+	return nil
 }

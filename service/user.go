@@ -157,3 +157,28 @@ func (s *userService) UpdateProfile(
 		s.UpdateClosure(ctx, u),
 	)
 }
+
+func (s *userService) GetProfile(
+	ctx context.Context,
+) (domain.User, error) {
+	userRepo := s.dataRepository.UserRepository()
+
+	accountID, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return domain.User{}, apperror.Wrap(err)
+	}
+
+	user, err := userRepo.GetByAccountID(ctx, accountID)
+	if err != nil {
+		return domain.User{}, apperror.Wrap(err)
+	}
+
+	locations, err := userRepo.GetLocationsByUserID(ctx, user.ID)
+	if err != nil {
+		return domain.User{}, apperror.Wrap(err)
+	}
+
+	user.Locations = locations
+
+	return user, nil
+}
