@@ -29,7 +29,8 @@ func NewCategoryHandler(opts CategoryHandlerOpts) *CategoryHandler {
 
 func (h *CategoryHandler) GetCategoriesHierarchy(ctx *gin.Context) {
 	query := dto.GetCategoriesQuery{}
-	categories, err := h.categorySrv.GetCategories(ctx, query.ToCategoriesQuery())
+
+	categories, err := h.categorySrv.GetCategoriesHierarchy(ctx, query.ToCategoriesQuery())
 	if err != nil {
 		ctx.Error(err)
 		ctx.Abort()
@@ -49,14 +50,22 @@ func (h *CategoryHandler) GetCategories(ctx *gin.Context) {
 		return
 	}
 
-	categories, err := h.categorySrv.GetCategories(ctx, query.ToCategoriesQuery())
+	categories, pageInfo, err := h.categorySrv.GetCategories(ctx, query.ToCategoriesQuery())
 	if err != nil {
 		ctx.Error(err)
 		ctx.Abort()
 		return
 	}
 
-	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewCategoriesWithParentNameResponse(categories)))
+	if query.Limit == 0 {
+		pageInfo.ItemsPerPage = 1
+		pageInfo.PageCount = 1
+	} else {
+		pageInfo.ItemsPerPage = int(query.Limit)
+		pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
+	}
+
+	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewCategoriesWithParentNameResponse(categories, pageInfo)))
 }
 
 func (h *CategoryHandler) CreateCategoryLevelOne(ctx *gin.Context) {
