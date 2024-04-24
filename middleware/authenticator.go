@@ -40,7 +40,7 @@ func Authenticator(jwtProvider cryptoutil.JWTProvider) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set(constants.ContextUserID, claims.UserID)
+		ctx.Set(constants.ContextAccountID, claims.UserID)
 
 		ctx.Next()
 	}

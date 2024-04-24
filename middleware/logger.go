@@ -53,10 +53,14 @@ func Logger(logger logger.Logger) gin.HandlerFunc {
 		}
 
 		if statusCode >= 400 && statusCode < 500 {
+			var appErr *apperror.AppError
 			for _, err := range ctx.Errors {
 				fields["error"] = err
 				fields["error_type"] = fmt.Sprintf("%T", err)
 				logger.InfoFields(fields, "request processed with user error")
+				if errors.As(err, &appErr) && appErr.ContainsStackTrace() {
+					logger.Errorf("Stack trace:\n %s", string(appErr.GetStackTrace()))
+				}
 			}
 			return
 		}

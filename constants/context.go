@@ -1,6 +1,6 @@
 package constants
 
 const (
-	ContextUserID    = "user-id"
+	ContextAccountID = "account-id"
 	ContextRequestID = "request-id"
 )

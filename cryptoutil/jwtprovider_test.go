@@ -3,6 +3,7 @@ package cryptoutil_test
 import (
 	"medichat-be/apperror"
 	"medichat-be/cryptoutil"
+	"medichat-be/mocks/cryptomocks"
 	"testing"
 	"time"
 
@@ -169,4 +170,72 @@ func Test_jwtProviderHS256_VerifyToken(t *testing.T) {
 
 		apperror.AssertErrorIsCode(t, err, apperror.CodeUnauthorized)
 	})
+}
+
+func Test_jwtProviderAny_VerifyToken(t *testing.T) {
+	tests := []struct {
+		name string
+
+		provAVerifyRet cryptoutil.JWTClaims
+		provAVerifyErr error
+		provBVerifyRet cryptoutil.JWTClaims
+		provBVerifyErr error
+
+		want    cryptoutil.JWTClaims
+		wantErr int
+	}{
+		{
+			name:           "should return claims when provider A successfully verify the token",
+			provAVerifyRet: myClaims,
+			provBVerifyErr: apperror.NewUnauthorized(nil),
+			want:           myClaims,
+		},
+		{
+			name:           "should return claims when provider B successfully verify the token",
+			provAVerifyErr: apperror.NewUnauthorized(nil),
+			provBVerifyRet: myClaims,
+			want:           myClaims,
+		},
+		{
+			name:           "should return claims when provider B successfully verify the token",
+			provAVerifyErr: apperror.NewUnauthorized(nil),
+			provBVerifyErr: apperror.NewUnauthorized(nil),
+			wantErr:        apperror.CodeUnauthorized,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provA := new(cryptomocks.JWTProvider)
+			provA.On(
+				"VerifyToken",
+				randomGarbage,
+			).Return(
+				tt.provAVerifyRet,
+				tt.provAVerifyErr,
+			)
+
+			provB := new(cryptomocks.JWTProvider)
+			provB.On(
+				"VerifyToken",
+				randomGarbage,
+			).Return(
+				tt.provBVerifyRet,
+				tt.provBVerifyErr,
+			)
+
+			p := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+				provA,
+				provB,
+			})
+
+			claims, err := p.VerifyToken(randomGarbage)
+
+			assert.Equal(t, tt.want, claims)
+			if tt.wantErr != 0 {
+				apperror.AssertErrorIsCode(t, err, tt.wantErr)
+				return
+			}
+			assert.Nil(t, err)
+		})
+	}
 }

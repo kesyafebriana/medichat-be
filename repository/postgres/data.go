@@ -22,7 +22,7 @@ func NewDataRepository(db *sql.DB) *dataRepository {
 
 func (r *dataRepository) Atomic(
 	ctx context.Context,
-	fn domain.AtomicFunc[any],
+	fn domain.AtomicFuncAny,
 ) (any, error) {
 	tx, err := r.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
@@ -57,4 +57,28 @@ func (r *dataRepository) Sleep(ctx context.Context, duration time.Duration) erro
 		r.querier, ctx, q,
 		duration.Seconds(),
 	)
+}
+
+func (r *dataRepository) AccountRepository() domain.AccountRepository {
+	return &accountRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) RefreshTokenRepository() domain.RefreshTokenRepository {
+	return &refreshTokenRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) ResetPasswordTokenRepository() domain.ResetPasswordTokenRepository {
+	return &resetPasswordTokenRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) VerifyEmailTokenRepository() domain.VerifyEmailTokenRepository {
+	return &verifyEmailTokenRepository{
+		querier: r.querier,
+	}
 }
