@@ -63,12 +63,7 @@ func UserCreateRequestToDetails(r UserCreateRequest) (domain.UserCreateDetails, 
 		Locations: util.MapSlice(
 			r.Data.Locations,
 			func(ul UserLocationCreateRequest) domain.UserLocation {
-				return domain.UserLocation{
-					Alias:      ul.Alias,
-					Address:    ul.Address,
-					Coordinate: ul.Coordinate.ToCoordinate(),
-					IsActive:   ul.IsActive,
-				}
+				return ul.ToEntity()
 			},
 		),
 	}
@@ -108,4 +103,32 @@ type UserLocationCreateRequest struct {
 	Address    string        `json:"address" binding:"required"`
 	Coordinate CoordinateDTO `json:"coordinate" binding:"required"`
 	IsActive   bool          `json:"is_active" binding:"required"`
+}
+
+func (r UserLocationCreateRequest) ToEntity() domain.UserLocation {
+	return domain.UserLocation{
+		Alias:      r.Alias,
+		Address:    r.Address,
+		Coordinate: r.Coordinate.ToCoordinate(),
+		IsActive:   r.IsActive,
+	}
+}
+
+type UserLocationUpdateRequest struct {
+	ID int64 `json:"id" binding:"required"`
+
+	Alias      *string        `json:"alias"`
+	Address    *string        `json:"address"`
+	Coordinate *CoordinateDTO `json:"coordinate"`
+	IsActive   *bool          `json:"is_active"`
+}
+
+func (r UserLocationUpdateRequest) ToDetails() domain.UserLocationUpdateDetails {
+	return domain.UserLocationUpdateDetails{
+		ID:         r.ID,
+		Alias:      r.Alias,
+		Address:    r.Address,
+		Coordinate: (*domain.Coordinate)(r.Coordinate),
+		IsActive:   r.IsActive,
+	}
 }

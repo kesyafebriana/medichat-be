@@ -119,6 +119,18 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		".",
 		opts.UserHandler.UpdateProfile,
 	)
+	userGroup.POST(
+		"/locations",
+		opts.UserHandler.AddLocation,
+	)
+	userGroup.PUT(
+		"/locations",
+		opts.UserHandler.UpdateLocation,
+	)
+	userGroup.DELETE(
+		"/locations/:id",
+		opts.UserHandler.DeleteLocation,
+	)
 
 	router.NoRoute(func(ctx *gin.Context) {
 		ctx.Error(apperror.NewAppError(

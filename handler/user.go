@@ -96,3 +96,76 @@ func (h *UserHandler) GetProfile(ctx *gin.Context) {
 		dto.ResponseOk(dto.NewProfileResponse(profile)),
 	)
 }
+
+func (h *UserHandler) AddLocation(ctx *gin.Context) {
+	var req dto.UserLocationCreateRequest
+
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	ul := req.ToEntity()
+
+	ul, err = h.userSrv.AddLocation(ctx, ul)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusCreated,
+		dto.ResponseCreated(dto.NewUserLocationResponse(ul)),
+	)
+}
+
+func (h *UserHandler) UpdateLocation(ctx *gin.Context) {
+	var req dto.UserLocationUpdateRequest
+
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	det := req.ToDetails()
+
+	ul, err := h.userSrv.UpdateLocation(ctx, det)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusCreated,
+		dto.ResponseCreated(dto.NewUserLocationResponse(ul)),
+	)
+}
+
+func (h *UserHandler) DeleteLocation(ctx *gin.Context) {
+	var req dto.IDPathRequest
+
+	err := ctx.ShouldBindUri(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	err = h.userSrv.DeleteLocationByID(ctx, req.ID)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusNoContent,
+		nil,
+	)
+}
