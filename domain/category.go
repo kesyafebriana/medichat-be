@@ -33,7 +33,9 @@ type CategoriesQuery struct {
 }
 
 type CategoryRepository interface {
-	GetCategories(ctx context.Context, query CategoriesQuery) ([]CategoryWithParentName, error)
+	GetCategoriesWithParentName(ctx context.Context, query CategoriesQuery) ([]CategoryWithParentName, error)
+	GetCategories(ctx context.Context, query CategoriesQuery) ([]Category, error)
+	GetPageInfo(ctx context.Context, query CategoriesQuery) (PageInfo, error)
 	GetByName(ctx context.Context, name string) (Category, error)
 	GetById(ctx context.Context, id int64) (Category, error)
 
@@ -45,7 +47,8 @@ type CategoryRepository interface {
 
 type CategoryService interface {
 	CreateCategory(ctx context.Context, category Category) (Category, error)
-	GetCategories(ctx context.Context, query CategoriesQuery) ([]CategoryWithParentName, error)
+	GetCategories(ctx context.Context, query CategoriesQuery) ([]CategoryWithParentName, PageInfo, error)
+	GetCategoriesHierarchy(ctx context.Context, query CategoriesQuery) ([]Category, error)
 	DeleteCategory(ctx context.Context, id int64) error
 	UpdateCategory(ctx context.Context, category Category) (Category, error)
 }
