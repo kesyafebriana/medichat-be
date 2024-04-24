@@ -1,4 +1,4 @@
-package domain
+package dto
 
 import (
 	"mime/multipart"
@@ -6,11 +6,11 @@ import (
 )
 
 type ChatRoom struct{
-	Date time.Time `json:"date"`
+	Start time.Time `json:"start"`
+	End time.Time `json:"end"`
 	DoctorId int `json:"doctorId"`
 	DoctorName string `json:"doctorName"`
 	IsTyping []string `json:"isTyping"`
-	Open bool `json:"open"`
 	UserId int `json:"userId"`
 	UserName string `json:"userName"`
 }

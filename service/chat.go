@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"medichat-be/constants"
-	"medichat-be/domain"
+	"medichat-be/dto"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -15,9 +15,9 @@ import (
 )
 
 type ChatService interface {
-	PostMessage(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error)
-	PostFile(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error)
-	CreateRoom(req *domain.ChatRoom,ctx *gin.Context) (error)
+	PostMessage(req *dto.ChatMessage,roomId string,ctx *gin.Context) (error)
+	PostFile(req *dto.ChatMessage,roomId string,ctx *gin.Context) (error)
+	CreateRoom(req *dto.ChatRoom,ctx *gin.Context) (error)
 	CloseRoom(roomId string,ctx *gin.Context) (error)
 }
 
@@ -34,7 +34,7 @@ func NewChatServiceImpl(client  *firestore.Client, cloud *cloudinary.Cloudinary)
 	}
 }
 
-func (u *chatServiceImpl) CreateRoom(req *domain.ChatRoom,ctx *gin.Context) (error) {
+func (u *chatServiceImpl) CreateRoom(req *dto.ChatRoom,ctx *gin.Context) (error) {
 
 	colRef := u.client.Collection("rooms");
 	_, _,err := colRef.Add(ctx,req)
@@ -64,7 +64,7 @@ func (u *chatServiceImpl) CloseRoom(roomId string,ctx *gin.Context) (error) {
 
 
 
-func (u *chatServiceImpl) PostMessage(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error) {
+func (u *chatServiceImpl) PostMessage(req *dto.ChatMessage,roomId string,ctx *gin.Context) (error) {
 
 
 	colRef := u.client.Collection("rooms");
@@ -84,7 +84,7 @@ func (u *chatServiceImpl) PostMessage(req *domain.ChatMessage,roomId string,ctx 
 
 }
 
-func (u *chatServiceImpl) PostFile(req *domain.ChatMessage,roomId string,ctx *gin.Context) (error) {
+func (u *chatServiceImpl) PostFile(req *dto.ChatMessage,roomId string,ctx *gin.Context) (error) {
 
 	fileType := req.File.Header.Get("Content-Type")
 

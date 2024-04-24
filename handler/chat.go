@@ -2,7 +2,8 @@ package handler
 
 import (
 	"medichat-be/apperror"
-	"medichat-be/domain"
+	"medichat-be/constants"
+	"medichat-be/dto"
 	"medichat-be/service"
 	"net/http"
 	"strconv"
@@ -21,8 +22,7 @@ func NewChatHandler(chatService service.ChatService) *ChatHandler {
 
 func (h *ChatHandler) Chat(ctx *gin.Context) {
 	roomId := ctx.Query("roomId")
-	var req domain.ChatMessage
-
+	var req dto.ChatMessage
 	req.Type = ctx.PostForm("type")
 	req.UserName = ctx.PostForm("userName")
 
@@ -87,7 +87,7 @@ func (h *ChatHandler) Chat(ctx *gin.Context) {
 }
 
 func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
-	var req domain.ChatRoom
+	var req dto.ChatRoom
 
 	req.UserName = ctx.PostForm("userName")
 	userId,err := strconv.Atoi(ctx.PostForm("userId"))
@@ -113,9 +113,11 @@ func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
         ctx.Abort()
         return
 	}
-	req.Date = date
+	req.Start = date
 
-	req.Open = true
+	extra , _ := time.ParseDuration(constants.ChatDuration)
+
+	req.End = date.Add(extra)
 
 	err = h.chatService.CreateRoom(&req,ctx)
 	if err!= nil {
