@@ -185,14 +185,15 @@ func (r *accountRepository) Update(
 ) (domain.Account, error) {
 	q := `
 		UPDATE accounts
-		SET name = $1,
-			photo_url = $2
+		SET name = $2,
+			photo_url = $3
+		WHERE id = $1
 		RETURNING ` + accountColumns
 
 	return queryOne(
 		r.querier, ctx, q,
 		accountScanDests,
-		a.Name, a.PhotoURL,
+		a.ID, a.Name, a.PhotoURL,
 	)
 }
 
@@ -237,7 +238,7 @@ func (r *accountRepository) ProfileSetByID(
 ) error {
 	q := `
 		UPDATE accounts
-		SET profile = true,
+		SET profile_set = true,
 			updated_at = now()
 		WHERE id = $1
 	`
