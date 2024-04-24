@@ -107,6 +107,10 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/users",
 		opts.UserAuthenticator,
 	)
+	userGroup.GET(
+		".",
+		opts.UserHandler.GetProfile,
+	)
 	userGroup.POST(
 		".",
 		opts.UserHandler.CreateProfile,

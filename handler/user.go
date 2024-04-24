@@ -87,3 +87,17 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 		dto.ResponseCreated(nil),
 	)
 }
+
+func (h *UserHandler) GetProfile(ctx *gin.Context) {
+	profile, err := h.userSrv.GetProfile(ctx)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewProfileResponse(profile)),
+	)
+}

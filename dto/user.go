@@ -7,8 +7,9 @@ import (
 )
 
 type UserResponse struct {
-	ID          int64  `json:"id"`
-	DateOfBirth string `json:"date_of_birth"`
+	ID          int64                  `json:"id"`
+	DateOfBirth string                 `json:"date_of_birth"`
+	Locations   []UserLocationResponse `json:"locations,omitempty"`
 }
 
 func NewUserResponse(u domain.User) UserResponse {
@@ -16,9 +17,38 @@ func NewUserResponse(u domain.User) UserResponse {
 	if u.DateOfBirth != (time.Time{}) {
 		dob = u.DateOfBirth.Format("2006-01-02")
 	}
+
+	var locations []UserLocationResponse
+	if u.Locations != nil {
+		locations = make([]UserLocationResponse, len(u.Locations))
+		for i, ul := range u.Locations {
+			locations[i] = NewUserLocationResponse(ul)
+		}
+	}
+
 	return UserResponse{
 		ID:          u.ID,
 		DateOfBirth: dob,
+		Locations:   locations,
+	}
+}
+
+type UserLocationResponse struct {
+	ID int64 `json:"id"`
+
+	Alias      string        `json:"alias"`
+	Address    string        `json:"address"`
+	Coordinate CoordinateDTO `json:"coordinate"`
+	IsActive   bool          `json:"is_active"`
+}
+
+func NewUserLocationResponse(ul domain.UserLocation) UserLocationResponse {
+	return UserLocationResponse{
+		ID:         ul.ID,
+		Alias:      ul.Alias,
+		Address:    ul.Address,
+		Coordinate: NewCoordinateDTO(ul.Coordinate),
+		IsActive:   ul.IsActive,
 	}
 }
 
