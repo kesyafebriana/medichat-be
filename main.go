@@ -138,6 +138,10 @@ func main() {
 		EmailProvider:                 emailProvider,
 	})
 
+	categoryService := service.NewCategoryService(service.CategoryServiceOpts{
+		DataRepository: dataRepository,
+	})
+
 	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{
 		OAuth2Provider: googleAuthProvider,
 	})
@@ -150,6 +154,10 @@ func main() {
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
+	})
+	categoryHandler := handler.NewCategoryHandler(handler.CategoryHandlerOpts{
+		CategorySrv: categoryService,
+		Domain:      conf.WebDomain,
 	})
 	pingHandler := handler.NewPingHandler()
 	googleAuthHandler := handler.NewOAuth2Handler(handler.OAuth2HandlerOpts{
@@ -173,6 +181,7 @@ func main() {
 		PingHandler:       pingHandler,
 		GoogleAuthHandler: googleAuthHandler,
 		GoogleHandler:     googleHandler,
+		CategoryHandler:   categoryHandler,
 
 		SessionKey: conf.SessionKey,
 

@@ -14,6 +14,7 @@ type SetupServerOpts struct {
 	PingHandler       *handler.PingHandler
 	GoogleAuthHandler *handler.OAuth2Handler
 	GoogleHandler     *handler.GoogleHandler
+	CategoryHandler   *handler.CategoryHandler
 
 	SessionKey []byte
 
@@ -109,6 +110,14 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		))
 		ctx.Abort()
 	})
+
+	categoryGroup := apiV1Group.Group("/categories")
+	categoryGroup.GET("/", opts.CategoryHandler.GetCategories)
+	categoryGroup.GET("/hierarchy", opts.CategoryHandler.GetCategoriesHierarchy)
+	categoryGroup.POST("/", opts.CategoryHandler.CreateCategoryLevelOne)
+	categoryGroup.POST("/:id", opts.CategoryHandler.CreateCategoryLevelTwo)
+	categoryGroup.PATCH("/:id", opts.CategoryHandler.UpdateCategory)
+	categoryGroup.DELETE("/:id", opts.CategoryHandler.DeleteCategory)
 
 	return router
 }
