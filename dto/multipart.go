@@ -21,6 +21,10 @@ func ShouldBindMultipart[F any, D any](
 		return err
 	}
 
+	if ctx.Request.MultipartForm == nil {
+		return errors.New("request body is not a multipart")
+	}
+
 	data, ok := ctx.Request.MultipartForm.Value["data"]
 	if !ok {
 		return errors.New("data is required")
