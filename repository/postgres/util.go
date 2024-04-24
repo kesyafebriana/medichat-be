@@ -44,13 +44,13 @@ func scanAccountWithCredentials(r RowScanner, a *domain.AccountWithCredentials) 
 
 var (
 	userColumns = `
-		id, account_id, date_of_birth
+		id, account_id, date_of_birth, main_location_id
 	`
 
 	userJoinedColumns = `
 		u.id,
 		u.account_id, a.email, a.email_verified, a.role, a.account_type,
-		a.name, a.photo_url, u.date_of_birth
+		a.name, a.photo_url, u.date_of_birth, u.main_location_id
 	`
 
 	userLocationColumns = `
@@ -61,7 +61,7 @@ var (
 func scanUser(r RowScanner, u *domain.User) error {
 	a := &u.Account
 	return r.Scan(
-		&u.ID, &a.ID, &u.DateOfBirth,
+		&u.ID, &a.ID, &u.DateOfBirth, &u.MainLocationID,
 	)
 }
 
@@ -70,7 +70,7 @@ func scanUserJoined(r RowScanner, u *domain.User) error {
 	return r.Scan(
 		&u.ID,
 		&a.ID, &a.Email, &a.EmailVerified, &a.Role, &a.AccountType,
-		&a.Name, &a.PhotoURL, &u.DateOfBirth,
+		&a.Name, &a.PhotoURL, &u.DateOfBirth, &u.MainLocationID,
 	)
 }
 

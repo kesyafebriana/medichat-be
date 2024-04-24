@@ -132,15 +132,15 @@ func (r *userRepository) Add(
 	u domain.User,
 ) (domain.User, error) {
 	q := `
-		INSERT INTO users(account_id, date_of_birth)
+		INSERT INTO users(account_id, date_of_birth, main_location_id)
 		VALUES
-		($1, $2)
+		($1, $2, $3)
 		RETURNING ` + userColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanUser,
-		u.Account.ID, u.DateOfBirth,
+		u.Account.ID, u.DateOfBirth, u.MainLocationID,
 	)
 }
 
@@ -151,6 +151,7 @@ func (r *userRepository) Update(
 	q := `
 		UPDATE users
 		SET date_of_birth = $2,
+			main_location_id = $3,
 			updated_at = now()
 		WHERE id = $1
 			AND deleted_at IS NULL
@@ -158,7 +159,7 @@ func (r *userRepository) Update(
 
 	err := execOne(
 		r.querier, ctx, q,
-		u.ID, u.DateOfBirth,
+		u.ID, u.DateOfBirth, u.MainLocationID,
 	)
 	if err != nil {
 		return domain.User{}, apperror.Wrap(err)
@@ -244,7 +245,7 @@ func (r *userRepository) AddLocation(
 func (r *userRepository) AddLocations(
 	ctx context.Context,
 	uls []domain.UserLocation,
-) error {
+) ([]domain.UserLocation, error) {
 	var sb strings.Builder
 	l := len(uls)
 	args := make([]any, l*5)
@@ -273,8 +274,11 @@ func (r *userRepository) AddLocations(
 		args[j+4] = ul.IsActive
 	}
 
-	return exec(
+	sb.WriteString(` RETURNING ` + userLocationColumns)
+
+	return queryFull(
 		r.querier, ctx, sb.String(),
+		scanUserLocation,
 		args...,
 	)
 }

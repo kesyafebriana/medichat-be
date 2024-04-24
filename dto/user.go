@@ -8,16 +8,18 @@ import (
 )
 
 type UserResponse struct {
-	ID          int64                  `json:"id"`
-	DateOfBirth string                 `json:"date_of_birth"`
-	Locations   []UserLocationResponse `json:"locations,omitempty"`
+	ID             int64                  `json:"id"`
+	DateOfBirth    string                 `json:"date_of_birth"`
+	MainLocationID int64                  `json:"main_location_id"`
+	Locations      []UserLocationResponse `json:"locations,omitempty"`
 }
 
 func NewUserResponse(u domain.User) UserResponse {
 	return UserResponse{
-		ID:          u.ID,
-		DateOfBirth: u.DateOfBirth.Format("2006-01-02"),
-		Locations:   util.MapSlice(u.Locations, NewUserLocationResponse),
+		ID:             u.ID,
+		DateOfBirth:    u.DateOfBirth.Format("2006-01-02"),
+		MainLocationID: u.MainLocationID,
+		Locations:      util.MapSlice(u.Locations, NewUserLocationResponse),
 	}
 }
 

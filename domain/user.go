@@ -9,8 +9,9 @@ type User struct {
 	ID      int64
 	Account Account
 
-	DateOfBirth time.Time
-	Locations   []UserLocation
+	DateOfBirth    time.Time
+	MainLocationID int64
+	Locations      []UserLocation
 }
 
 type UserLocation struct {
@@ -62,7 +63,7 @@ type UserRepository interface {
 	GetLocationByIDAndLock(ctx context.Context, id int64) (UserLocation, error)
 
 	AddLocation(ctx context.Context, ul UserLocation) (UserLocation, error)
-	AddLocations(ctx context.Context, uls []UserLocation) error
+	AddLocations(ctx context.Context, uls []UserLocation) ([]UserLocation, error)
 	UpdateLocation(ctx context.Context, ul UserLocation) (UserLocation, error)
 	SoftDeleteLocationByID(ctx context.Context, id int64) error
 }
@@ -72,7 +73,6 @@ type UserService interface {
 	UpdateProfile(ctx context.Context, u UserUpdateDetails) (User, error)
 	GetProfile(ctx context.Context) (User, error)
 
-	// GetLocationsForLoggedUser(ctx context.Context) ([]UserLocation, error)
 	AddLocation(ctx context.Context, ul UserLocation) (UserLocation, error)
 	UpdateLocation(ctx context.Context, ul UserLocationUpdateDetails) (UserLocation, error)
 	DeleteLocationByID(ctx context.Context, id int64) error

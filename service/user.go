@@ -67,9 +67,17 @@ func (s *userService) CreateClosure(
 			locations[i].UserID = user.ID
 		}
 
-		err = userRepo.AddLocations(ctx, locations)
+		locations, err = userRepo.AddLocations(ctx, locations)
 		if err != nil {
 			return domain.User{}, apperror.Wrap(err)
+		}
+
+		if len(locations) > 0 {
+			user.MainLocationID = locations[0].ID
+			user, err = userRepo.Update(ctx, user)
+			if err != nil {
+				return domain.User{}, apperror.Wrap(err)
+			}
 		}
 
 		account.Name = dets.Name
