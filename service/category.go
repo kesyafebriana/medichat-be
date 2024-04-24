@@ -60,6 +60,12 @@ func (s *categoryService) GetCategories(ctx context.Context, query domain.Catego
 		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
 
+	pageInfo.ItemsPerPage = int(query.Limit)
+	if query.Limit == 0 {
+		pageInfo.ItemsPerPage = len(categories)
+	}
+	pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
+
 	return categories, pageInfo, nil
 }
 

@@ -57,14 +57,6 @@ func (h *CategoryHandler) GetCategories(ctx *gin.Context) {
 		return
 	}
 
-	if query.Limit == 0 {
-		pageInfo.ItemsPerPage = 1
-		pageInfo.PageCount = 1
-	} else {
-		pageInfo.ItemsPerPage = int(query.Limit)
-		pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
-	}
-
 	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewCategoriesWithParentNameResponse(categories, pageInfo)))
 }
 
