@@ -34,6 +34,10 @@ func (s *userService) CreateClosure(
 			return domain.User{}, apperror.Wrap(err)
 		}
 
+		if accountID != dets.AccountID {
+			return domain.User{}, apperror.NewForbidden(nil)
+		}
+
 		exists, err := userRepo.IsExistByAccountID(ctx, accountID)
 		if err != nil {
 			return domain.User{}, apperror.Wrap(err)
