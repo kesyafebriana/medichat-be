@@ -2,6 +2,7 @@ package dto
 
 import (
 	"medichat-be/domain"
+	"medichat-be/util"
 	"mime/multipart"
 	"time"
 )
@@ -13,23 +14,10 @@ type UserResponse struct {
 }
 
 func NewUserResponse(u domain.User) UserResponse {
-	dob := ""
-	if u.DateOfBirth != (time.Time{}) {
-		dob = u.DateOfBirth.Format("2006-01-02")
-	}
-
-	var locations []UserLocationResponse
-	if u.Locations != nil {
-		locations = make([]UserLocationResponse, len(u.Locations))
-		for i, ul := range u.Locations {
-			locations[i] = NewUserLocationResponse(ul)
-		}
-	}
-
 	return UserResponse{
 		ID:          u.ID,
-		DateOfBirth: dob,
-		Locations:   locations,
+		DateOfBirth: u.DateOfBirth.Format("2006-01-02"),
+		Locations:   util.MapSlice(u.Locations, NewUserLocationResponse),
 	}
 }
 
