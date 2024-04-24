@@ -39,3 +39,32 @@ func scanAccountWithCredentials(r RowScanner, a *domain.AccountWithCredentials) 
 	a.HashedPassword = toStringPtr(nullHashedPassword)
 	return nil
 }
+
+var (
+	categoryColumns               = " id, parent_id, name "
+	categoryWithParentNameColumns = " c.id, c.parent_id, c.name, c2.name as parent_name "
+)
+
+func scanCategory(r RowScanner, c *domain.Category) error {
+	var nullParentId sql.NullInt64
+	if err := r.Scan(
+		&c.ID, &nullParentId, &c.Name,
+	); err != nil {
+		return err
+	}
+	c.ParentID = toInt64Ptr(nullParentId)
+	return nil
+}
+
+func scanCategoryWithParentName(r RowScanner, c *domain.CategoryWithParentName) error {
+	var nullParentId sql.NullInt64
+	var nullParentName sql.NullString
+	if err := r.Scan(
+		&c.Category.ID, &nullParentId, &c.Category.Name, &nullParentName,
+	); err != nil {
+		return err
+	}
+	c.Category.ParentID = toInt64Ptr(nullParentId)
+	c.ParentName = toStringPtr(nullParentName)
+	return nil
+}
