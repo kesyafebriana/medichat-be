@@ -47,7 +47,23 @@ func (s *categoryService) CreateCategory(ctx context.Context, category domain.Ca
 	return savedCategory, nil
 }
 
-func (s *categoryService) GetCategories(ctx context.Context, query domain.CategoriesQuery) ([]domain.CategoryWithParentName, error) {
+func (s *categoryService) GetCategories(ctx context.Context, query domain.CategoriesQuery) ([]domain.CategoryWithParentName, domain.PageInfo, error) {
+	categoryRepo := s.dataRepository.CategoryRepository()
+
+	categories, err := categoryRepo.GetCategoriesWithParentName(ctx, query)
+	if err != nil {
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	pageInfo, err := categoryRepo.GetPageInfo(ctx, query)
+	if err != nil {
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	return categories, pageInfo, nil
+}
+
+func (s *categoryService) GetCategoriesHierarchy(ctx context.Context, query domain.CategoriesQuery) ([]domain.Category, error) {
 	categoryRepo := s.dataRepository.CategoryRepository()
 
 	categories, err := categoryRepo.GetCategories(ctx, query)
@@ -84,7 +100,7 @@ func (s *categoryService) DeleteCategory(ctx context.Context, id int64) error {
 	ids := make([]int64, len(childs)+1)
 	ids[0] = id
 	for i := 0; i < len(childs); i++ {
-		ids[i+1] = childs[i].Category.ID
+		ids[i+1] = childs[i].ID
 	}
 
 	err = categoryRepo.BulkSoftDelete(ctx, ids)
