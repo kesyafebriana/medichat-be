@@ -32,9 +32,10 @@ type UserCreateDetails struct {
 }
 
 type UserUpdateDetails struct {
-	Name        *string
-	PhotoURL    *string
-	DateOfBirth *time.Time
+	Name           *string
+	PhotoURL       *string
+	DateOfBirth    *time.Time
+	MainLocationID *int64
 }
 
 type UserLocationUpdateDetails struct {
@@ -61,6 +62,7 @@ type UserRepository interface {
 	GetLocationsByUserID(ctx context.Context, id int64) ([]UserLocation, error)
 	GetLocationByID(ctx context.Context, id int64) (UserLocation, error)
 	GetLocationByIDAndLock(ctx context.Context, id int64) (UserLocation, error)
+	IsAnyLocationActiveByUserID(Ctx context.Context, id int64) (bool, error)
 
 	AddLocation(ctx context.Context, ul UserLocation) (UserLocation, error)
 	AddLocations(ctx context.Context, uls []UserLocation) ([]UserLocation, error)
@@ -76,5 +78,4 @@ type UserService interface {
 	AddLocation(ctx context.Context, ul UserLocation) (UserLocation, error)
 	UpdateLocation(ctx context.Context, ul UserLocationUpdateDetails) (UserLocation, error)
 	DeleteLocationByID(ctx context.Context, id int64) error
-	// SetMainLocation(ctx context.Context, userID int64, locID int64) error
 }
