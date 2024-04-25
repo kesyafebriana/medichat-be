@@ -84,3 +84,55 @@ func scanUserLocation(r RowScanner, ul *domain.UserLocation) error {
 	ul.Coordinate = p.ToCoordinate()
 	return nil
 }
+
+var (
+	doctorColumns = `
+		id, account_id, specialization_id, str, work_location, gender,
+		phone_number, is_active, start_work_date, price, certificate_url
+	`
+
+	doctorJoinedColumns = `
+		d.id, 
+		d.account_id, a.email, a.email_verified, a.role, a.account_type, 
+		a.name, a.photo_url,
+		d.specialization_id, s.name, 
+		d.str, d.work_location, d.gender, d.phone_number, d.is_active, 
+		d.start_work_date, d.price, d.certificate_url
+	`
+)
+
+func scanDoctor(r RowScanner, d *domain.Doctor) error {
+	a := &d.Account
+	s := &d.Specialization
+	return r.Scan(
+		&d.ID, &a.ID, &s.ID, &d.STR, &d.WorkLocation, &d.Gender,
+		&d.PhoneNumber, &d.IsActive, &d.StartWorkDate, &d.Price,
+		&d.CertificateURL,
+	)
+}
+
+func scanDoctorJoined(r RowScanner, d *domain.Doctor) error {
+	a := &d.Account
+	s := &d.Specialization
+	return r.Scan(
+		&d.ID,
+		&a.ID, &a.Email, &a.EmailVerified, &a.Role, &a.AccountType,
+		&a.Name, &a.PhotoURL,
+		&s.ID, &s.Name,
+		&d.STR, &d.WorkLocation, &d.Gender,
+		&d.PhoneNumber, &d.IsActive, &d.StartWorkDate, &d.Price,
+		&d.CertificateURL,
+	)
+}
+
+var (
+	specializationColumns = `
+		id, name
+	`
+)
+
+func scanSpecialization(r RowScanner, s *domain.Specialization) error {
+	return r.Scan(
+		&s.ID, &s.Name,
+	)
+}
