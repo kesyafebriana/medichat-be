@@ -50,7 +50,7 @@ var (
 	userJoinedColumns = `
 		u.id,
 		u.account_id, a.email, a.email_verified, a.role, a.account_type,
-		a.name, a.photo_url, u.date_of_birth, u.main_location_id
+		a.name, a.photo_url, a.profile_set, u.date_of_birth, u.main_location_id
 	`
 
 	userLocationColumns = `
@@ -70,7 +70,7 @@ func scanUserJoined(r RowScanner, u *domain.User) error {
 	return r.Scan(
 		&u.ID,
 		&a.ID, &a.Email, &a.EmailVerified, &a.Role, &a.AccountType,
-		&a.Name, &a.PhotoURL, &u.DateOfBirth, &u.MainLocationID,
+		&a.Name, &a.PhotoURL, &a.ProfileSet, &u.DateOfBirth, &u.MainLocationID,
 	)
 }
 
@@ -94,7 +94,7 @@ var (
 	doctorJoinedColumns = `
 		d.id, 
 		d.account_id, a.email, a.email_verified, a.role, a.account_type, 
-		a.name, a.photo_url,
+		a.name, a.photo_url, a.profile_set,
 		d.specialization_id, s.name, 
 		d.str, d.work_location, d.gender, d.phone_number, d.is_active, 
 		d.start_work_date, d.price, d.certificate_url
@@ -117,7 +117,7 @@ func scanDoctorJoined(r RowScanner, d *domain.Doctor) error {
 	return r.Scan(
 		&d.ID,
 		&a.ID, &a.Email, &a.EmailVerified, &a.Role, &a.AccountType,
-		&a.Name, &a.PhotoURL,
+		&a.Name, &a.PhotoURL, &a.ProfileSet,
 		&s.ID, &s.Name,
 		&d.STR, &d.WorkLocation, &d.Gender,
 		&d.PhoneNumber, &d.IsActive, &d.StartWorkDate, &d.Price,
