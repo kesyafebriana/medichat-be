@@ -142,6 +142,19 @@ func (s *userService) UpdateClosure(
 		if u.DateOfBirth != nil {
 			user.DateOfBirth = *u.DateOfBirth
 		}
+		if u.MainLocationID != nil {
+			user.MainLocationID = *u.MainLocationID
+			location, err := userRepo.GetLocationByID(ctx, *u.MainLocationID)
+			if err != nil {
+				return domain.User{}, apperror.Wrap(err)
+			}
+			if location.UserID != user.ID {
+				return domain.User{}, apperror.NewForbidden(nil)
+			}
+			if !location.IsActive {
+				return domain.User{}, apperror.NewUserLocationIsNotActive(nil)
+			}
+		}
 
 		account, err = accountRepo.Update(ctx, account)
 		if err != nil {
@@ -269,11 +282,26 @@ func (s *userService) UpdateLocationClosure(
 		}
 		if det.IsActive != nil {
 			ul.IsActive = *det.IsActive
+			if !*det.IsActive {
+				if user.MainLocationID == det.ID {
+					return domain.UserLocation{}, apperror.NewUserLocationCannotDeleteMain(nil)
+				}
+			}
 		}
 
 		ul, err = userRepo.UpdateLocation(ctx, ul)
 		if err != nil {
 			return domain.UserLocation{}, apperror.Wrap(err)
+		}
+
+		if det.IsActive != nil && !*det.IsActive {
+			exists, err := userRepo.IsAnyLocationActiveByUserID(ctx, user.ID)
+			if err != nil {
+				return domain.UserLocation{}, apperror.Wrap(err)
+			}
+			if !exists {
+				return domain.UserLocation{}, apperror.NewUserLocationShouldHaveActive(nil)
+			}
 		}
 
 		return ul, nil
@@ -307,6 +335,9 @@ func (s *userService) DeleteLocationByIDClosure(
 		if err != nil {
 			return nil, apperror.Wrap(err)
 		}
+		if user.MainLocationID == id {
+			return nil, apperror.NewUserLocationCannotDeleteMain(nil)
+		}
 
 		ul, err := userRepo.GetLocationByIDAndLock(ctx, id)
 		if err != nil {
@@ -320,6 +351,14 @@ func (s *userService) DeleteLocationByIDClosure(
 		err = userRepo.SoftDeleteLocationByID(ctx, id)
 		if err != nil {
 			return nil, apperror.Wrap(err)
+		}
+
+		exists, err := userRepo.IsAnyLocationActiveByUserID(ctx, user.ID)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+		if !exists {
+			return nil, apperror.NewUserLocationShouldHaveActive(nil)
 		}
 
 		return nil, nil

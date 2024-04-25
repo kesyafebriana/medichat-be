@@ -78,15 +78,17 @@ type UserUpdateRequest = MultipartForm[
 		Photo *multipart.FileHeader `form:"photo"`
 	},
 	struct {
-		Name        *string `json:"name" binding:"omitempty,no_leading_trailing_space"`
-		DateOfBirth *string `json:"date_of_birth" binding:"omitempty,no_leading_trailing_space"`
+		Name           *string `json:"name" binding:"omitempty,no_leading_trailing_space"`
+		DateOfBirth    *string `json:"date_of_birth" binding:"omitempty,no_leading_trailing_space"`
+		MainLocationID *int64  `json:"main_location_id"`
 	},
 ]
 
 func UserUpdateRequestToDetails(r UserUpdateRequest) (domain.UserUpdateDetails, error) {
 	ret := domain.UserUpdateDetails{
-		Name:        r.Data.Name,
-		DateOfBirth: nil,
+		Name:           r.Data.Name,
+		DateOfBirth:    nil,
+		MainLocationID: r.Data.MainLocationID,
 	}
 
 	if r.Data.DateOfBirth != nil {
