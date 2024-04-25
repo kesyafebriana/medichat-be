@@ -149,6 +149,22 @@ func (_m *DataRepository) Sleep(ctx context.Context, duration time.Duration) err
 	return r0
 }
 
+// SpecializationRepository provides a mock function with given fields:
+func (_m *DataRepository) SpecializationRepository() domain.SpecializationRepository {
+	ret := _m.Called()
+
+	var r0 domain.SpecializationRepository
+	if rf, ok := ret.Get(0).(func() domain.SpecializationRepository); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.SpecializationRepository)
+		}
+	}
+
+	return r0
+}
+
 // UserRepository provides a mock function with given fields:
 func (_m *DataRepository) UserRepository() domain.UserRepository {
 	ret := _m.Called()
