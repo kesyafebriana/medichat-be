@@ -2,13 +2,11 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"medichat-be/constants"
 	"medichat-be/dto"
 	"medichat-be/util"
 
 	"cloud.google.com/go/firestore"
-	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gin-gonic/gin"
 )
 
@@ -97,7 +95,6 @@ func (u *chatServiceImpl) PostFile(req *dto.ChatMessage,roomId string,ctx *gin.C
 
 	fileName := req.File.Filename
 
-	resp := make(chan *uploader.UploadResult)
 	stringType := ""
 
 	if (fileType == "application/pdf"){
@@ -109,22 +106,14 @@ func (u *chatServiceImpl) PostFile(req *dto.ChatMessage,roomId string,ctx *gin.C
 	
 
 	if(fileType == "application/pdf" || fileType == "image/png" || fileType == "image/jpeg" || fileType == "image/webp"){
-		go func() {
-			opts := util.SendFileOpts{
-				Context: ctx,
-				Filename: fileName,
-				Roomid: roomId,
-				File: file,
-			}
-			res, err := u.cloud.SendFile(opts)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			resp<- res
-		}()
+		opts := util.SendFileOpts{
+			Context: ctx,
+			Filename: fileName,
+			Roomid: roomId,
+			File: file,
+		}
+		response, err := u.cloud.SendFile(opts)
 
-		response := <-resp
 		if err != nil {
 			return err
 		}
