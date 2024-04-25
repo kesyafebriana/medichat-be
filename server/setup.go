@@ -108,50 +108,58 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 
 	userGroup := apiV1Group.Group(
 		"/users",
+	)
+
+	userProfileGroup := userGroup.Group(
+		"/profile",
 		opts.UserAuthenticator,
 	)
-	userGroup.GET(
+	userProfileGroup.GET(
 		".",
 		opts.UserHandler.GetProfile,
 	)
-	userGroup.POST(
+	userProfileGroup.POST(
 		".",
 		opts.UserHandler.CreateProfile,
 	)
-	userGroup.PUT(
+	userProfileGroup.PUT(
 		".",
 		opts.UserHandler.UpdateProfile,
 	)
-	userGroup.POST(
+	userProfileGroup.POST(
 		"/locations",
 		opts.UserHandler.AddLocation,
 	)
-	userGroup.PUT(
+	userProfileGroup.PUT(
 		"/locations",
 		opts.UserHandler.UpdateLocation,
 	)
-	userGroup.DELETE(
+	userProfileGroup.DELETE(
 		"/locations/:id",
 		opts.UserHandler.DeleteLocation,
 	)
 
 	doctorGroup := apiV1Group.Group(
 		"/doctors",
+	)
+
+	doctorProfileGroup := doctorGroup.Group(
+		"/profile",
 		opts.DoctorAuthenticator,
 	)
-	doctorGroup.GET(
+	doctorProfileGroup.GET(
 		".",
 		opts.DoctorHandler.GetProfile,
 	)
-	doctorGroup.POST(
+	doctorProfileGroup.POST(
 		".",
 		opts.DoctorHandler.CreateProfile,
 	)
-	doctorGroup.PUT(
+	doctorProfileGroup.PUT(
 		".",
 		opts.DoctorHandler.UpdateProfile,
 	)
-	doctorGroup.POST(
+	doctorProfileGroup.POST(
 		"/active-status",
 		opts.DoctorHandler.SetActiveStatus,
 	)
