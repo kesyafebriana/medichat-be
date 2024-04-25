@@ -150,6 +150,13 @@ func main() {
 	userService := service.NewUserService(service.UserServiceOpts{
 		DataRepository: dataRepository,
 	})
+	doctorService := service.NewDoctorService(service.DoctorServiceOpts{
+		DataRepository: dataRepository,
+	})
+
+	specializationService := service.NewSpecializationService(service.SpecializationServiceOpts{
+		DataRepository: dataRepository,
+	})
 
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
@@ -168,6 +175,13 @@ func main() {
 	userHandler := handler.NewUserHandler(handler.UserHandlerOpts{
 		UserSrv: userService,
 	})
+	doctorHandler := handler.NewDoctorHandler(handler.DoctorHandlerOpts{
+		DoctorSrv: doctorService,
+	})
+
+	specializationHandler := handler.NewSpecializationHandler(handler.SpecializationHandlerOpts{
+		SpecializationSrv: specializationService,
+	})
 
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
@@ -176,22 +190,28 @@ func main() {
 
 	authenticator := middleware.Authenticator(anyAccessProvider)
 	userAuthenticator := middleware.Authenticator(userAccessProvider)
+	doctorAuthenticator := middleware.Authenticator(doctorAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
-		AccountHandler:    accountHandler,
-		PingHandler:       pingHandler,
-		GoogleAuthHandler: googleAuthHandler,
-		GoogleHandler:     googleHandler,
-		UserHandler:       userHandler,
+		AccountHandler:        accountHandler,
+		PingHandler:           pingHandler,
+		GoogleAuthHandler:     googleAuthHandler,
+		GoogleHandler:         googleHandler,
+		UserHandler:           userHandler,
+		DoctorHandler:         doctorHandler,
+		SpecializationHandler: specializationHandler,
 
 		SessionKey: conf.SessionKey,
 
-		RequestID:         requestIDMid,
-		Authenticator:     authenticator,
-		UserAuthenticator: userAuthenticator,
-		CorsHandler:       corsHandler,
-		Logger:            loggerMid,
-		ErrorHandler:      errorHandler,
+		RequestID: requestIDMid,
+
+		Authenticator:       authenticator,
+		UserAuthenticator:   userAuthenticator,
+		DoctorAuthenticator: doctorAuthenticator,
+
+		CorsHandler:  corsHandler,
+		Logger:       loggerMid,
+		ErrorHandler: errorHandler,
 	})
 
 	srv := &http.Server{

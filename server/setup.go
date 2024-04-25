@@ -10,18 +10,21 @@ import (
 )
 
 type SetupServerOpts struct {
-	AccountHandler    *handler.AccountHandler
-	PingHandler       *handler.PingHandler
-	GoogleAuthHandler *handler.OAuth2Handler
-	GoogleHandler     *handler.GoogleHandler
-	UserHandler       *handler.UserHandler
+	AccountHandler        *handler.AccountHandler
+	PingHandler           *handler.PingHandler
+	GoogleAuthHandler     *handler.OAuth2Handler
+	GoogleHandler         *handler.GoogleHandler
+	UserHandler           *handler.UserHandler
+	DoctorHandler         *handler.DoctorHandler
+	SpecializationHandler *handler.SpecializationHandler
 
 	SessionKey []byte
 
 	RequestID gin.HandlerFunc
 
-	Authenticator     gin.HandlerFunc
-	UserAuthenticator gin.HandlerFunc
+	Authenticator       gin.HandlerFunc
+	UserAuthenticator   gin.HandlerFunc
+	DoctorAuthenticator gin.HandlerFunc
 
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
@@ -130,6 +133,35 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	userGroup.DELETE(
 		"/locations/:id",
 		opts.UserHandler.DeleteLocation,
+	)
+
+	doctorGroup := apiV1Group.Group(
+		"/doctors",
+		opts.DoctorAuthenticator,
+	)
+	doctorGroup.GET(
+		".",
+		opts.DoctorHandler.GetProfile,
+	)
+	doctorGroup.POST(
+		".",
+		opts.DoctorHandler.CreateProfile,
+	)
+	doctorGroup.PUT(
+		".",
+		opts.DoctorHandler.UpdateProfile,
+	)
+	doctorGroup.POST(
+		"/active-status",
+		opts.DoctorHandler.SetActiveStatus,
+	)
+
+	specializationGroup := apiV1Group.Group(
+		"/specializations",
+	)
+	specializationGroup.GET(
+		".",
+		opts.SpecializationHandler.GetAll,
 	)
 
 	router.NoRoute(func(ctx *gin.Context) {
