@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"medichat-be/apperror"
 	"medichat-be/domain"
+	"strings"
 )
 
 type categoryService struct {
@@ -22,6 +24,8 @@ func NewCategoryService(opts CategoryServiceOpts) *categoryService {
 
 func (s *categoryService) CreateCategory(ctx context.Context, category domain.Category) (domain.Category, error) {
 	categoryRepo := s.dataRepository.CategoryRepository()
+	category.Name = strings.TrimSpace(strings.ToLower(category.Name))
+	category.Slug = strings.ReplaceAll(category.Name, " ", "-")
 
 	c, err := categoryRepo.GetByName(ctx, category.Name)
 	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
@@ -55,16 +59,26 @@ func (s *categoryService) GetCategories(ctx context.Context, query domain.Catego
 		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
 
+	fmt.Printf("%#v\n", categories)
+	fmt.Printf("%#v\n", query)
+
 	pageInfo, err := categoryRepo.GetPageInfo(ctx, query)
 	if err != nil {
 		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
 
+	fmt.Printf("%#v", pageInfo)
+
 	pageInfo.ItemsPerPage = int(query.Limit)
 	if query.Limit == 0 {
 		pageInfo.ItemsPerPage = len(categories)
 	}
-	pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
+
+	if pageInfo.ItemsPerPage == 0 {
+		pageInfo.PageCount = 0
+	} else {
+		pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
+	}
 
 	return categories, pageInfo, nil
 }

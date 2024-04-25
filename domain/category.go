@@ -15,6 +15,7 @@ type Category struct {
 	ID       int64
 	ParentID *int64
 	Name     string
+	Slug     string
 }
 
 type CategoryWithParentName struct {
@@ -23,13 +24,14 @@ type CategoryWithParentName struct {
 }
 
 type CategoriesQuery struct {
-	ParentId *int64
-	Page     int64
-	Limit    int64
-	Level    int64
-	Term     string
-	SortBy   string
-	SortType string
+	ParentId   *int64
+	Page       int64
+	Limit      int64
+	Level      int64
+	Term       string
+	SortBy     string
+	SortType   string
+	ParentSlug string
 }
 
 type CategoryRepository interface {

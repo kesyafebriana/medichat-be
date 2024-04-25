@@ -41,14 +41,14 @@ func scanAccountWithCredentials(r RowScanner, a *domain.AccountWithCredentials) 
 }
 
 var (
-	categoryColumns               = " id, parent_id, name "
-	categoryWithParentNameColumns = " c.id, c.parent_id, c.name, c2.name as parent_name "
+	categoryColumns               = " id, parent_id, name, slug "
+	categoryWithParentNameColumns = " c.id, c.parent_id, c.name, c2.name as parent_name, c.slug "
 )
 
 func scanCategory(r RowScanner, c *domain.Category) error {
 	var nullParentId sql.NullInt64
 	if err := r.Scan(
-		&c.ID, &nullParentId, &c.Name,
+		&c.ID, &nullParentId, &c.Name, &c.Slug,
 	); err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func scanCategoryWithParentName(r RowScanner, c *domain.CategoryWithParentName) 
 	var nullParentId sql.NullInt64
 	var nullParentName sql.NullString
 	if err := r.Scan(
-		&c.Category.ID, &nullParentId, &c.Category.Name, &nullParentName,
+		&c.Category.ID, &nullParentId, &c.Category.Name, &nullParentName, &c.Category.Slug,
 	); err != nil {
 		return err
 	}

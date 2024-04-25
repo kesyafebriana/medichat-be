@@ -25,8 +25,15 @@ func (r *categoryRepository) GetCategoriesWithParentName(ctx context.Context, qu
 		WHERE c.deleted_at IS NULL
 	`)
 
-	sb.WriteString(` AND c.name ILIKE '%' || @name || '%' `)
-	args["name"] = query.Term
+	if query.Term != "" {
+		sb.WriteString(` AND c.name ILIKE '%' || @name || '%' `)
+		args["name"] = query.Term
+	}
+
+	if query.ParentSlug != "" {
+		sb.WriteString(` AND c2.slug = @parentSlug `)
+		args["parentSlug"] = query.ParentSlug
+	}
 
 	if query.Level != 0 {
 		var key string
@@ -109,8 +116,15 @@ func (r *categoryRepository) GetPageInfo(ctx context.Context, query domain.Categ
 		WHERE c.deleted_at IS NULL
 	`)
 
-	sb.WriteString(` AND c.name ILIKE '%' || @name || '%' `)
-	args["name"] = query.Term
+	if query.Term != "" {
+		sb.WriteString(` AND c.name ILIKE '%' || @name || '%' `)
+		args["name"] = query.Term
+	}
+
+	if query.ParentSlug != "" {
+		sb.WriteString(` AND c2.slug = @parentSlug `)
+		args["parentSlug"] = query.ParentSlug
+	}
 
 	if query.Level != 0 {
 		var key string
@@ -169,15 +183,15 @@ func (r *categoryRepository) GetById(ctx context.Context, id int64) (domain.Cate
 
 func (r *categoryRepository) Add(ctx context.Context, category domain.Category) (domain.Category, error) {
 	q := `
-		INSERT INTO categories(parent_id, name)
+		INSERT INTO categories(parent_id, name, slug)
 		VALUES
-		($1, $2)
+		($1, $2, $3)
 		RETURNING ` + categoryColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanCategory,
-		category.ParentID, category.Name,
+		category.ParentID, category.Name, category.Slug,
 	)
 }
 

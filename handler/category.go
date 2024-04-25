@@ -71,7 +71,7 @@ func (h *CategoryHandler) CreateCategoryLevelOne(ctx *gin.Context) {
 	}
 
 	category, err := h.categorySrv.CreateCategory(ctx, domain.Category{
-		Name: strings.ToLower(req.Name),
+		Name: req.Name,
 	})
 
 	if err != nil {
@@ -102,7 +102,7 @@ func (h *CategoryHandler) CreateCategoryLevelTwo(ctx *gin.Context) {
 	}
 
 	category, err := h.categorySrv.CreateCategory(ctx, domain.Category{
-		Name:     strings.ToLower(req.Name),
+		Name:     req.Name,
 		ParentID: &params.ID,
 	})
 	if err != nil {

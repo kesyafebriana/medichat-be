@@ -20,8 +20,37 @@ type GetCategoriesQuery struct {
 	Level      int64  `form:"level" binding:"numeric,omitempty,oneof=1 2"`
 	SortBy     string `form:"sort_by" binding:"omitempty,oneof=name level parent"`
 	SortType   string `form:"sort_type" binding:"omitempty,oneof=ASC DESC"`
-	ParentSlug string `form:"parent_slug" binding:""`
+	ParentSlug string `form:"parent_slug"`
 	Term       string `form:"term"`
+}
+
+type CategoryParams struct {
+	ID int64 `uri:"id" binding:"required"`
+}
+
+type CategoryResponse struct {
+	ID       int64  `json:"id"`
+	ParentID *int64 `json:"parent_id,omitempty"`
+	Name     string `json:"name"`
+	Slug     string `json:"slug"`
+}
+
+type CategoryWithParentNameResponse struct {
+	ID         int64   `json:"id"`
+	ParentID   *int64  `json:"parent_id,omitempty"`
+	Name       string  `json:"name"`
+	Slug       string  `json:"slug"`
+	ParentName *string `json:"parent_name,omitempty"`
+}
+
+type CategoriesWithParentNameResponse struct {
+	Categories []CategoryWithParentNameResponse `json:"categories"`
+	PageInfo   PageInfoResponse                 `json:"page_info"`
+}
+
+type CategoriesResponse struct {
+	Parent    CategoryResponse   `json:"parent"`
+	Childrens []CategoryResponse `json:"childrens"`
 }
 
 func (q *GetCategoriesQuery) ToCategoriesQuery() domain.CategoriesQuery {
@@ -46,40 +75,14 @@ func (q *GetCategoriesQuery) ToCategoriesQuery() domain.CategoriesQuery {
 		}
 	}
 	return domain.CategoriesQuery{
-		Page:     page,
-		Limit:    q.Limit,
-		Level:    q.Level,
-		Term:     q.Term,
-		SortBy:   sortBy,
-		SortType: sortType,
+		Page:       page,
+		Limit:      q.Limit,
+		Level:      q.Level,
+		Term:       q.Term,
+		SortBy:     sortBy,
+		SortType:   sortType,
+		ParentSlug: q.ParentSlug,
 	}
-}
-
-type CategoryParams struct {
-	ID int64 `uri:"id" binding:"required"`
-}
-
-type CategoryResponse struct {
-	ID       int64  `json:"id"`
-	ParentID *int64 `json:"parent_id,omitempty"`
-	Name     string `json:"name"`
-}
-
-type CategoryWithParentNameResponse struct {
-	ID         int64   `json:"id"`
-	ParentID   *int64  `json:"parent_id,omitempty"`
-	Name       string  `json:"name"`
-	ParentName *string `json:"parent_name,omitempty"`
-}
-
-type CategoriesWithParentNameResponse struct {
-	Categories []CategoryWithParentNameResponse `json:"categories"`
-	PageInfo   PageInfoResponse                 `json:"page_info"`
-}
-
-type CategoriesResponse struct {
-	Parent    CategoryResponse   `json:"parent"`
-	Childrens []CategoryResponse `json:"childrens"`
 }
 
 func NewCategoryResponse(c domain.Category) CategoryResponse {
@@ -87,6 +90,7 @@ func NewCategoryResponse(c domain.Category) CategoryResponse {
 		ID:       c.ID,
 		ParentID: c.ParentID,
 		Name:     c.Name,
+		Slug:     c.Slug,
 	}
 }
 
@@ -96,6 +100,7 @@ func NewCategoryWithParentNameResponse(c domain.CategoryWithParentName) Category
 		ParentID:   c.Category.ParentID,
 		Name:       c.Category.Name,
 		ParentName: c.ParentName,
+		Slug:       c.Category.Slug,
 	}
 }
 
