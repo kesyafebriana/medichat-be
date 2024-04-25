@@ -23,7 +23,6 @@ import (
 	"time"
 
 	firebase "firebase.google.com/go/v4"
-	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
@@ -109,16 +108,12 @@ func main() {
 
 	
 
-	cld, _ := cloudinary.NewFromParams(conf.CloudinaryName, conf.CloudinaryAPIKey, conf.CloudinaryAPISecret)
+	cld, _ := util.NewCloudinarylProvider()
 
 
 	chatService := service.NewChatServiceImpl(client,cld)
 
 	chatHandler := handler.NewChatHandler(chatService)
-
-		conf.RefreshSecret,
-		conf.RefreshTokenLifespan,
-	)
 
 	passwordHasher := cryptoutil.NewPasswordHasherBcrypt(constants.HashCost)
 
@@ -201,6 +196,7 @@ func main() {
 
 	router := server.SetupServer(server.SetupServerOpts{
 		AccountHandler:    accountHandler,
+		ChatHandler: chatHandler,
 		PingHandler:       pingHandler,
 		GoogleAuthHandler: googleAuthHandler,
 		GoogleHandler:     googleHandler,

@@ -23,4 +23,3 @@ type ChatMessage struct{
 	UserName string `json:"userName"`
 	File *multipart.FileHeader `json:"file"`
 }
-

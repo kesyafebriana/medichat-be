@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"medichat-be/constants"
 	"medichat-be/dto"
-	"time"
+	"medichat-be/util"
 
 	"cloud.google.com/go/firestore"
-	"github.com/cloudinary/cloudinary-go/v2"
-	"github.com/cloudinary/cloudinary-go/v2/api"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gin-gonic/gin"
 )
@@ -23,11 +21,11 @@ type ChatService interface {
 
 type chatServiceImpl struct {
 	client *firestore.Client
-	cloud *cloudinary.Cloudinary
+	cloud util.CloudinaryProvider
 
 }
 
-func NewChatServiceImpl(client  *firestore.Client, cloud *cloudinary.Cloudinary) *chatServiceImpl {
+func NewChatServiceImpl(client  *firestore.Client, cloud util.CloudinaryProvider) *chatServiceImpl {
 	return &chatServiceImpl{
 		client: client,
 		cloud: cloud,
@@ -99,7 +97,6 @@ func (u *chatServiceImpl) PostFile(req *dto.ChatMessage,roomId string,ctx *gin.C
 
 	fileName := req.File.Filename
 
-	now := time.Now()
 	resp := make(chan *uploader.UploadResult)
 	stringType := ""
 
@@ -109,15 +106,17 @@ func (u *chatServiceImpl) PostFile(req *dto.ChatMessage,roomId string,ctx *gin.C
 		stringType = "message/image"
 	}
 
+	
+
 	if(fileType == "application/pdf" || fileType == "image/png" || fileType == "image/jpeg" || fileType == "image/webp"){
 		go func() {
-			res, err := u.cloud.Upload.Upload(ctx,file,uploader.UploadParams{
-				Type: api.Upload,
-				ResourceType: "auto",
-				DisplayName: fileName,
-				FilenameOverride: fileName,
-				PublicID: roomId+now.Format("2006_01_02_T15_04_05"),
-			})
+			opts := util.SendFileOpts{
+				Context: ctx,
+				Filename: fileName,
+				Roomid: roomId,
+				File: file,
+			}
+			res, err := u.cloud.SendFile(opts)
 			if err != nil {
 				fmt.Println(err)
 				return
