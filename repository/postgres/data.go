@@ -82,3 +82,21 @@ func (r *dataRepository) VerifyEmailTokenRepository() domain.VerifyEmailTokenRep
 		querier: r.querier,
 	}
 }
+
+func (r *dataRepository) AdminRepository() domain.AdminRepository {
+	return nil
+}
+
+func (r *dataRepository) UserRepository() domain.UserRepository {
+	return &userRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) DoctorRepository() domain.DoctorRepository {
+	return nil
+}
+
+func (r *dataRepository) PharmacyManagerRepository() domain.PharmacyManagerRepository {
+	return nil
+}

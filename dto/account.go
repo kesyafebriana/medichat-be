@@ -1,6 +1,10 @@
 package dto
 
-import "medichat-be/domain"
+import (
+	"medichat-be/constants"
+	"medichat-be/domain"
+	"medichat-be/util"
+)
 
 type AccountLoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
@@ -24,8 +28,11 @@ func (r *AccountRegisterRequest) ToCredentials() domain.AccountRegisterCredentia
 		Account: domain.Account{
 			Email:         r.Email,
 			EmailVerified: false,
+			Name:          util.GetNameFromEmailAddress(r.Email),
+			PhotoURL:      constants.DefaultPhotoURL,
 			Role:          r.Role,
 			AccountType:   domain.AccountTypeRegular,
+			ProfileSet:    false,
 		},
 	}
 }
@@ -80,8 +87,13 @@ type AccountResponse struct {
 	ID            int64  `json:"id"`
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"email_verified"`
+	Name          string `json:"name"`
+	PhotoURL      string `json:"photo_url"`
 	Role          string `json:"role"`
 	AccountType   string `json:"account_type"`
+	ProfileSet    bool   `json:"profile_set"`
+
+	User *UserResponse `json:"user,omitempty"`
 }
 
 func NewAccountResponse(u domain.Account) AccountResponse {
@@ -89,7 +101,24 @@ func NewAccountResponse(u domain.Account) AccountResponse {
 		ID:            u.ID,
 		Email:         u.Email,
 		EmailVerified: u.EmailVerified,
+		Name:          u.Name,
+		PhotoURL:      u.PhotoURL,
 		Role:          u.Role,
 		AccountType:   u.AccountType,
+		ProfileSet:    u.ProfileSet,
+	}
+}
+
+func NewProfileResponse(a any) AccountResponse {
+	switch v := a.(type) {
+	case domain.Account:
+		return NewAccountResponse(v)
+	case domain.User:
+		ret := NewAccountResponse(v.Account)
+		u := NewUserResponse(v)
+		ret.User = &u
+		return ret
+	default:
+		return AccountResponse{}
 	}
 }

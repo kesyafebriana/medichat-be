@@ -147,6 +147,10 @@ func main() {
 		AccountService: accountService,
 	})
 
+	userService := service.NewUserService(service.UserServiceOpts{
+		DataRepository: dataRepository,
+	})
+
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
@@ -161,26 +165,33 @@ func main() {
 		Domain:    conf.WebDomain,
 	})
 
+	userHandler := handler.NewUserHandler(handler.UserHandlerOpts{
+		UserSrv: userService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
 	errorHandler := middleware.ErrorHandler()
 
 	authenticator := middleware.Authenticator(anyAccessProvider)
+	userAuthenticator := middleware.Authenticator(userAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
 		AccountHandler:    accountHandler,
 		PingHandler:       pingHandler,
 		GoogleAuthHandler: googleAuthHandler,
 		GoogleHandler:     googleHandler,
+		UserHandler:       userHandler,
 
 		SessionKey: conf.SessionKey,
 
-		RequestID:     requestIDMid,
-		Authenticator: authenticator,
-		CorsHandler:   corsHandler,
-		Logger:        loggerMid,
-		ErrorHandler:  errorHandler,
+		RequestID:         requestIDMid,
+		Authenticator:     authenticator,
+		UserAuthenticator: userAuthenticator,
+		CorsHandler:       corsHandler,
+		Logger:            loggerMid,
+		ErrorHandler:      errorHandler,
 	})
 
 	srv := &http.Server{

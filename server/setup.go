@@ -14,12 +14,14 @@ type SetupServerOpts struct {
 	PingHandler       *handler.PingHandler
 	GoogleAuthHandler *handler.OAuth2Handler
 	GoogleHandler     *handler.GoogleHandler
+	UserHandler       *handler.UserHandler
 
 	SessionKey []byte
 
 	RequestID gin.HandlerFunc
 
-	Authenticator gin.HandlerFunc
+	Authenticator     gin.HandlerFunc
+	UserAuthenticator gin.HandlerFunc
 
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
@@ -99,6 +101,35 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	googleGroup.GET(
 		"/callback",
 		opts.GoogleHandler.OAuth2Callback,
+	)
+
+	userGroup := apiV1Group.Group(
+		"/users",
+		opts.UserAuthenticator,
+	)
+	userGroup.GET(
+		".",
+		opts.UserHandler.GetProfile,
+	)
+	userGroup.POST(
+		".",
+		opts.UserHandler.CreateProfile,
+	)
+	userGroup.PUT(
+		".",
+		opts.UserHandler.UpdateProfile,
+	)
+	userGroup.POST(
+		"/locations",
+		opts.UserHandler.AddLocation,
+	)
+	userGroup.PUT(
+		"/locations",
+		opts.UserHandler.UpdateLocation,
+	)
+	userGroup.DELETE(
+		"/locations/:id",
+		opts.UserHandler.DeleteLocation,
 	)
 
 	router.NoRoute(func(ctx *gin.Context) {
