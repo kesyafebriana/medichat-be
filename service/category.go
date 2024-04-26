@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"medichat-be/apperror"
 	"medichat-be/domain"
+	"medichat-be/util"
 	"strings"
 )
 
@@ -22,10 +23,10 @@ func NewCategoryService(opts CategoryServiceOpts) *categoryService {
 	}
 }
 
-func (s *categoryService) CreateCategory(ctx context.Context, category domain.Category) (domain.Category, error) {
+func (s *categoryService) CreateCategoryLevelOne(ctx context.Context, category domain.Category) (domain.Category, error) {
 	categoryRepo := s.dataRepository.CategoryRepository()
 	category.Name = strings.TrimSpace(strings.ToLower(category.Name))
-	category.Slug = strings.ReplaceAll(category.Name, " ", "-")
+	category.Slug = util.GenerateSlug(category.Name)
 
 	c, err := categoryRepo.GetByName(ctx, category.Name)
 	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
@@ -36,19 +37,51 @@ func (s *categoryService) CreateCategory(ctx context.Context, category domain.Ca
 		return domain.Category{}, apperror.NewAlreadyExists("category")
 	}
 
-	if category.ParentID != nil {
-		_, err := categoryRepo.GetById(ctx, *category.ParentID)
-		if err != nil {
-			return domain.Category{}, apperror.Wrap(err)
-		}
-	}
-
 	savedCategory, err := categoryRepo.Add(ctx, category)
 	if err != nil {
 		return domain.Category{}, apperror.Wrap(err)
 	}
 
 	return savedCategory, nil
+}
+
+func (s *categoryService) CreateCategoryLevelTwo(ctx context.Context, category domain.Category, parentSlug string) (domain.CategoryWithParentName, error) {
+	categoryRepo := s.dataRepository.CategoryRepository()
+	category.Name = strings.TrimSpace(strings.ToLower(category.Name))
+	category.Slug = util.GenerateSlug(category.Name)
+
+	c, err := categoryRepo.GetByName(ctx, category.Name)
+	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
+		return domain.CategoryWithParentName{}, apperror.Wrap(err)
+	}
+
+	if c.Name == category.Name {
+		return domain.CategoryWithParentName{}, apperror.NewAlreadyExists("category")
+	}
+
+	c, err = categoryRepo.GetBySlug(ctx, parentSlug)
+	if err != nil {
+		if apperror.IsErrorCode(err, apperror.CodeNotFound) {
+			return domain.CategoryWithParentName{}, apperror.NewEntityNotFound(fmt.Sprintf(`category with slug %s`, parentSlug))
+		}
+		return domain.CategoryWithParentName{}, apperror.Wrap(err)
+	}
+
+	if c.ParentID != nil {
+		return domain.CategoryWithParentName{}, apperror.NewCreateCategoryParentRestrict()
+	}
+
+	category.ParentID = &c.ID
+	savedCategory, err := categoryRepo.Add(ctx, category)
+	if err != nil {
+		return domain.CategoryWithParentName{}, apperror.Wrap(err)
+	}
+
+	return domain.CategoryWithParentName{
+		Category:   savedCategory,
+		ParentName: &c.Name,
+	}, nil
+
 }
 
 func (s *categoryService) GetCategories(ctx context.Context, query domain.CategoriesQuery) ([]domain.CategoryWithParentName, domain.PageInfo, error) {
@@ -59,15 +92,10 @@ func (s *categoryService) GetCategories(ctx context.Context, query domain.Catego
 		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
 
-	fmt.Printf("%#v\n", categories)
-	fmt.Printf("%#v\n", query)
-
 	pageInfo, err := categoryRepo.GetPageInfo(ctx, query)
 	if err != nil {
 		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
-
-	fmt.Printf("%#v", pageInfo)
 
 	pageInfo.ItemsPerPage = int(query.Limit)
 	if query.Limit == 0 {
@@ -94,36 +122,47 @@ func (s *categoryService) GetCategoriesHierarchy(ctx context.Context, query doma
 	return categories, nil
 }
 
-func (s *categoryService) DeleteCategory(ctx context.Context, id int64) error {
+func (s *categoryService) GetCategoryBySlug(ctx context.Context, slug string) (domain.CategoryWithParentName, error) {
 	categoryRepo := s.dataRepository.CategoryRepository()
 
-	c, err := categoryRepo.GetById(ctx, id)
+	categories, err := categoryRepo.GetBySlugWithParentName(ctx, slug)
+	if err != nil {
+		return domain.CategoryWithParentName{}, apperror.Wrap(err)
+	}
+
+	return categories, nil
+}
+
+func (s *categoryService) DeleteCategory(ctx context.Context, slug string) error {
+	categoryRepo := s.dataRepository.CategoryRepository()
+
+	c, err := categoryRepo.GetBySlug(ctx, slug)
 	if err != nil {
 		return apperror.Wrap(err)
 	}
 
 	if c.ParentID != nil {
-		err = categoryRepo.SoftDeleteById(ctx, id)
+		err = categoryRepo.SoftDeleteBySlug(ctx, slug)
 		if err != nil {
 			return apperror.Wrap(err)
 		}
 		return nil
 	}
 
-	childs, err := categoryRepo.GetCategories(ctx, domain.CategoriesQuery{
-		ParentId: &id,
-	})
+	q := domain.DefaultCategoriesQuery()
+	q.ParentSlug = slug
+	childs, err := categoryRepo.GetCategoriesWithParentName(ctx, q)
 	if err != nil {
 		return apperror.Wrap(err)
 	}
 
-	ids := make([]int64, len(childs)+1)
-	ids[0] = id
+	slugs := make([]string, len(childs)+1)
+	slugs[0] = slug
 	for i := 0; i < len(childs); i++ {
-		ids[i+1] = childs[i].ID
+		slugs[i+1] = childs[i].Category.Slug
 	}
 
-	err = categoryRepo.BulkSoftDelete(ctx, ids)
+	err = categoryRepo.BulkSoftDeleteBySlug(ctx, slugs)
 	if err != nil {
 		return apperror.Wrap(err)
 	}
@@ -133,11 +172,39 @@ func (s *categoryService) DeleteCategory(ctx context.Context, id int64) error {
 func (s *categoryService) UpdateCategory(ctx context.Context, category domain.Category) (domain.Category, error) {
 	categoryRepo := s.dataRepository.CategoryRepository()
 
-	_, err := categoryRepo.GetById(ctx, category.ID)
+	c, err := categoryRepo.GetBySlug(ctx, category.Slug)
 	if err != nil {
+		if apperror.IsErrorCode(err, apperror.CodeNotFound) {
+			return domain.Category{}, apperror.NewEntityNotFound(fmt.Sprintf("category with slug %s", category.Slug))
+		}
 		return domain.Category{}, apperror.Wrap(err)
 	}
 
+	if category.Name == "" {
+		category.Name = c.Name
+	}
+
+	if category.ParentID == nil {
+		category.ParentID = c.ParentID
+	}
+
+	if category.ParentID != nil {
+		cParent, err := categoryRepo.GetById(ctx, *category.ParentID)
+		if err != nil {
+			if apperror.IsErrorCode(err, apperror.CodeNotFound) {
+				return domain.Category{}, apperror.NewEntityNotFound(fmt.Sprintf("category with id %d", *category.ParentID))
+			}
+			return domain.Category{}, apperror.Wrap(err)
+		}
+
+		if cParent.ParentID != nil {
+			return domain.Category{}, apperror.NewUpdateCategoryParentRestrict()
+		}
+	}
+
+	category.ID = c.ID
+	category.Name = strings.TrimSpace(strings.ToLower(category.Name))
+	category.Slug = util.GenerateSlug(category.Name)
 	updatedCategory, err := categoryRepo.Update(ctx, category)
 	if err != nil {
 		return domain.Category{}, apperror.Wrap(err)
