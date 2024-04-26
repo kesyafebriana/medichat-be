@@ -2,7 +2,6 @@ package util
 
 import (
 	"context"
-	"fmt"
 	"medichat-be/config"
 	"mime/multipart"
 	"time"
@@ -12,53 +11,48 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
-
 type CloudinaryProvider interface {
-	SendFile(sendFile SendFileOpts) (*uploader.UploadResult,error)
+	SendFile(sendFile SendFileOpts) (*uploader.UploadResult, error)
 }
 
 type cloudinaryProviderImpl struct {
 	cloud *cloudinary.Cloudinary
 }
 
-type SendFileOpts struct{
-	Context context.Context
+type SendFileOpts struct {
+	Context  context.Context
 	Filename string `json:"filename"`
-	Roomid string `json:"roomid"`
-	File multipart.File
+	Roomid   string `json:"roomid"`
+	File     multipart.File
 }
 
-
-func NewCloudinarylProvider() (*cloudinaryProviderImpl,error) {
+func NewCloudinarylProvider() (*cloudinaryProviderImpl, error) {
 	conf, err := config.LoadConfig()
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	cld, _ := cloudinary.NewFromParams(conf.CloudinaryName, conf.CloudinaryAPIKey, conf.CloudinaryAPISecret)
-	
+
 	return &cloudinaryProviderImpl{
 		cloud: cld,
-	},nil
+	}, nil
 }
 
-
-
-func (p *cloudinaryProviderImpl) SendFile(sendFile SendFileOpts) (*uploader.UploadResult,error) {
+func (p *cloudinaryProviderImpl) SendFile(sendFile SendFileOpts) (*uploader.UploadResult, error) {
 
 	now := time.Now()
 
 	params := uploader.UploadParams{
-		Type: api.Upload,
-		ResourceType: "auto",
+		Type:             api.Upload,
+		ResourceType:     "auto",
 		FilenameOverride: sendFile.Filename,
-		PublicID: sendFile.Roomid+now.Format("2006_01_02_T15_04_05"),
+		PublicID:         sendFile.Roomid + now.Format("2006_01_02_T15_04_05"),
 	}
 
-	res,err := p.cloud.Upload.Upload(sendFile.Context,sendFile.File,params)
+	res, err := p.cloud.Upload.Upload(sendFile.Context, sendFile.File, params)
 	if err != nil {
-		fmt.Println(err)
-		return nil,err
+		return nil, err
 	}
-	return res,nil
+	return res, nil
 }
