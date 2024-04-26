@@ -87,8 +87,8 @@ func main() {
 
 	refreshProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
-		conf.JWTSecret,
-		conf.JWTLifespan,
+		conf.RefreshSecret,
+		conf.RefreshTokenLifespan,
 	)
 	ctx := context.Background()
 	sa := option.WithCredentialsFile("./serviceAccount.json")
