@@ -12,8 +12,8 @@ import (
 type SetupServerOpts struct {
 	AccountHandler    *handler.AccountHandler
 	PingHandler       *handler.PingHandler
-	ChatHandler *handler.ChatHandler
-		GoogleAuthHandler *handler.OAuth2Handler
+	ChatHandler       *handler.ChatHandler
+	GoogleAuthHandler *handler.OAuth2Handler
 	GoogleHandler     *handler.GoogleHandler
 	CategoryHandler   *handler.CategoryHandler
 
@@ -120,11 +120,12 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 
 	categoryGroup := apiV1Group.Group("/categories")
 	categoryGroup.GET("/", opts.CategoryHandler.GetCategories)
+	categoryGroup.GET("/:slug", opts.CategoryHandler.GetCategoryBySlug)
 	categoryGroup.GET("/hierarchy", opts.CategoryHandler.GetCategoriesHierarchy)
 	categoryGroup.POST("/", opts.CategoryHandler.CreateCategoryLevelOne)
-	categoryGroup.POST("/:id", opts.CategoryHandler.CreateCategoryLevelTwo)
-	categoryGroup.PATCH("/:id", opts.CategoryHandler.UpdateCategory)
-	categoryGroup.DELETE("/:id", opts.CategoryHandler.DeleteCategory)
+	categoryGroup.POST("/:slug", opts.CategoryHandler.CreateCategoryLevelTwo)
+	categoryGroup.PATCH("/:slug", opts.CategoryHandler.UpdateCategory)
+	categoryGroup.DELETE("/:slug", opts.CategoryHandler.DeleteCategory)
 
 	return router
 }
