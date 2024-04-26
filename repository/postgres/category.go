@@ -105,6 +105,35 @@ func (r *categoryRepository) GetCategories(ctx context.Context, query domain.Cat
 	)
 }
 
+func (r *categoryRepository) GetBySlug(ctx context.Context, slug string) (domain.Category, error) {
+	q := `
+		SELECT ` + categoryColumns + `
+		FROM categories
+		WHERE deleted_at IS NULL AND slug = $1
+	`
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanCategory,
+		slug,
+	)
+}
+
+func (r *categoryRepository) GetBySlugWithParentName(ctx context.Context, slug string) (domain.CategoryWithParentName, error) {
+	q := `
+		SELECT ` + categoryWithParentNameColumns + `
+		FROM categories c LEFT JOIN categories c2 
+			ON c.parent_id = c2.id
+		WHERE c.deleted_at IS NULL AND c.slug = $1
+	`
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanCategoryWithParentName,
+		slug,
+	)
+}
+
 func (r *categoryRepository) GetPageInfo(ctx context.Context, query domain.CategoriesQuery) (domain.PageInfo, error) {
 	sb := strings.Builder{}
 	args := pgx.NamedArgs{}
@@ -199,42 +228,42 @@ func (r *categoryRepository) Update(ctx context.Context, category domain.Categor
 	q := `
 		UPDATE categories
 		SET name = $1, 
-			parent_id = $2
-		WHERE id = $3
-		RETURNING ` + categoryColumns
+			parent_id = $2,
+			slug = $3
+		WHERE id = $4 RETURNING ` + categoryColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanCategory,
-		category.Name, category.ParentID, category.ID,
+		category.Name, category.ParentID, category.Slug, category.ID,
 	)
 }
 
-func (r *categoryRepository) SoftDeleteById(ctx context.Context, id int64) error {
+func (r *categoryRepository) SoftDeleteBySlug(ctx context.Context, slug string) error {
 	q := `
 		UPDATE categories
 		SET deleted_at = now()
-		WHERE id = $1 
+		WHERE slug = $1 
 	`
 
 	return exec(
 		r.querier, ctx, q,
-		id,
+		slug,
 	)
 }
 
-func (r *categoryRepository) BulkSoftDelete(ctx context.Context, ids []int64) error {
+func (r *categoryRepository) BulkSoftDeleteBySlug(ctx context.Context, slugs []string) error {
 	sb := strings.Builder{}
-	params := make([]interface{}, len(ids))
+	params := make([]interface{}, len(slugs))
 	sb.WriteString(`
 		UPDATE categories
 		SET deleted_at = now()
-		WHERE id IN (`)
+		WHERE slug IN (`)
 
-	for i := 0; i < len(ids); i++ {
-		params[i] = ids[i]
+	for i := 0; i < len(slugs); i++ {
+		params[i] = slugs[i]
 		sb.WriteString(fmt.Sprintf("$%d", i+1))
-		if i != len(ids)-1 {
+		if i != len(slugs)-1 {
 			sb.WriteString(", ")
 		}
 	}
