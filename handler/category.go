@@ -5,7 +5,6 @@ import (
 	"medichat-be/domain"
 	"medichat-be/dto"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -60,6 +59,26 @@ func (h *CategoryHandler) GetCategories(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewCategoriesWithParentNameResponse(categories, pageInfo)))
 }
 
+func (h *CategoryHandler) GetCategoryBySlug(ctx *gin.Context) {
+	var params dto.CategorySlugParams
+
+	err := ctx.ShouldBindUri(&params)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	category, err := h.categorySrv.GetCategoryBySlug(ctx, params.Slug)
+	if err != nil {
+		ctx.Error(err)
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewCategoryWithParentNameResponse(category)))
+}
+
 func (h *CategoryHandler) CreateCategoryLevelOne(ctx *gin.Context) {
 	var req dto.CreateCategoryRequest
 
@@ -70,7 +89,7 @@ func (h *CategoryHandler) CreateCategoryLevelOne(ctx *gin.Context) {
 		return
 	}
 
-	category, err := h.categorySrv.CreateCategory(ctx, domain.Category{
+	category, err := h.categorySrv.CreateCategoryLevelOne(ctx, domain.Category{
 		Name: req.Name,
 	})
 
@@ -85,7 +104,7 @@ func (h *CategoryHandler) CreateCategoryLevelOne(ctx *gin.Context) {
 
 func (h *CategoryHandler) CreateCategoryLevelTwo(ctx *gin.Context) {
 	var req dto.CreateCategoryRequest
-	var params dto.CategoryParams
+	var params dto.CategorySlugParams
 
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -101,21 +120,20 @@ func (h *CategoryHandler) CreateCategoryLevelTwo(ctx *gin.Context) {
 		return
 	}
 
-	category, err := h.categorySrv.CreateCategory(ctx, domain.Category{
-		Name:     req.Name,
-		ParentID: &params.ID,
-	})
+	category, err := h.categorySrv.CreateCategoryLevelTwo(ctx, domain.Category{
+		Name: req.Name,
+	}, params.Slug)
 	if err != nil {
 		ctx.Error(err)
 		ctx.Abort()
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, dto.ResponseCreated(dto.NewCategoryResponse(category)))
+	ctx.JSON(http.StatusCreated, dto.ResponseCreated(dto.NewCategoryWithParentNameResponse(category)))
 }
 
 func (h *CategoryHandler) DeleteCategory(ctx *gin.Context) {
-	var params dto.CategoryParams
+	var params dto.CategorySlugParams
 
 	err := ctx.ShouldBindUri(&params)
 	if err != nil {
@@ -124,7 +142,7 @@ func (h *CategoryHandler) DeleteCategory(ctx *gin.Context) {
 		return
 	}
 
-	err = h.categorySrv.DeleteCategory(ctx, params.ID)
+	err = h.categorySrv.DeleteCategory(ctx, params.Slug)
 	if err != nil {
 		ctx.Error(err)
 		ctx.Abort()
@@ -136,7 +154,7 @@ func (h *CategoryHandler) DeleteCategory(ctx *gin.Context) {
 
 func (h *CategoryHandler) UpdateCategory(ctx *gin.Context) {
 	var req dto.UpdateCategoryRequest
-	var params dto.CategoryParams
+	var params dto.CategorySlugParams
 
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -153,9 +171,9 @@ func (h *CategoryHandler) UpdateCategory(ctx *gin.Context) {
 	}
 
 	category, err := h.categorySrv.UpdateCategory(ctx, domain.Category{
-		ID:       params.ID,
-		Name:     strings.ToLower(req.Name),
+		Name:     req.Name,
 		ParentID: req.ParentId,
+		Slug:     params.Slug,
 	})
 	if err != nil {
 		ctx.Error(err)
