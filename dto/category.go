@@ -3,6 +3,7 @@ package dto
 import (
 	"medichat-be/constants"
 	"medichat-be/domain"
+	"sort"
 )
 
 type CreateCategoryRequest struct {
@@ -10,8 +11,8 @@ type CreateCategoryRequest struct {
 }
 
 type UpdateCategoryRequest struct {
-	Name     string `json:"name" binding:"required"`
-	ParentId *int64 `json:"parent_id"`
+	Name     string `json:"name"`
+	ParentId *int64 `json:"parent_id" binding:"numeric,omitempty,min=1"`
 }
 
 type GetCategoriesQuery struct {
@@ -24,8 +25,8 @@ type GetCategoriesQuery struct {
 	Term       string `form:"term"`
 }
 
-type CategoryParams struct {
-	ID int64 `uri:"id" binding:"required"`
+type CategorySlugParams struct {
+	Slug string `uri:"slug" binding:"required"`
 }
 
 type CategoryResponse struct {
@@ -129,6 +130,10 @@ func NewCategoriesHierarchyResponse(categories []domain.Category) []CategoriesRe
 			Childrens: v,
 		})
 	}
+
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].Parent.ID < res[j].Parent.ID
+	})
 
 	return res
 }
