@@ -21,6 +21,20 @@ func NewDoctorService(opts DoctorServiceOpts) *doctorService {
 	}
 }
 
+func (s *doctorService) List(
+	ctx context.Context,
+	det domain.DoctorListDetails,
+) ([]domain.Doctor, error) {
+	doctorRepo := s.dataRepository.DoctorRepository()
+
+	doctors, err := doctorRepo.List(ctx, det)
+	if err != nil {
+		return nil, apperror.Wrap(err)
+	}
+
+	return doctors, nil
+}
+
 func (s *doctorService) CreateClosure(
 	ctx context.Context,
 	dets domain.DoctorCreateDetails,

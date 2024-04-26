@@ -16,6 +16,7 @@ type Doctor struct {
 	PhoneNumber    string
 	IsActive       bool
 	StartWorkDate  time.Time
+	YearExperience int
 	Price          int
 	CertificateURL string
 }
@@ -45,6 +46,22 @@ type DoctorUpdateDetails struct {
 	Price        *int
 }
 
+type DoctorListDetails struct {
+	SpecializationID  *int64
+	Name              *string
+	Gender            *string
+	MinPrice          *int
+	MaxPrice          *int
+	MinYearExperience *int
+
+	SortBy  string
+	SortAsc bool
+
+	Cursor   any
+	CursorID *int64
+	Limit    int
+}
+
 func (d *Doctor) ApplyUpdate(det DoctorUpdateDetails) {
 	if det.WorkLocation != nil {
 		d.WorkLocation = *det.WorkLocation
@@ -61,6 +78,8 @@ func (d *Doctor) ApplyUpdate(det DoctorUpdateDetails) {
 }
 
 type DoctorRepository interface {
+	List(ctx context.Context, det DoctorListDetails) ([]Doctor, error)
+
 	GetByID(ctx context.Context, id int64) (Doctor, error)
 	GetByIDAndLock(ctx context.Context, id int64) (Doctor, error)
 	IsExistByID(ctx context.Context, id int64) (bool, error)
@@ -74,6 +93,8 @@ type DoctorRepository interface {
 }
 
 type DoctorService interface {
+	List(ctx context.Context, det DoctorListDetails) ([]Doctor, error)
+
 	CreateProfile(ctx context.Context, det DoctorCreateDetails) (Doctor, error)
 	UpdateProfile(ctx context.Context, det DoctorUpdateDetails) (Doctor, error)
 	GetProfile(ctx context.Context) (Doctor, error)
