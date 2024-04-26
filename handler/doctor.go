@@ -4,6 +4,7 @@ import (
 	"medichat-be/apperror"
 	"medichat-be/domain"
 	"medichat-be/dto"
+	"medichat-be/util"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,33 @@ func NewDoctorHandler(opts DoctorHandlerOpts) *DoctorHandler {
 	return &DoctorHandler{
 		doctorSrv: opts.DoctorSrv,
 	}
+}
+
+func (h *DoctorHandler) ListDoctors(ctx *gin.Context) {
+	var q dto.DoctorListQuery
+
+	err := ctx.ShouldBindQuery(&q)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	det := q.ToDetails()
+
+	doctors, err := h.doctorSrv.List(ctx, det)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(util.MapSlice(doctors, func(d domain.Doctor) any {
+			return dto.NewProfileResponse(d)
+		})),
+	)
 }
 
 func (h *DoctorHandler) CreateProfile(ctx *gin.Context) {

@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"medichat-be/constants"
 	"medichat-be/domain"
 	"mime/multipart"
 	"time"
@@ -16,6 +17,7 @@ type DoctorResponse struct {
 	PhoneNumber    string `json:"phone_number"`
 	IsActive       bool   `json:"is_active"`
 	StartWorkDate  string `json:"start_working_date"`
+	YearExperience int    `json:"year_experience"`
 	Price          int    `json:"price"`
 	CertificateURL string `json:"certificate_url"`
 }
@@ -30,9 +32,54 @@ func NewDoctorResponse(d domain.Doctor) DoctorResponse {
 		PhoneNumber:    d.PhoneNumber,
 		IsActive:       d.IsActive,
 		StartWorkDate:  d.StartWorkDate.Format("2006-01-02"),
+		YearExperience: d.YearExperience,
 		Price:          d.Price,
 		CertificateURL: d.CertificateURL,
 	}
+}
+
+type DoctorListQuery struct {
+	SpecializationID  *int64  `form:"specialization_id"`
+	Name              *string `form:"name"`
+	Gender            *string `form:"gender"`
+	MinPrice          *int    `form:"min_price" binding:"omitempty,min=0"`
+	MaxPrice          *int    `form:"max_price" binding:"omitempty,min=0"`
+	MinYearExperience *int    `form:"min_year_experience" binding:"omitempty,min=0"`
+
+	SortBy *string `form:"sort_by" binding:"omitempty,doctor_sort_by"`
+	Sort   *string `form:"sort" binding:"omitempty,sort_order"`
+
+	Cursor *string `form:"cursor"`
+	Limit  *int    `form:"limit" binding:"omitempty,min=1"`
+}
+
+func (q *DoctorListQuery) ToDetails() domain.DoctorListDetails {
+	ret := domain.DoctorListDetails{
+		SpecializationID:  q.SpecializationID,
+		Name:              q.Name,
+		Gender:            q.Gender,
+		MinPrice:          q.MinPrice,
+		MaxPrice:          q.MaxPrice,
+		MinYearExperience: q.MinYearExperience,
+
+		SortBy:  constants.DoctorSortByName,
+		SortAsc: true,
+
+		Cursor: q.Cursor,
+		Limit:  10,
+	}
+
+	if q.SortBy != nil {
+		ret.SortBy = *q.SortBy
+	}
+	if q.Sort != nil && *q.Sort == constants.SortDesc {
+		ret.SortAsc = false
+	}
+	if q.Limit != nil {
+		ret.Limit = *q.Limit
+	}
+
+	return ret
 }
 
 type DoctorCreateRequest = MultipartForm[

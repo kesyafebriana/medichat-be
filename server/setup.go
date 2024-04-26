@@ -142,6 +142,10 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	doctorGroup := apiV1Group.Group(
 		"/doctors",
 	)
+	doctorGroup.GET(
+		".",
+		opts.DoctorHandler.ListDoctors,
+	)
 
 	doctorProfileGroup := doctorGroup.Group(
 		"/profile",

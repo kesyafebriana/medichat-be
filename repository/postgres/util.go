@@ -6,6 +6,20 @@ import (
 	"medichat-be/repository/postgis"
 )
 
+func getSortOrder(asc bool) string {
+	if asc {
+		return "ASC"
+	}
+	return "DESC"
+}
+
+func getSortCursorCmp(asc bool) string {
+	if asc {
+		return ">"
+	}
+	return "<"
+}
+
 func int64ScanDest(i *int64) []any {
 	return []any{i}
 }
@@ -88,7 +102,8 @@ func scanUserLocation(r RowScanner, ul *domain.UserLocation) error {
 var (
 	doctorColumns = `
 		id, account_id, specialization_id, str, work_location, gender,
-		phone_number, is_active, start_work_date, price, certificate_url
+		phone_number, is_active, start_work_date, price, certificate_url,
+		now()::date - start_work_date as year_experience
 	`
 
 	doctorJoinedColumns = `
@@ -97,7 +112,8 @@ var (
 		a.name, a.photo_url, a.profile_set,
 		d.specialization_id, s.name, 
 		d.str, d.work_location, d.gender, d.phone_number, d.is_active, 
-		d.start_work_date, d.price, d.certificate_url
+		d.start_work_date, d.price, d.certificate_url,
+		(now()::date - d.start_work_date) / 365 as year_experience
 	`
 )
 
@@ -107,7 +123,7 @@ func scanDoctor(r RowScanner, d *domain.Doctor) error {
 	return r.Scan(
 		&d.ID, &a.ID, &s.ID, &d.STR, &d.WorkLocation, &d.Gender,
 		&d.PhoneNumber, &d.IsActive, &d.StartWorkDate, &d.Price,
-		&d.CertificateURL,
+		&d.CertificateURL, &d.YearExperience,
 	)
 }
 
@@ -121,9 +137,25 @@ func scanDoctorJoined(r RowScanner, d *domain.Doctor) error {
 		&s.ID, &s.Name,
 		&d.STR, &d.WorkLocation, &d.Gender,
 		&d.PhoneNumber, &d.IsActive, &d.StartWorkDate, &d.Price,
-		&d.CertificateURL,
+		&d.CertificateURL, &d.YearExperience,
 	)
 }
+
+// func prefixDoctorSortColumn(c string) string {
+// 	cols := map[string]string{
+// 		constants.DoctorSortByYearExperience: "year_experience",
+// 		constants.DoctorSortByName:           "a.name",
+// 		constants.DoctorSortByPrice:          "d.price",
+// 	}
+// 	return cols[c]
+// }
+
+// func sortDoctor(col string, asc bool) string {
+// 	if col == constants.DoctorSortByYearExperience {
+// 		col = "start_work_date"
+// 	}
+// 	return fmt.Sprintf(" ORDER BY ")
+// }
 
 var (
 	specializationColumns = `
