@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"mime/multipart"
 	"time"
 )
 
@@ -26,14 +27,14 @@ type UserLocation struct {
 
 type UserCreateDetails struct {
 	Name        string
-	PhotoURL    string
+	Photo       multipart.File
 	DateOfBirth time.Time
 	Locations   []UserLocation
 }
 
 type UserUpdateDetails struct {
 	Name           *string
-	PhotoURL       *string
+	Photo          multipart.File
 	DateOfBirth    *time.Time
 	MainLocationID *int64
 }

@@ -44,7 +44,7 @@ func NewUserLocationResponse(ul domain.UserLocation) UserLocationResponse {
 
 type UserCreateRequest = MultipartForm[
 	struct {
-		Photo *multipart.FileHeader `form:"photo"`
+		Photo *multipart.FileHeader `form:"photo" binding:"omitempty,content_type=image/png"`
 	},
 	struct {
 		Name        string                      `json:"name" binding:"required,no_leading_trailing_space"`
@@ -70,12 +70,20 @@ func UserCreateRequestToDetails(r UserCreateRequest) (domain.UserCreateDetails, 
 		),
 	}
 
+	if r.Form.Photo != nil {
+		f, err := r.Form.Photo.Open()
+		if err != nil {
+			return domain.UserCreateDetails{}, err
+		}
+		ret.Photo = f
+	}
+
 	return ret, nil
 }
 
 type UserUpdateRequest = MultipartForm[
 	struct {
-		Photo *multipart.FileHeader `form:"photo"`
+		Photo *multipart.FileHeader `form:"photo" binding:"omitempty,content_type=image/png"`
 	},
 	struct {
 		Name           *string `json:"name" binding:"omitempty,no_leading_trailing_space"`
@@ -97,6 +105,14 @@ func UserUpdateRequestToDetails(r UserUpdateRequest) (domain.UserUpdateDetails, 
 			return domain.UserUpdateDetails{}, err
 		}
 		ret.DateOfBirth = &dob
+	}
+
+	if r.Form.Photo != nil {
+		f, err := r.Form.Photo.Open()
+		if err != nil {
+			return domain.UserUpdateDetails{}, err
+		}
+		ret.Photo = f
 	}
 
 	return ret, nil

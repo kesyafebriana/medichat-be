@@ -5,19 +5,24 @@ import (
 	"medichat-be/apperror"
 	"medichat-be/domain"
 	"medichat-be/util"
+
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
 type userService struct {
 	dataRepository domain.DataRepository
+	cloudProvider  util.CloudinaryProvider
 }
 
 type UserServiceOpts struct {
 	DataRepository domain.DataRepository
+	CloudProvider  util.CloudinaryProvider
 }
 
 func NewUserService(opts UserServiceOpts) *userService {
 	return &userService{
 		dataRepository: opts.DataRepository,
+		cloudProvider:  opts.CloudProvider,
 	}
 }
 
@@ -81,6 +86,13 @@ func (s *userService) CreateClosure(
 		}
 
 		account.Name = dets.Name
+		if dets.Photo != nil {
+			res, err := s.cloudProvider.UploadImage(ctx, dets.Photo, uploader.UploadParams{})
+			if err != nil {
+				return domain.User{}, apperror.Wrap(err)
+			}
+			account.PhotoURL = res.SecureURL
+		}
 
 		account, err = accountRepo.Update(ctx, account)
 		if err != nil {
@@ -139,6 +151,14 @@ func (s *userService) UpdateClosure(
 		if u.Name != nil {
 			account.Name = *u.Name
 		}
+		if u.Photo != nil {
+			res, err := s.cloudProvider.UploadImage(ctx, u.Photo, uploader.UploadParams{})
+			if err != nil {
+				return domain.User{}, apperror.Wrap(err)
+			}
+			account.PhotoURL = res.SecureURL
+		}
+
 		if u.DateOfBirth != nil {
 			user.DateOfBirth = *u.DateOfBirth
 		}
