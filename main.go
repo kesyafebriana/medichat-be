@@ -87,31 +87,27 @@ func main() {
 
 	refreshProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
-		conf.JWTSecret,
-		conf.JWTLifespan,
+		conf.RefreshSecret,
+		conf.RefreshTokenLifespan,
 	)
 	ctx := context.Background()
 	sa := option.WithCredentialsFile("./serviceAccount.json")
 	firebaseConfig := &firebase.Config{ProjectID: "rapunzel-medichat"}
 
-	app, err := firebase.NewApp(ctx, firebaseConfig,sa)
+	app, err := firebase.NewApp(ctx, firebaseConfig, sa)
 	if err != nil {
 		log.Fatalf("error initializing app: %v\n", err)
 	}
 
 	client, err := app.Firestore(ctx)
 	if err != nil {
-	log.Fatalf("Error connecting to firebase %v", err)
+		log.Fatalf("Error connecting to firebase %v", err)
 	}
 	defer client.Close()
 
-
-	
-
 	cld, _ := util.NewCloudinarylProvider()
 
-
-	chatService := service.NewChatServiceImpl(client,cld)
+	chatService := service.NewChatServiceImpl(client, cld)
 
 	chatHandler := handler.NewChatHandler(chatService)
 
@@ -173,6 +169,19 @@ func main() {
 		AccountService: accountService,
 	})
 
+	userService := service.NewUserService(service.UserServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+	doctorService := service.NewDoctorService(service.DoctorServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
+	specializationService := service.NewSpecializationService(service.SpecializationServiceOpts{
+		DataRepository: dataRepository,
+	})
+
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
@@ -187,27 +196,47 @@ func main() {
 		Domain:    conf.WebDomain,
 	})
 
+	userHandler := handler.NewUserHandler(handler.UserHandlerOpts{
+		UserSrv: userService,
+	})
+	doctorHandler := handler.NewDoctorHandler(handler.DoctorHandlerOpts{
+		DoctorSrv: doctorService,
+	})
+
+	specializationHandler := handler.NewSpecializationHandler(handler.SpecializationHandlerOpts{
+		SpecializationSrv: specializationService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
 	errorHandler := middleware.ErrorHandler()
 
 	authenticator := middleware.Authenticator(anyAccessProvider)
+	userAuthenticator := middleware.Authenticator(userAccessProvider)
+	doctorAuthenticator := middleware.Authenticator(doctorAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
-		AccountHandler:    accountHandler,
-		ChatHandler: chatHandler,
-		PingHandler:       pingHandler,
-		GoogleAuthHandler: googleAuthHandler,
-		GoogleHandler:     googleHandler,
+		AccountHandler:        accountHandler,
+		ChatHandler:           chatHandler,
+		PingHandler:           pingHandler,
+		GoogleAuthHandler:     googleAuthHandler,
+		GoogleHandler:         googleHandler,
+		UserHandler:           userHandler,
+		DoctorHandler:         doctorHandler,
+		SpecializationHandler: specializationHandler,
 
 		SessionKey: conf.SessionKey,
 
-		RequestID:     requestIDMid,
-		Authenticator: authenticator,
-		CorsHandler:   corsHandler,
-		Logger:        loggerMid,
-		ErrorHandler:  errorHandler,
+		RequestID: requestIDMid,
+
+		Authenticator:       authenticator,
+		UserAuthenticator:   userAuthenticator,
+		DoctorAuthenticator: doctorAuthenticator,
+
+		CorsHandler:  corsHandler,
+		Logger:       loggerMid,
+		ErrorHandler: errorHandler,
 	})
 
 	srv := &http.Server{
