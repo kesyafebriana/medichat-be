@@ -174,6 +174,19 @@ func main() {
 		AccountService: accountService,
 	})
 
+	userService := service.NewUserService(service.UserServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+	doctorService := service.NewDoctorService(service.DoctorServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
+	specializationService := service.NewSpecializationService(service.SpecializationServiceOpts{
+		DataRepository: dataRepository,
+	})
+
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
@@ -192,6 +205,17 @@ func main() {
 		Domain:    conf.WebDomain,
 	})
 
+	userHandler := handler.NewUserHandler(handler.UserHandlerOpts{
+		UserSrv: userService,
+	})
+	doctorHandler := handler.NewDoctorHandler(handler.DoctorHandlerOpts{
+		DoctorSrv: doctorService,
+	})
+
+	specializationHandler := handler.NewSpecializationHandler(handler.SpecializationHandlerOpts{
+		SpecializationSrv: specializationService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
@@ -199,23 +223,30 @@ func main() {
 
 	authenticator := middleware.Authenticator(anyAccessProvider)
 	adminAuthenticator := middleware.Authenticator(adminAccessProvider)
+	userAuthenticator := middleware.Authenticator(userAccessProvider)
+	doctorAuthenticator := middleware.Authenticator(doctorAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
-		AccountHandler:    accountHandler,
-		ChatHandler:       chatHandler,
-		PingHandler:       pingHandler,
-		GoogleAuthHandler: googleAuthHandler,
-		GoogleHandler:     googleHandler,
-		CategoryHandler:   categoryHandler,
+		AccountHandler:        accountHandler,
+		ChatHandler:           chatHandler,
+		PingHandler:           pingHandler,
+		GoogleAuthHandler:     googleAuthHandler,
+		GoogleHandler:         googleHandler,
+		UserHandler:           userHandler,
+		DoctorHandler:         doctorHandler,
+		SpecializationHandler: specializationHandler,
+		CategoryHandler:       categoryHandler,
 
 		SessionKey: conf.SessionKey,
 
-		RequestID:          requestIDMid,
-		Authenticator:      authenticator,
-		AdminAuthenticator: adminAuthenticator,
-		CorsHandler:        corsHandler,
-		Logger:             loggerMid,
-		ErrorHandler:       errorHandler,
+		RequestID:           requestIDMid,
+		Authenticator:       authenticator,
+		AdminAuthenticator:  adminAuthenticator,
+		UserAuthenticator:   userAuthenticator,
+		DoctorAuthenticator: doctorAuthenticator,
+		CorsHandler:         corsHandler,
+		Logger:              loggerMid,
+		ErrorHandler:        errorHandler,
 	})
 
 	srv := &http.Server{

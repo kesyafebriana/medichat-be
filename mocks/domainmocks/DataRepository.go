@@ -32,6 +32,22 @@ func (_m *DataRepository) AccountRepository() domain.AccountRepository {
 	return r0
 }
 
+// AdminRepository provides a mock function with given fields:
+func (_m *DataRepository) AdminRepository() domain.AdminRepository {
+	ret := _m.Called()
+
+	var r0 domain.AdminRepository
+	if rf, ok := ret.Get(0).(func() domain.AdminRepository); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.AdminRepository)
+		}
+	}
+
+	return r0
+}
+
 // Atomic provides a mock function with given fields: ctx, fn
 func (_m *DataRepository) Atomic(ctx context.Context, fn domain.AtomicFuncAny) (interface{}, error) {
 	ret := _m.Called(ctx, fn)
@@ -53,6 +69,38 @@ func (_m *DataRepository) Atomic(ctx context.Context, fn domain.AtomicFuncAny) (
 	}
 
 	return r0, r1
+}
+
+// DoctorRepository provides a mock function with given fields:
+func (_m *DataRepository) DoctorRepository() domain.DoctorRepository {
+	ret := _m.Called()
+
+	var r0 domain.DoctorRepository
+	if rf, ok := ret.Get(0).(func() domain.DoctorRepository); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.DoctorRepository)
+		}
+	}
+
+	return r0
+}
+
+// PharmacyManagerRepository provides a mock function with given fields:
+func (_m *DataRepository) PharmacyManagerRepository() domain.PharmacyManagerRepository {
+	ret := _m.Called()
+
+	var r0 domain.PharmacyManagerRepository
+	if rf, ok := ret.Get(0).(func() domain.PharmacyManagerRepository); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.PharmacyManagerRepository)
+		}
+	}
+
+	return r0
 }
 
 // RefreshTokenRepository provides a mock function with given fields:
@@ -96,6 +144,38 @@ func (_m *DataRepository) Sleep(ctx context.Context, duration time.Duration) err
 		r0 = rf(ctx, duration)
 	} else {
 		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SpecializationRepository provides a mock function with given fields:
+func (_m *DataRepository) SpecializationRepository() domain.SpecializationRepository {
+	ret := _m.Called()
+
+	var r0 domain.SpecializationRepository
+	if rf, ok := ret.Get(0).(func() domain.SpecializationRepository); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.SpecializationRepository)
+		}
+	}
+
+	return r0
+}
+
+// UserRepository provides a mock function with given fields:
+func (_m *DataRepository) UserRepository() domain.UserRepository {
+	ret := _m.Called()
+
+	var r0 domain.UserRepository
+	if rf, ok := ret.Get(0).(func() domain.UserRepository); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.UserRepository)
+		}
 	}
 
 	return r0

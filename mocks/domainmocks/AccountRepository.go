@@ -203,6 +203,41 @@ func (_m *AccountRepository) IsExistByID(ctx context.Context, id int64) (bool, e
 	return r0, r1
 }
 
+// ProfileSetByID provides a mock function with given fields: ctx, id
+func (_m *AccountRepository) ProfileSetByID(ctx context.Context, id int64) error {
+	ret := _m.Called(ctx, id)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Update provides a mock function with given fields: ctx, a
+func (_m *AccountRepository) Update(ctx context.Context, a domain.Account) (domain.Account, error) {
+	ret := _m.Called(ctx, a)
+
+	var r0 domain.Account
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Account) domain.Account); ok {
+		r0 = rf(ctx, a)
+	} else {
+		r0 = ret.Get(0).(domain.Account)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, domain.Account) error); ok {
+		r1 = rf(ctx, a)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdatePasswordByID provides a mock function with given fields: ctx, id, newHashedPassword
 func (_m *AccountRepository) UpdatePasswordByID(ctx context.Context, id int64, newHashedPassword string) error {
 	ret := _m.Called(ctx, id, newHashedPassword)

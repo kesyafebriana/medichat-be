@@ -16,8 +16,11 @@ type Account struct {
 	ID            int64
 	Email         string
 	EmailVerified bool
+	Name          string
+	PhotoURL      string
 	Role          string
 	AccountType   string
+	ProfileSet    bool
 }
 
 type AccountWithCredentials struct {
@@ -65,8 +68,10 @@ type AccountRepository interface {
 	IsExistByID(ctx context.Context, id int64) (bool, error)
 
 	Add(ctx context.Context, creds AccountWithCredentials) (Account, error)
+	Update(ctx context.Context, a Account) (Account, error)
 	UpdatePasswordByID(ctx context.Context, id int64, newHashedPassword string) error
 	VerifyEmailByID(ctx context.Context, id int64) error
+	ProfileSetByID(ctx context.Context, id int64) error
 }
 
 type AccountService interface {
@@ -85,5 +90,5 @@ type AccountService interface {
 
 	CreateTokensForAccount(accountID int64, role string) (AuthTokens, error)
 
-	GetProfile(ctx context.Context) (Account, error)
+	GetProfile(ctx context.Context) (any, error)
 }

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"medichat-be/apperror"
 	"medichat-be/domain"
 )
 
@@ -164,9 +165,9 @@ func (r *accountRepository) Add(
 	creds domain.AccountWithCredentials,
 ) (domain.Account, error) {
 	q := `
-		INSERT INTO accounts(email, email_verified, role, account_type, hashed_password)
+		INSERT INTO accounts(email, email_verified, role, account_type, hashed_password, name, photo_url, profile_set)
 		VALUES
-		($1, $2, $3, $4, $5)
+		($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING ` + accountColumns
 
 	return queryOne(
@@ -175,7 +176,30 @@ func (r *accountRepository) Add(
 		creds.Account.Email, creds.Account.EmailVerified,
 		creds.Account.Role, creds.Account.AccountType,
 		fromStringPtr(creds.HashedPassword),
+		creds.Account.Name, creds.Account.PhotoURL, creds.Account.ProfileSet,
 	)
+}
+
+func (r *accountRepository) Update(
+	ctx context.Context,
+	a domain.Account,
+) (domain.Account, error) {
+	q := `
+		UPDATE accounts
+		SET name = $2,
+			photo_url = $3
+		WHERE id = $1
+	`
+
+	err := execOne(
+		r.querier, ctx, q,
+		a.ID, a.Name, a.PhotoURL,
+	)
+	if err != nil {
+		return domain.Account{}, apperror.Wrap(err)
+	}
+
+	return a, nil
 }
 
 func (r *accountRepository) UpdatePasswordByID(
@@ -190,7 +214,7 @@ func (r *accountRepository) UpdatePasswordByID(
 		WHERE id = $2
 	`
 
-	return exec(
+	return execOne(
 		r.querier, ctx, q,
 		newHashedPassword, id,
 	)
@@ -207,7 +231,24 @@ func (r *accountRepository) VerifyEmailByID(
 		WHERE id = $1
 	`
 
-	return exec(
+	return execOne(
+		r.querier, ctx, q,
+		id,
+	)
+}
+
+func (r *accountRepository) ProfileSetByID(
+	ctx context.Context,
+	id int64,
+) error {
+	q := `
+		UPDATE accounts
+		SET profile_set = true,
+			updated_at = now()
+		WHERE id = $1
+	`
+
+	return execOne(
 		r.querier, ctx, q,
 		id,
 	)
