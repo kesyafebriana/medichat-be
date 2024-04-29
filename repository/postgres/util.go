@@ -89,6 +89,22 @@ func scanCategoryWithParentName(r RowScanner, c *domain.CategoryWithParentName) 
 	return nil
 }
 
+var (
+	userColumns = `
+		id, account_id, date_of_birth, main_location_id
+	`
+
+	userJoinedColumns = `
+		u.id,
+		u.account_id, a.email, a.email_verified, a.role, a.account_type,
+		a.name, a.photo_url, a.profile_set, u.date_of_birth, u.main_location_id
+	`
+
+	userLocationColumns = `
+		id, user_id, alias, address, coordinate, is_active
+	`
+)
+
 func scanUser(r RowScanner, u *domain.User) error {
 	a := &u.Account
 	return r.Scan(
