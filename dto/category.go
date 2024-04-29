@@ -3,16 +3,23 @@ package dto
 import (
 	"medichat-be/constants"
 	"medichat-be/domain"
+	"mime/multipart"
 	"sort"
 )
+
+type CreateCategoryForm struct {
+	Name  string                `form:"name" binding:"required"`
+	Image *multipart.FileHeader `form:"image"`
+}
 
 type CreateCategoryRequest struct {
 	Name string `json:"name" binding:"required"`
 }
 
-type UpdateCategoryRequest struct {
-	Name     string `json:"name"`
-	ParentId *int64 `json:"parent_id" binding:"numeric,omitempty,min=1"`
+type UpdateCategoryForm struct {
+	Name     string                `form:"name"`
+	ParentId *int64                `form:"parent_id" binding:"omitempty,numeric,min=1"`
+	Image    *multipart.FileHeader `form:"image"`
 }
 
 type GetCategoriesQuery struct {
@@ -30,10 +37,11 @@ type CategorySlugParams struct {
 }
 
 type CategoryResponse struct {
-	ID       int64  `json:"id"`
-	ParentID *int64 `json:"parent_id,omitempty"`
-	Name     string `json:"name"`
-	Slug     string `json:"slug"`
+	ID       int64   `json:"id"`
+	ParentID *int64  `json:"parent_id,omitempty"`
+	Name     string  `json:"name"`
+	Slug     string  `json:"slug"`
+	PhotoUrl *string `json:"photo_url,omitempty"`
 }
 
 type CategoryWithParentNameResponse struct {
@@ -41,6 +49,7 @@ type CategoryWithParentNameResponse struct {
 	ParentID   *int64  `json:"parent_id,omitempty"`
 	Name       string  `json:"name"`
 	Slug       string  `json:"slug"`
+	PhotoUrl   *string `json:"photo_url,omitempty"`
 	ParentName *string `json:"parent_name,omitempty"`
 }
 
@@ -87,11 +96,17 @@ func (q *GetCategoriesQuery) ToCategoriesQuery() domain.CategoriesQuery {
 }
 
 func NewCategoryResponse(c domain.Category) CategoryResponse {
+	photoUrl := c.PhotoUrl
+	if c.ParentID == nil && photoUrl == nil {
+		t := constants.DefaultCategoryImageURL
+		photoUrl = &t
+	}
 	return CategoryResponse{
 		ID:       c.ID,
 		ParentID: c.ParentID,
 		Name:     c.Name,
 		Slug:     c.Slug,
+		PhotoUrl: photoUrl,
 	}
 }
 
@@ -102,6 +117,7 @@ func NewCategoryWithParentNameResponse(c domain.CategoryWithParentName) Category
 		Name:       c.Category.Name,
 		ParentName: c.ParentName,
 		Slug:       c.Category.Slug,
+		PhotoUrl:   c.Category.PhotoUrl,
 	}
 }
 
@@ -115,6 +131,10 @@ func NewCategoriesHierarchyResponse(categories []domain.Category) []CategoriesRe
 		if categories[i].ParentID != nil {
 			childs = append(childs, cR)
 			continue
+		}
+		if cR.PhotoUrl == nil {
+			t := constants.DefaultCategoryImageURL
+			cR.PhotoUrl = &t
 		}
 		parentsMap[cR.ID] = &cR
 		categoriesMap[cR.ID] = []CategoryResponse{}
@@ -141,6 +161,10 @@ func NewCategoriesHierarchyResponse(categories []domain.Category) []CategoriesRe
 func NewCategoriesWithParentNameResponse(categories []domain.CategoryWithParentName, pageInfo domain.PageInfo) CategoriesWithParentNameResponse {
 	res := make([]CategoryWithParentNameResponse, len(categories))
 	for i := 0; i < len(categories); i++ {
+		if categories[i].Category.ParentID == nil && categories[i].Category.PhotoUrl == nil {
+			t := constants.DefaultCategoryImageURL
+			categories[i].Category.PhotoUrl = &t
+		}
 		res[i] = NewCategoryWithParentNameResponse(categories[i])
 	}
 	return CategoriesWithParentNameResponse{
