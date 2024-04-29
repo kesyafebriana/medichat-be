@@ -107,8 +107,8 @@ func (q *DoctorListQuery) ToDetails() (domain.DoctorListDetails, error) {
 
 type DoctorCreateRequest = MultipartForm[
 	struct {
-		Photo       *multipart.FileHeader `form:"photo"`
-		Certificate *multipart.FileHeader `form:"certificate" binding:"required"`
+		Photo       *multipart.FileHeader `form:"photo" binding:"omitempty,content_type=image/png"`
+		Certificate *multipart.FileHeader `form:"certificate" binding:"required,content_type=application/pdf"`
 	},
 	struct {
 		Name             string `json:"name" binding:"required,no_leading_trailing_space"`
@@ -142,12 +142,28 @@ func DoctorCreateRequestToDetails(r DoctorCreateRequest) (domain.DoctorCreateDet
 	}
 	ret.StartWorkDate = swd
 
+	if r.Form.Photo != nil {
+		f, err := r.Form.Photo.Open()
+		if err != nil {
+			return domain.DoctorCreateDetails{}, err
+		}
+		ret.Photo = f
+	}
+
+	if r.Form.Certificate != nil {
+		f, err := r.Form.Certificate.Open()
+		if err != nil {
+			return domain.DoctorCreateDetails{}, err
+		}
+		ret.Certificate = f
+	}
+
 	return ret, nil
 }
 
 type DoctorUpdateRequest = MultipartForm[
 	struct {
-		Photo *multipart.FileHeader `form:"photo"`
+		Photo *multipart.FileHeader `form:"photo" binding:"omitempty,content_type=image/png"`
 	},
 	struct {
 		Name         *string `json:"name" binding:"omitempty,no_leading_trailing_space"`
@@ -166,6 +182,14 @@ func DoctorUpdateRequestToDetails(r DoctorUpdateRequest) (domain.DoctorUpdateDet
 		Gender:       d.Gender,
 		PhoneNumber:  d.PhoneNumber,
 		Price:        d.Price,
+	}
+
+	if r.Form.Photo != nil {
+		f, err := r.Form.Photo.Open()
+		if err != nil {
+			return domain.DoctorUpdateDetails{}, err
+		}
+		ret.Photo = f
 	}
 
 	return ret, nil

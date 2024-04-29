@@ -5,19 +5,24 @@ import (
 	"medichat-be/apperror"
 	"medichat-be/domain"
 	"medichat-be/util"
+
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
 type doctorService struct {
 	dataRepository domain.DataRepository
+	cloudProvider  util.CloudinaryProvider
 }
 
 type DoctorServiceOpts struct {
 	DataRepository domain.DataRepository
+	CloudProvider  util.CloudinaryProvider
 }
 
 func NewDoctorService(opts DoctorServiceOpts) *doctorService {
 	return &doctorService{
 		dataRepository: opts.DataRepository,
+		cloudProvider:  opts.CloudProvider,
 	}
 }
 
@@ -78,15 +83,23 @@ func (s *doctorService) CreateClosure(
 			Specialization: domain.Specialization{
 				ID: dets.SpecializationID,
 			},
-			STR:            dets.STR,
-			WorkLocation:   dets.WorkLocation,
-			Gender:         dets.Gender,
-			PhoneNumber:    dets.PhoneNumber,
-			IsActive:       dets.IsActive,
-			StartWorkDate:  dets.StartWorkDate,
-			Price:          dets.Price,
-			CertificateURL: dets.CertificateURL,
+			STR:           dets.STR,
+			WorkLocation:  dets.WorkLocation,
+			Gender:        dets.Gender,
+			PhoneNumber:   dets.PhoneNumber,
+			IsActive:      dets.IsActive,
+			StartWorkDate: dets.StartWorkDate,
+			Price:         dets.Price,
 		}
+
+		if dets.Certificate == nil {
+			return domain.Doctor{}, apperror.NewInternalFmt("dets.Certificate should not be nil")
+		}
+		res, err := s.cloudProvider.UploadImage(ctx, dets.Certificate, uploader.UploadParams{})
+		if err != nil {
+			return domain.Doctor{}, apperror.Wrap(err)
+		}
+		doctor.CertificateURL = res.SecureURL
 
 		doctor, err = doctorRepo.Add(ctx, doctor)
 		if err != nil {
@@ -94,6 +107,13 @@ func (s *doctorService) CreateClosure(
 		}
 
 		account.Name = dets.Name
+		if dets.Photo != nil {
+			res, err := s.cloudProvider.UploadImage(ctx, dets.Photo, uploader.UploadParams{})
+			if err != nil {
+				return domain.Doctor{}, apperror.Wrap(err)
+			}
+			account.PhotoURL = res.SecureURL
+		}
 
 		account, err = accountRepo.Update(ctx, account)
 		if err != nil {
@@ -152,6 +172,14 @@ func (s *doctorService) UpdateClosure(
 		if dets.Name != nil {
 			account.Name = *dets.Name
 		}
+		if dets.Photo != nil {
+			res, err := s.cloudProvider.UploadImage(ctx, dets.Photo, uploader.UploadParams{})
+			if err != nil {
+				return domain.Doctor{}, apperror.Wrap(err)
+			}
+			account.PhotoURL = res.SecureURL
+		}
+
 		doctor.ApplyUpdate(dets)
 
 		account, err = accountRepo.Update(ctx, account)

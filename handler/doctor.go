@@ -2,6 +2,7 @@ package handler
 
 import (
 	"medichat-be/apperror"
+	"medichat-be/constants"
 	"medichat-be/domain"
 	"medichat-be/dto"
 	"medichat-be/util"
@@ -59,7 +60,14 @@ func (h *DoctorHandler) ListDoctors(ctx *gin.Context) {
 func (h *DoctorHandler) CreateProfile(ctx *gin.Context) {
 	var req dto.DoctorCreateRequest
 
-	err := dto.ShouldBindMultipart(ctx, &req)
+	err := util.LimitContentLength(ctx, constants.MaxFileSize)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	err = dto.ShouldBindMultipart(ctx, &req)
 	if err != nil {
 		ctx.Error(apperror.NewBadRequest(err))
 		ctx.Abort()
@@ -89,7 +97,14 @@ func (h *DoctorHandler) CreateProfile(ctx *gin.Context) {
 func (h *DoctorHandler) UpdateProfile(ctx *gin.Context) {
 	var req dto.DoctorUpdateRequest
 
-	err := dto.ShouldBindMultipart(ctx, &req)
+	err := util.LimitContentLength(ctx, constants.MaxFileSize*2)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	err = dto.ShouldBindMultipart(ctx, &req)
 	if err != nil {
 		ctx.Error(apperror.NewBadRequest(err))
 		ctx.Abort()

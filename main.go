@@ -171,9 +171,11 @@ func main() {
 
 	userService := service.NewUserService(service.UserServiceOpts{
 		DataRepository: dataRepository,
+		CloudProvider:  cld,
 	})
 	doctorService := service.NewDoctorService(service.DoctorServiceOpts{
 		DataRepository: dataRepository,
+		CloudProvider:  cld,
 	})
 
 	specializationService := service.NewSpecializationService(service.SpecializationServiceOpts{

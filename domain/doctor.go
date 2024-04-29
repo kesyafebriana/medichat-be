@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"mime/multipart"
 	"time"
 )
 
@@ -22,8 +23,8 @@ type Doctor struct {
 }
 
 type DoctorCreateDetails struct {
-	Name     string
-	PhotoURL string
+	Name  string
+	Photo multipart.File
 
 	SpecializationID int64
 	STR              string
@@ -33,12 +34,12 @@ type DoctorCreateDetails struct {
 	IsActive         bool
 	StartWorkDate    time.Time
 	Price            int
-	CertificateURL   string
+	Certificate      multipart.File
 }
 
 type DoctorUpdateDetails struct {
-	Name     *string
-	PhotoURL *string
+	Name  *string
+	Photo multipart.File
 
 	WorkLocation *string
 	Gender       *string
