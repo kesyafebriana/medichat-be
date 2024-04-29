@@ -14,6 +14,7 @@ type DataRepository interface {
 	Sleep(ctx context.Context, duration time.Duration) error
 
 	AccountRepository() AccountRepository
+	ProductRepository() ProductRepository
 	RefreshTokenRepository() RefreshTokenRepository
 	ResetPasswordTokenRepository() ResetPasswordTokenRepository
 	VerifyEmailTokenRepository() VerifyEmailTokenRepository

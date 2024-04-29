@@ -1,6 +1,8 @@
 package domain
 
-import "context"
+import (
+	"context"
+)
 
 const (
 )
@@ -8,7 +10,8 @@ const (
 type Product struct {
 	ID            int64
 	Name string
-	Picture string
+	Slug string
+	Picture *string
 	ProductDetailId int64
 	ProductCategoryId int64
 	IsActive bool
@@ -44,7 +47,11 @@ type ProductCategories struct{
 
 type ProductRepository interface {
 	GetByName(ctx context.Context, name string) (Product, error)
-	AddProduct(ctx context.Context, product AddProductRequest) (Product,error)
+	Add(ctx context.Context, product Product) (Product, error)
+	GetById(ctx context.Context, id int64) (Product, error)
+	Update(ctx context.Context, product Product) (Product, error)
+	SoftDeleteBySlug(ctx context.Context, slug string) error
+	BulkSoftDeleteBySlug(ctx context.Context, slugs []string) error
 }
 
 type ProductService interface {
