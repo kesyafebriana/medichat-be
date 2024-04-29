@@ -40,6 +40,20 @@ func (s *doctorService) List(
 	return doctors, nil
 }
 
+func (s *doctorService) GetByID(
+	ctx context.Context,
+	id int64,
+) (domain.Doctor, error) {
+	doctorRepo := s.dataRepository.DoctorRepository()
+
+	doctor, err := doctorRepo.GetByID(ctx, id)
+	if err != nil {
+		return domain.Doctor{}, apperror.Wrap(err)
+	}
+
+	return doctor, err
+}
+
 func (s *doctorService) CreateClosure(
 	ctx context.Context,
 	dets domain.DoctorCreateDetails,

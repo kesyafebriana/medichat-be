@@ -96,6 +96,8 @@ type DoctorRepository interface {
 type DoctorService interface {
 	List(ctx context.Context, det DoctorListDetails) ([]Doctor, error)
 
+	GetByID(ctx context.Context, id int64) (Doctor, error)
+
 	CreateProfile(ctx context.Context, det DoctorCreateDetails) (Doctor, error)
 	UpdateProfile(ctx context.Context, det DoctorUpdateDetails) (Doctor, error)
 	GetProfile(ctx context.Context) (Doctor, error)

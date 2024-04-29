@@ -57,6 +57,29 @@ func (h *DoctorHandler) ListDoctors(ctx *gin.Context) {
 	)
 }
 
+func (h *DoctorHandler) GetDoctorByID(ctx *gin.Context) {
+	var req dto.IDPathRequest
+
+	err := ctx.ShouldBindUri(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	doctor, err := h.doctorSrv.GetByID(ctx, req.ID)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewProfileResponse(doctor)),
+	)
+}
+
 func (h *DoctorHandler) CreateProfile(ctx *gin.Context) {
 	var req dto.DoctorCreateRequest
 

@@ -153,6 +153,10 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		".",
 		opts.DoctorHandler.ListDoctors,
 	)
+	doctorGroup.GET(
+		"/:id",
+		opts.DoctorHandler.GetDoctorByID,
+	)
 
 	doctorProfileGroup := doctorGroup.Group(
 		"/profile",
