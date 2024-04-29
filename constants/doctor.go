@@ -1,15 +1,15 @@
 package constants
 
 const (
-	DoctorSortByYearExperience = "year_experience"
-	DoctorSortByName           = "name"
-	DoctorSortByPrice          = "price"
+	DoctorSortByStartWorkDate = "start_work_date"
+	DoctorSortByName          = "name"
+	DoctorSortByPrice         = "price"
 )
 
 var (
 	DoctorSortBys = map[string]bool{
-		DoctorSortByYearExperience: true,
-		DoctorSortByName:           true,
-		DoctorSortByPrice:          true,
+		DoctorSortByStartWorkDate: true,
+		DoctorSortByName:          true,
+		DoctorSortByPrice:         true,
 	}
 )

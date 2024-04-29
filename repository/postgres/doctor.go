@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"log"
 	"medichat-be/apperror"
 	"medichat-be/constants"
 	"medichat-be/domain"
@@ -72,21 +71,18 @@ func (r *doctorRepository) List(
 		sortCol = "a.name"
 	case constants.DoctorSortByPrice:
 		sortCol = "d.price"
-	case constants.DoctorSortByYearExperience:
+	case constants.DoctorSortByStartWorkDate:
 		sortCol = "d.start_work_date"
-		sortAsc = !sortAsc
 	}
 
 	if det.CursorID != nil && det.Cursor != nil {
 		fmt.Fprintf(
 			&sb,
 			` AND (%s, d.id) %s ($%d, $%d) `,
-			sortCol,
-			getSortCursorCmp(sortAsc),
-			idx, idx+1,
+			sortCol, getSortCursorCmp(sortAsc), idx, idx+1,
 		)
 		idx += 2
-		args = append(args, det.CursorID, *det.CursorID)
+		args = append(args, det.Cursor, *det.CursorID)
 	}
 
 	fmt.Fprintf(
@@ -100,8 +96,6 @@ func (r *doctorRepository) List(
 	fmt.Fprintf(&sb, ` LIMIT $%d `, idx)
 	idx++
 	args = append(args, det.Limit)
-
-	log.Println(sb.String())
 
 	return queryFull(
 		r.querier, ctx, sb.String(),

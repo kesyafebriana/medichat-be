@@ -34,7 +34,12 @@ func (h *DoctorHandler) ListDoctors(ctx *gin.Context) {
 		return
 	}
 
-	det := q.ToDetails()
+	det, err := q.ToDetails()
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
 
 	doctors, err := h.doctorSrv.List(ctx, det)
 	if err != nil {

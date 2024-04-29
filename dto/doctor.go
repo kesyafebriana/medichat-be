@@ -4,6 +4,7 @@ import (
 	"medichat-be/constants"
 	"medichat-be/domain"
 	"mime/multipart"
+	"strconv"
 	"time"
 )
 
@@ -49,11 +50,12 @@ type DoctorListQuery struct {
 	SortBy *string `form:"sort_by" binding:"omitempty,doctor_sort_by"`
 	Sort   *string `form:"sort" binding:"omitempty,sort_order"`
 
-	Cursor *string `form:"cursor"`
-	Limit  *int    `form:"limit" binding:"omitempty,min=1"`
+	Cursor   *string `form:"cursor" binding:"required_with=CursorID"`
+	CursorID *int64  `form:"cursor_id" binding:"required_with=Cursor"`
+	Limit    *int    `form:"limit" binding:"omitempty,min=1"`
 }
 
-func (q *DoctorListQuery) ToDetails() domain.DoctorListDetails {
+func (q *DoctorListQuery) ToDetails() (domain.DoctorListDetails, error) {
 	ret := domain.DoctorListDetails{
 		SpecializationID:  q.SpecializationID,
 		Name:              q.Name,
@@ -65,8 +67,8 @@ func (q *DoctorListQuery) ToDetails() domain.DoctorListDetails {
 		SortBy:  constants.DoctorSortByName,
 		SortAsc: true,
 
-		Cursor: q.Cursor,
-		Limit:  10,
+		CursorID: q.CursorID,
+		Limit:    10,
 	}
 
 	if q.SortBy != nil {
@@ -79,7 +81,28 @@ func (q *DoctorListQuery) ToDetails() domain.DoctorListDetails {
 		ret.Limit = *q.Limit
 	}
 
-	return ret
+	if q.CursorID != nil && q.Cursor != nil {
+		switch ret.SortBy {
+		case constants.DoctorSortByStartWorkDate:
+			v, err := time.Parse("2006-01-02", *q.Cursor)
+			if err != nil {
+				return domain.DoctorListDetails{}, err
+			}
+			ret.Cursor = v
+
+		case constants.DoctorSortByPrice:
+			v, err := strconv.Atoi(*q.Cursor)
+			if err != nil {
+				return domain.DoctorListDetails{}, err
+			}
+			ret.Cursor = v
+
+		default:
+			ret.Cursor = *q.Cursor
+		}
+	}
+
+	return ret, nil
 }
 
 type DoctorCreateRequest = MultipartForm[
