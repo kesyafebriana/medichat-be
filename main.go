@@ -162,6 +162,7 @@ func main() {
 
 	categoryService := service.NewCategoryService(service.CategoryServiceOpts{
 		DataRepository: dataRepository,
+		Cloud:          cld,
 	})
 
 	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{
