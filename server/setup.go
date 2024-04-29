@@ -15,6 +15,7 @@ type SetupServerOpts struct {
 	ChatHandler           *handler.ChatHandler
 	GoogleAuthHandler     *handler.OAuth2Handler
 	GoogleHandler         *handler.GoogleHandler
+	CategoryHandler       *handler.CategoryHandler
 	UserHandler           *handler.UserHandler
 	DoctorHandler         *handler.DoctorHandler
 	SpecializationHandler *handler.SpecializationHandler
@@ -24,6 +25,7 @@ type SetupServerOpts struct {
 	RequestID gin.HandlerFunc
 
 	Authenticator       gin.HandlerFunc
+	AdminAuthenticator  gin.HandlerFunc
 	UserAuthenticator   gin.HandlerFunc
 	DoctorAuthenticator gin.HandlerFunc
 
@@ -195,6 +197,15 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		))
 		ctx.Abort()
 	})
+
+	categoryGroup := apiV1Group.Group("/categories")
+	categoryGroup.GET("/", opts.Authenticator, opts.CategoryHandler.GetCategories)
+	categoryGroup.GET("/:slug", opts.Authenticator, opts.CategoryHandler.GetCategoryBySlug)
+	categoryGroup.GET("/hierarchy", opts.Authenticator, opts.CategoryHandler.GetCategoriesHierarchy)
+	categoryGroup.POST("/", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelOne)
+	categoryGroup.POST("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelTwo)
+	categoryGroup.PATCH("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.UpdateCategory)
+	categoryGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.DeleteCategory)
 
 	return router
 }

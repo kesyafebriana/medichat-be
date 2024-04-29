@@ -160,6 +160,11 @@ func main() {
 		EmailProvider:                 emailProvider,
 	})
 
+	categoryService := service.NewCategoryService(service.CategoryServiceOpts{
+		DataRepository: dataRepository,
+		Cloud:          cld,
+	})
+
 	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{
 		OAuth2Provider: googleAuthProvider,
 	})
@@ -185,6 +190,10 @@ func main() {
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
+	})
+	categoryHandler := handler.NewCategoryHandler(handler.CategoryHandlerOpts{
+		CategorySrv: categoryService,
+		Domain:      conf.WebDomain,
 	})
 	pingHandler := handler.NewPingHandler()
 	googleAuthHandler := handler.NewOAuth2Handler(handler.OAuth2HandlerOpts{
@@ -213,6 +222,7 @@ func main() {
 	errorHandler := middleware.ErrorHandler()
 
 	authenticator := middleware.Authenticator(anyAccessProvider)
+	adminAuthenticator := middleware.Authenticator(adminAccessProvider)
 	userAuthenticator := middleware.Authenticator(userAccessProvider)
 	doctorAuthenticator := middleware.Authenticator(doctorAccessProvider)
 
@@ -225,18 +235,18 @@ func main() {
 		UserHandler:           userHandler,
 		DoctorHandler:         doctorHandler,
 		SpecializationHandler: specializationHandler,
+		CategoryHandler:       categoryHandler,
 
 		SessionKey: conf.SessionKey,
 
-		RequestID: requestIDMid,
-
+		RequestID:           requestIDMid,
 		Authenticator:       authenticator,
+		AdminAuthenticator:  adminAuthenticator,
 		UserAuthenticator:   userAuthenticator,
 		DoctorAuthenticator: doctorAuthenticator,
-
-		CorsHandler:  corsHandler,
-		Logger:       loggerMid,
-		ErrorHandler: errorHandler,
+		CorsHandler:         corsHandler,
+		Logger:              loggerMid,
+		ErrorHandler:        errorHandler,
 	})
 
 	srv := &http.Server{
