@@ -212,15 +212,15 @@ func (r *categoryRepository) GetById(ctx context.Context, id int64) (domain.Cate
 
 func (r *categoryRepository) Add(ctx context.Context, category domain.Category) (domain.Category, error) {
 	q := `
-		INSERT INTO categories(parent_id, name, slug)
+		INSERT INTO categories(parent_id, name, slug, photo_url)
 		VALUES
-		($1, $2, $3)
+		($1, $2, $3, $4)
 		RETURNING ` + categoryColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanCategory,
-		category.ParentID, category.Name, category.Slug,
+		category.ParentID, category.Name, category.Slug, category.PhotoUrl,
 	)
 }
 
@@ -229,13 +229,14 @@ func (r *categoryRepository) Update(ctx context.Context, category domain.Categor
 		UPDATE categories
 		SET name = $1, 
 			parent_id = $2,
-			slug = $3
-		WHERE id = $4 RETURNING ` + categoryColumns
+			slug = $3,
+			photo_url = $4
+		WHERE id = $5 RETURNING ` + categoryColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanCategory,
-		category.Name, category.ParentID, category.Slug, category.ID,
+		category.Name, category.ParentID, category.Slug, category.PhotoUrl, category.ID,
 	)
 }
 
