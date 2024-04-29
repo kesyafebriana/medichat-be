@@ -12,6 +12,7 @@ import (
 type SetupServerOpts struct {
 	AccountHandler        *handler.AccountHandler
 	PingHandler           *handler.PingHandler
+	ChatHandler           *handler.ChatHandler
 	GoogleAuthHandler     *handler.OAuth2Handler
 	GoogleHandler         *handler.GoogleHandler
 	UserHandler           *handler.UserHandler
@@ -52,6 +53,12 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/ping",
 		opts.PingHandler.Ping,
 	)
+
+	chatGroup := apiV1Group.Group("/chat")
+
+	chatGroup.POST("/send", opts.ChatHandler.Chat)
+	chatGroup.PATCH("/close", opts.ChatHandler.CloseRoom)
+	chatGroup.POST("/create", opts.ChatHandler.CreateRoom)
 
 	authGroup := apiV1Group.Group("/auth")
 	authGroup.POST(
