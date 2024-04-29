@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"mime/multipart"
 )
 
 const (
@@ -16,6 +17,7 @@ type Category struct {
 	ParentID *int64
 	Name     string
 	Slug     string
+	PhotoUrl *string
 }
 
 type CategoryWithParentName struct {
@@ -58,11 +60,11 @@ type CategoryRepository interface {
 }
 
 type CategoryService interface {
-	CreateCategoryLevelOne(ctx context.Context, category Category) (Category, error)
+	CreateCategoryLevelOne(ctx context.Context, category Category, file *multipart.File) (Category, error)
 	CreateCategoryLevelTwo(ctx context.Context, category Category, parentSlug string) (CategoryWithParentName, error)
 	GetCategories(ctx context.Context, query CategoriesQuery) ([]CategoryWithParentName, PageInfo, error)
 	GetCategoriesHierarchy(ctx context.Context, query CategoriesQuery) ([]Category, error)
 	GetCategoryBySlug(ctx context.Context, slug string) (CategoryWithParentName, error)
 	DeleteCategory(ctx context.Context, slug string) error
-	UpdateCategory(ctx context.Context, category Category) (Category, error)
+	UpdateCategory(ctx context.Context, category Category, file *multipart.File) (Category, error)
 }
