@@ -6,24 +6,30 @@ import (
 	"medichat-be/apperror"
 	"medichat-be/domain"
 	"medichat-be/util"
+	"mime/multipart"
 	"strings"
+
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
 type categoryService struct {
 	dataRepository domain.DataRepository
+	cloud          util.CloudinaryProvider
 }
 
 type CategoryServiceOpts struct {
 	DataRepository domain.DataRepository
+	Cloud          util.CloudinaryProvider
 }
 
 func NewCategoryService(opts CategoryServiceOpts) *categoryService {
 	return &categoryService{
 		dataRepository: opts.DataRepository,
+		cloud:          opts.Cloud,
 	}
 }
 
-func (s *categoryService) CreateCategoryLevelOne(ctx context.Context, category domain.Category) (domain.Category, error) {
+func (s *categoryService) CreateCategoryLevelOne(ctx context.Context, category domain.Category, file *multipart.File) (domain.Category, error) {
 	categoryRepo := s.dataRepository.CategoryRepository()
 	category.Name = strings.TrimSpace(strings.ToLower(category.Name))
 	category.Slug = util.GenerateSlug(category.Name)
@@ -35,6 +41,13 @@ func (s *categoryService) CreateCategoryLevelOne(ctx context.Context, category d
 
 	if c.Name == category.Name {
 		return domain.Category{}, apperror.NewAlreadyExists("category")
+	}
+
+	if file != nil {
+		res, err := s.cloud.UploadImage(ctx, *file, uploader.UploadParams{})
+		if err == nil {
+			category.PhotoUrl = &res.SecureURL
+		}
 	}
 
 	savedCategory, err := categoryRepo.Add(ctx, category)
@@ -169,7 +182,7 @@ func (s *categoryService) DeleteCategory(ctx context.Context, slug string) error
 	return nil
 }
 
-func (s *categoryService) UpdateCategory(ctx context.Context, category domain.Category) (domain.Category, error) {
+func (s *categoryService) UpdateCategory(ctx context.Context, category domain.Category, file *multipart.File) (domain.Category, error) {
 	categoryRepo := s.dataRepository.CategoryRepository()
 
 	c, err := categoryRepo.GetBySlug(ctx, category.Slug)
@@ -184,11 +197,15 @@ func (s *categoryService) UpdateCategory(ctx context.Context, category domain.Ca
 		category.Name = c.Name
 	}
 
-	if category.ParentID == nil {
+	if c.ParentID == nil {
+		category.ParentID = nil
+	}
+
+	if category.ParentID == nil && c.ParentID != nil {
 		category.ParentID = c.ParentID
 	}
 
-	if category.ParentID != nil {
+	if category.ParentID != nil && c.ParentID != nil {
 		cParent, err := categoryRepo.GetById(ctx, *category.ParentID)
 		if err != nil {
 			if apperror.IsErrorCode(err, apperror.CodeNotFound) {
@@ -199,6 +216,13 @@ func (s *categoryService) UpdateCategory(ctx context.Context, category domain.Ca
 
 		if cParent.ParentID != nil {
 			return domain.Category{}, apperror.NewUpdateCategoryParentRestrict()
+		}
+	}
+
+	if file != nil && c.ParentID == nil {
+		res, err := s.cloud.UploadImage(ctx, *file, uploader.UploadParams{})
+		if err == nil {
+			category.PhotoUrl = &res.SecureURL
 		}
 	}
 
