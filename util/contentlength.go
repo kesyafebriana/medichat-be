@@ -2,7 +2,6 @@ package util
 
 import (
 	"fmt"
-	"log"
 	"medichat-be/constants"
 	"strconv"
 
@@ -16,8 +15,6 @@ func LimitContentLength(ctx *gin.Context, max_length int) error {
 	if err != nil {
 		return err
 	}
-
-	log.Println(length)
 
 	if length > max_length {
 		return fmt.Errorf("content length exceeds %d bytes (got %d bytes)", max_length, length)
