@@ -13,6 +13,7 @@ import (
 
 type CloudinaryProvider interface {
 	SendFile(sendFile SendFileOpts) (*uploader.UploadResult, error)
+	UploadImage(ctx context.Context, image multipart.File, params uploader.UploadParams) (*uploader.UploadResult, error)
 }
 
 type cloudinaryProviderImpl struct {
@@ -51,6 +52,14 @@ func (p *cloudinaryProviderImpl) SendFile(sendFile SendFileOpts) (*uploader.Uplo
 	}
 
 	res, err := p.cloud.Upload.Upload(sendFile.Context, sendFile.File, params)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (p *cloudinaryProviderImpl) UploadImage(ctx context.Context, image multipart.File, params uploader.UploadParams) (*uploader.UploadResult, error) {
+	res, err := p.cloud.Upload.Upload(ctx, image, params)
 	if err != nil {
 		return nil, err
 	}
