@@ -89,3 +89,9 @@ func (r *dataRepository) VerifyEmailTokenRepository() domain.VerifyEmailTokenRep
 		querier: r.querier,
 	}
 }
+
+func (r *dataRepository) CategoryRepository() domain.CategoryRepository {
+	return &categoryRepository{
+		querier: r.querier,
+	}
+}

@@ -18,6 +18,7 @@ type DataRepository interface {
 	RefreshTokenRepository() RefreshTokenRepository
 	ResetPasswordTokenRepository() ResetPasswordTokenRepository
 	VerifyEmailTokenRepository() VerifyEmailTokenRepository
+	CategoryRepository() CategoryRepository
 }
 
 func RunAtomic[T any](

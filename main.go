@@ -94,24 +94,20 @@ func main() {
 	sa := option.WithCredentialsFile("./serviceAccount.json")
 	firebaseConfig := &firebase.Config{ProjectID: "rapunzel-medichat"}
 
-	app, err := firebase.NewApp(ctx, firebaseConfig,sa)
+	app, err := firebase.NewApp(ctx, firebaseConfig, sa)
 	if err != nil {
 		log.Fatalf("error initializing app: %v\n", err)
 	}
 
 	client, err := app.Firestore(ctx)
 	if err != nil {
-	log.Fatalf("Error connecting to firebase %v", err)
+		log.Fatalf("Error connecting to firebase %v", err)
 	}
 	defer client.Close()
 
-
-	
-
 	cld, _ := util.NewCloudinarylProvider()
 
-
-	chatService := service.NewChatServiceImpl(client,cld)
+	chatService := service.NewChatServiceImpl(client, cld)
 
 	chatHandler := handler.NewChatHandler(chatService)
 
@@ -164,6 +160,11 @@ func main() {
 		EmailProvider:                 emailProvider,
 	})
 
+	categoryService := service.NewCategoryService(service.CategoryServiceOpts{
+		DataRepository: dataRepository,
+		Cloud:          cld,
+	})
+
 	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{
 		OAuth2Provider: googleAuthProvider,
 	})
@@ -176,6 +177,10 @@ func main() {
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
+	})
+	categoryHandler := handler.NewCategoryHandler(handler.CategoryHandlerOpts{
+		CategorySrv: categoryService,
+		Domain:      conf.WebDomain,
 	})
 	pingHandler := handler.NewPingHandler()
 	googleAuthHandler := handler.NewOAuth2Handler(handler.OAuth2HandlerOpts{
@@ -193,21 +198,24 @@ func main() {
 	errorHandler := middleware.ErrorHandler()
 
 	authenticator := middleware.Authenticator(anyAccessProvider)
+	adminAuthenticator := middleware.Authenticator(adminAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
 		AccountHandler:    accountHandler,
-		ChatHandler: chatHandler,
+		ChatHandler:       chatHandler,
 		PingHandler:       pingHandler,
 		GoogleAuthHandler: googleAuthHandler,
 		GoogleHandler:     googleHandler,
+		CategoryHandler:   categoryHandler,
 
 		SessionKey: conf.SessionKey,
 
-		RequestID:     requestIDMid,
-		Authenticator: authenticator,
-		CorsHandler:   corsHandler,
-		Logger:        loggerMid,
-		ErrorHandler:  errorHandler,
+		RequestID:          requestIDMid,
+		Authenticator:      authenticator,
+		AdminAuthenticator: adminAuthenticator,
+		CorsHandler:        corsHandler,
+		Logger:             loggerMid,
+		ErrorHandler:       errorHandler,
 	})
 
 	srv := &http.Server{
