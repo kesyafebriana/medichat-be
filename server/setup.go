@@ -21,7 +21,8 @@ type SetupServerOpts struct {
 
 	RequestID gin.HandlerFunc
 
-	Authenticator gin.HandlerFunc
+	Authenticator      gin.HandlerFunc
+	AdminAuthenticator gin.HandlerFunc
 
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
@@ -119,13 +120,13 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	})
 
 	categoryGroup := apiV1Group.Group("/categories")
-	categoryGroup.GET("/", opts.CategoryHandler.GetCategories)
-	categoryGroup.GET("/:slug", opts.CategoryHandler.GetCategoryBySlug)
-	categoryGroup.GET("/hierarchy", opts.CategoryHandler.GetCategoriesHierarchy)
-	categoryGroup.POST("/", opts.CategoryHandler.CreateCategoryLevelOne)
-	categoryGroup.POST("/:slug", opts.CategoryHandler.CreateCategoryLevelTwo)
-	categoryGroup.PATCH("/:slug", opts.CategoryHandler.UpdateCategory)
-	categoryGroup.DELETE("/:slug", opts.CategoryHandler.DeleteCategory)
+	categoryGroup.GET("/", opts.Authenticator, opts.CategoryHandler.GetCategories)
+	categoryGroup.GET("/:slug", opts.Authenticator, opts.CategoryHandler.GetCategoryBySlug)
+	categoryGroup.GET("/hierarchy", opts.Authenticator, opts.CategoryHandler.GetCategoriesHierarchy)
+	categoryGroup.POST("/", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelOne)
+	categoryGroup.POST("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelTwo)
+	categoryGroup.PATCH("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.UpdateCategory)
+	categoryGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.DeleteCategory)
 
 	return router
 }

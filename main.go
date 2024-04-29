@@ -198,6 +198,7 @@ func main() {
 	errorHandler := middleware.ErrorHandler()
 
 	authenticator := middleware.Authenticator(anyAccessProvider)
+	adminAuthenticator := middleware.Authenticator(adminAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
 		AccountHandler:    accountHandler,
@@ -209,11 +210,12 @@ func main() {
 
 		SessionKey: conf.SessionKey,
 
-		RequestID:     requestIDMid,
-		Authenticator: authenticator,
-		CorsHandler:   corsHandler,
-		Logger:        loggerMid,
-		ErrorHandler:  errorHandler,
+		RequestID:          requestIDMid,
+		Authenticator:      authenticator,
+		AdminAuthenticator: adminAuthenticator,
+		CorsHandler:        corsHandler,
+		Logger:             loggerMid,
+		ErrorHandler:       errorHandler,
 	})
 
 	srv := &http.Server{
