@@ -25,6 +25,7 @@ type DataRepository interface {
 	PharmacyManagerRepository() PharmacyManagerRepository
 
 	SpecializationRepository() SpecializationRepository
+	PharmacyRepository() PharmacyRepository
 }
 
 func RunAtomic[T any](

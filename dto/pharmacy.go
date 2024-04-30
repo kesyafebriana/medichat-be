@@ -64,31 +64,28 @@ func (p PharmacyOperationCreateRequest) ToEntity() domain.PharmacyOperations {
 	}
 }
 
-type PharmacyCreateRequest = MultipartForm[
-	struct {
-		Logo *multipart.FileHeader `form:"logo"`
-	},
-	struct {
-		Name               string                           `json:"name" binding:"required,no_leading_trailing_space"`
-		Address            string                           `json:"address" binding:"required,no_leading_trailing_space"`
-		Coordinate         CoordinateDTO                    `json:"coordinate" binding:"required"`
-		PharmacistName     string                           `json:"pharmacist_name" binding:"required,no_leading_trailing_space"`
-		PharmacistLicense  string                           `json:"pharmacist_license" binding:"required,no_leading_trailing_space"`
-		PharmacistPhone    string                           `json:"pharmacist_phone" binding:"required,no_leading_trailing_space"`
-		PharmacyOperations []PharmacyOperationCreateRequest `json:"pharmacy_operations" binding:"required,min=1,dive,required"`
-	},
-]
+type PharmacyCreateRequest struct {
+	Name string `json:"name" binding:"required,no_leading_trailing_space"`
+	// ManagerID          int64                            `json:"manager_id" binding:"required"`
+	// Address            string                           `json:"address" binding:"required,no_leading_trailing_space"`
+	// Coordinate         CoordinateDTO                    `json:"coordinate" binding:"required"`
+	// PharmacistName     string                           `json:"pharmacist_name" binding:"required,no_leading_trailing_space"`
+	// PharmacistLicense  string                           `json:"pharmacist_license" binding:"required,no_leading_trailing_space"`
+	// PharmacistPhone    string                           `json:"pharmacist_phone" binding:"required,no_leading_trailing_space"`
+	// PharmacyOperations []PharmacyOperationCreateRequest `json:"pharmacy_operations" binding:"required,min=1,dive,required"`
+}
 
 func PharmacyCreateToDetails(p PharmacyCreateRequest) domain.PharmacyCreateDetails {
 	return domain.PharmacyCreateDetails{
-		Name:            p.Data.Name,
-		Address:         p.Data.Address,
-		Coordinate:      p.Data.Coordinate.ToCoordinate(),
-		PharmacistName:  p.Data.PharmacistName,
-		PharmacistPhone: p.Data.PharmacistName,
-		PharmacyOperations: util.MapSlice(p.Data.PharmacyOperations, func(p PharmacyOperationCreateRequest) domain.PharmacyOperations {
-			return p.ToEntity()
-		}),
+		Name: p.Name,
+		// ManagerID:       p.Data.ManagerID,
+		// Address:         p.Data.Address,
+		// Coordinate:      p.Data.Coordinate.ToCoordinate(),
+		// PharmacistName:  p.Data.PharmacistName,
+		// PharmacistPhone: p.Data.PharmacistName,
+		// PharmacyOperations: util.MapSlice(p.Data.PharmacyOperations, func(p PharmacyOperationCreateRequest) domain.PharmacyOperations {
+		// 	return p.ToEntity()
+		// }),
 	}
 }
 

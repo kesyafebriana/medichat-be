@@ -187,6 +187,10 @@ func main() {
 		DataRepository: dataRepository,
 	})
 
+	pharmacyService := service.NewPharmacyService(service.PharmacyServiceOpts{
+		DataRepository: dataRepository,
+	})
+
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
@@ -216,6 +220,10 @@ func main() {
 		SpecializationSrv: specializationService,
 	})
 
+	pharmacyHandler := handler.NewPharmacyHandler(handler.PharmacyHandlerOpts{
+		PharmacySrv: pharmacyService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
@@ -236,6 +244,7 @@ func main() {
 		DoctorHandler:         doctorHandler,
 		SpecializationHandler: specializationHandler,
 		CategoryHandler:       categoryHandler,
+		PharmacyHandler:   pharmacyHandler,
 
 		SessionKey: conf.SessionKey,
 

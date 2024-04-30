@@ -19,6 +19,7 @@ type SetupServerOpts struct {
 	UserHandler           *handler.UserHandler
 	DoctorHandler         *handler.DoctorHandler
 	SpecializationHandler *handler.SpecializationHandler
+	PharmacyHandler       *handler.PharmacyHandler
 
 	SessionKey []byte
 
@@ -61,6 +62,10 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	chatGroup.POST("/send", opts.ChatHandler.Chat)
 	chatGroup.PATCH("/close", opts.ChatHandler.CloseRoom)
 	chatGroup.POST("/create", opts.ChatHandler.CreateRoom)
+	apiV1Group.POST(
+		"/pharmacies",
+		opts.PharmacyHandler.CreatePharmacy,
+	)
 
 	authGroup := apiV1Group.Group("/auth")
 	authGroup.POST(

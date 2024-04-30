@@ -114,3 +114,9 @@ func (r *dataRepository) SpecializationRepository() domain.SpecializationReposit
 		querier: r.querier,
 	}
 }
+
+func (r *dataRepository) PharmacyRepository() domain.PharmacyRepository {
+	return &pharmacyRepository{
+		querier: r.querier,
+	}
+}
