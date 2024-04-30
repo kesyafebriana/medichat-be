@@ -142,5 +142,7 @@ func (r *dataRepository) ShipmentMethodRepository() domain.ShipmentMethodReposit
 }
 
 func (r *dataRepository) StockRepository() domain.StockRepository {
-	return nil
+	return &stockRepository{
+		querier: r.querier,
+	}
 }
