@@ -268,7 +268,7 @@ func (h *AccountHandler) RefreshTokens(ctx *gin.Context) {
 }
 
 func (h *AccountHandler) GetProfile(ctx *gin.Context) {
-	account, err := h.accountSrv.GetProfile(ctx)
+	profile, err := h.accountSrv.GetProfile(ctx)
 	if err != nil {
 		ctx.Error(apperror.Wrap(err))
 		ctx.Abort()
@@ -277,6 +277,6 @@ func (h *AccountHandler) GetProfile(ctx *gin.Context) {
 
 	ctx.JSON(
 		http.StatusOK,
-		dto.ResponseOk(dto.NewAccountResponse(account)),
+		dto.ResponseOk(dto.NewProfileResponse(profile)),
 	)
 }

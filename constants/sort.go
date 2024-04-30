@@ -1,6 +1,13 @@
 package constants
 
 const (
-	SortASC  = "ASC"
-	SortDESC = "DESC"
+	SortAsc  = "asc"
+	SortDesc = "desc"
+)
+
+var (
+	SortOrders = map[string]bool{
+		SortAsc:  true,
+		SortDesc: true,
+	}
 )

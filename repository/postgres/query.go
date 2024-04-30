@@ -38,7 +38,7 @@ func queryFull[T any](
 	}
 	defer rows.Close()
 
-	var ret []T
+	var ret []T = make([]T, 0)
 
 	for rows.Next() {
 		var t T
@@ -108,6 +108,28 @@ func exec(
 	_, err := querier.ExecContext(ctx, query, args...)
 	if err != nil {
 		return apperror.Wrap(err)
+	}
+
+	return nil
+}
+
+func execOne(
+	querier Querier,
+	ctx context.Context,
+	query string,
+	args ...any,
+) error {
+	res, err := querier.ExecContext(ctx, query, args...)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+	if rows != 1 {
+		return apperror.NewInternalFmt("query: rows affected is not 1 (got %d)", rows)
 	}
 
 	return nil

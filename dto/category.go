@@ -74,14 +74,14 @@ func (q *GetCategoriesQuery) ToCategoriesQuery() domain.CategoriesQuery {
 		sortBy = domain.CategorySortById
 	}
 	if q.SortType == "" {
-		sortType = constants.SortASC
+		sortType = constants.SortAsc
 	}
 	if q.SortBy == domain.CategorySortByLevel {
 		sortBy = "parent_id"
-		if sortType == constants.SortASC {
-			sortType = constants.SortDESC
+		if sortType == constants.SortAsc {
+			sortType = constants.SortDesc
 		} else {
-			sortType = constants.SortASC
+			sortType = constants.SortAsc
 		}
 	}
 	return domain.CategoriesQuery{
