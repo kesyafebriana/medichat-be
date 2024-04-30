@@ -18,13 +18,11 @@ type ProductHandler struct {
 
 type ProductHandlerOpts struct {
 	ProductSrv domain.ProductService
-	Domain      string
 }
 
 func NewProductHandler(opts ProductHandlerOpts) *ProductHandler {
 	return &ProductHandler{
 		productsrv: opts.ProductSrv,
-		domain:      opts.Domain,
 	}
 }
 
@@ -37,14 +35,14 @@ func (h *ProductHandler) GetProducts(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
-
-	products, pageInfo, err := h.productsrv.GetProducts(ctx, query.ToProductsQuery())
+	products, pageInfo, err := h.productsrv.GetProducts(ctx,query.ToProductsQuery() )
+	
 	if err != nil {
 		ctx.Error(err)
 		ctx.Abort()
 		return
 	}
-
+	
 	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewProductsResponse(products, pageInfo)))
 }
 

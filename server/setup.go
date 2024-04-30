@@ -19,6 +19,7 @@ type SetupServerOpts struct {
 	UserHandler           *handler.UserHandler
 	DoctorHandler         *handler.DoctorHandler
 	SpecializationHandler *handler.SpecializationHandler
+	
 	ProductHandler    *handler.ProductHandler
 
 	SessionKey []byte

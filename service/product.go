@@ -116,6 +116,8 @@ func (s *productService) GetProducts(ctx context.Context, query domain.ProductsQ
 		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
 
+	fmt.Println(products);
+
 	pageInfo, err := productRepo.GetPageInfo(ctx, query)
 	if err != nil {
 		return nil, domain.PageInfo{}, apperror.Wrap(err)

@@ -61,7 +61,7 @@ type GetProductsQuery struct {
 	Page       int64  `form:"page" binding:"numeric,omitempty,min=1"`
 	Limit      int64  `form:"limit" binding:"numeric,omitempty,min=1"`
 	Term       string `form:"term"`
-	SortBy     string `form:"sort_by" binding:"omitempty,oneof=name level parent"`
+	SortBy     string `form:"sort_by" binding:"omitempty,oneof=name slug"`
 	SortType   string `form:"sort_type" binding:"omitempty,oneof=ASC DESC"`
 }
 
@@ -89,13 +89,13 @@ func (q *GetProductsQuery) ToProductsQuery() domain.ProductsQuery {
 	}
 
 	if q.SortType == "" {
-		sortType = constants.SortASC
+		sortType = constants.SortAsc
 	}
 
-	if sortType == constants.SortASC {
-		sortType = constants.SortDESC
+	if sortType == constants.SortAsc {
+		sortType = constants.SortDesc
 	} else {
-		sortType = constants.SortASC
+		sortType = constants.SortAsc
 	}
 	return domain.ProductsQuery{
 		Page:       page,
