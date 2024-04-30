@@ -37,7 +37,7 @@ func (s *stockService) GetByID(
 func (s *stockService) List(
 	ctx context.Context,
 	det domain.StockListDetails,
-) ([]domain.Stock, error) {
+) ([]domain.StockJoined, error) {
 	stockRepo := s.dataRepository.StockRepository()
 
 	stocks, err := stockRepo.List(ctx, det)
@@ -171,7 +171,7 @@ func (s *stockService) GetMutationByID(
 func (s *stockService) ListMutations(
 	ctx context.Context,
 	det domain.StockMutationListDetails,
-) ([]domain.StockMutation, error) {
+) ([]domain.StockMutationJoined, error) {
 	stockRepo := s.dataRepository.StockRepository()
 
 	muts, err := stockRepo.ListMutations(ctx, det)
