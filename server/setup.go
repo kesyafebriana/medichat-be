@@ -110,6 +110,20 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		opts.AccountHandler.GetProfile,
 	)
 
+	pharmacyGroup := apiV1Group.Group("/pharmacies")
+	pharmacyGroup.POST(
+		"/",
+		opts.PharmacyHandler.CreatePharmacy,
+	)
+	pharmacyGroup.GET(
+		"/:id/operations",
+		opts.PharmacyHandler.GetPharmacyOperations,
+	)
+	pharmacyGroup.PUT(
+		"/:id/operations",
+		opts.PharmacyHandler.UpdatePharmacyOperations,
+	)
+
 	googleGroup := apiV1Group.Group("/google")
 	googleGroup.GET(
 		"/auth",

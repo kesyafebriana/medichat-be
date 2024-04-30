@@ -244,7 +244,7 @@ func main() {
 		DoctorHandler:         doctorHandler,
 		SpecializationHandler: specializationHandler,
 		CategoryHandler:       categoryHandler,
-		PharmacyHandler:   pharmacyHandler,
+		PharmacyHandler:       pharmacyHandler,
 
 		SessionKey: conf.SessionKey,
 

@@ -41,7 +41,7 @@ type PharmacyCreateDetails struct {
 	PharmacistName     string
 	PharmacistLicense  string
 	PharmacistPhone    string
-	PharmacyOperations []PharmacyOperations
+	PharmacyOperations []PharmacyOperationCreateDetails
 }
 
 type PharmacyOperationCreateDetails struct {
@@ -64,11 +64,12 @@ type PharmacyUpdateDetails struct {
 }
 
 type PharmacyOperationsUpdateDetails struct {
-	ID int64
+	ID         int64
+	PharmacyID int64
 
-	Day       *string
-	StartTime *time.Time
-	EndTime   *time.Time
+	Day       string
+	StartTime time.Time
+	EndTime   time.Time
 }
 
 type PharmaciesQuery struct {
@@ -90,13 +91,11 @@ type PharmacyRepository interface {
 	// SoftDeleteById(ctx context.Context, id int64) error
 	// BulkSoftDelete(ctx context.Context, ids []int64) error
 
-	// GetOperationsByPharmacyID(ctx context.Context, id int64) ([]PharmacyOperations, error)
 	// GetOperationsByDay(ctx context.Context, day string) (PharmacyOperations, error)
-
-	AddOperation(ctx context.Context, pharmacyOperation PharmacyOperations) (PharmacyOperations, error)
-	// AddOperations(ctx context.Context, pharmacyOperations []PharmacyOperations) ([]PharmacyOperations, error)
-	// UpdateOperation(ctx context.Context, pharmacyOperation PharmacyOperations) (PharmacyOperations, error)
-	// SoftDeleteOperationByID(ctx context.Context, id int64) error
+	GetPharmacyOperationsByPharmacyId(ctx context.Context, id int64) ([]PharmacyOperations, error)
+	AddOperation(ctx context.Context, pharmacyOperation PharmacyOperationCreateDetails) (PharmacyOperations, error)
+	UpdateOperation(ctx context.Context, pharmacyOperation PharmacyOperationsUpdateDetails) (PharmacyOperations, error)
+	SoftDeleteOperationByID(ctx context.Context, id int64) error
 }
 
 type PharmacyService interface {
@@ -105,7 +104,8 @@ type PharmacyService interface {
 	// UpdatePharmacy(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
 	// DeletePharmacy(ctx context.Context, id int64) error
 
-	// AddOperation(ctx context.Context, pharmacyOperation PharmacyOperationCreateDetails) (PharmacyOperations, error)
-	// UpdateOperation(ctx context.Context, pharmacyOperation PharmacyOperationsUpdateDetails) (PharmacyOperations, error)
+	GetOperationsById(ctx context.Context, id int64) ([]PharmacyOperations, error)
+	AddOperation(ctx context.Context, pharmacyOperation PharmacyOperationCreateDetails) (PharmacyOperations, error)
+	UpdateOperations(ctx context.Context, pharmacyOperation []PharmacyOperationsUpdateDetails) ([]PharmacyOperations, error)
 	// DeleteOperationByID(ctx context.Context, id int64) error
 }

@@ -43,9 +43,24 @@ func NewPharmacyOperationResponse(pharmacyOperation domain.PharmacyOperations) P
 	return PharmacyOperationResponse{
 		ID:        pharmacyOperation.ID,
 		Day:       pharmacyOperation.Day,
-		StartTime: pharmacyOperation.StartTime.Format("07:00"),
-		EndTime:   pharmacyOperation.EndTime.Format("07:00"),
+		StartTime: pharmacyOperation.StartTime.Format("03:04"),
+		EndTime:   pharmacyOperation.EndTime.Format("03:04"),
 	}
+}
+
+func NewPharmacyOperationsResponse(pharmacyOperations []domain.PharmacyOperations) []PharmacyOperationResponse {
+	var res []PharmacyOperationResponse
+
+	for _, v := range pharmacyOperations {
+		res = append(res, PharmacyOperationResponse{
+			ID:        v.ID,
+			Day:       v.Day,
+			StartTime: v.StartTime.Format("03:04"),
+			EndTime:   v.EndTime.Format("03:04"),
+		})
+	}
+
+	return res
 }
 
 type PharmacyOperationCreateRequest struct {
@@ -54,11 +69,11 @@ type PharmacyOperationCreateRequest struct {
 	EndTime   string `json:"end_time" binding:"required,no_leading_trailing_space"`
 }
 
-func (p PharmacyOperationCreateRequest) ToEntity() domain.PharmacyOperations {
+func (p PharmacyOperationCreateRequest) ToEntity() domain.PharmacyOperationCreateDetails {
 	starTime, _ := time.Parse("03:04", p.StartTime)
 	endTime, _ := time.Parse("03:04", p.EndTime)
 
-	return domain.PharmacyOperations{
+	return domain.PharmacyOperationCreateDetails{
 		Day:       p.Day,
 		StartTime: starTime,
 		EndTime:   endTime,
@@ -85,7 +100,7 @@ func PharmacyCreateToDetails(p PharmacyCreateRequest) domain.PharmacyCreateDetai
 		PharmacistName:    p.PharmacistName,
 		PharmacistPhone:   p.PharmacistPhone,
 		PharmacistLicense: p.PharmacistLicense,
-		PharmacyOperations: util.MapSlice(p.PharmacyOperations, func(p PharmacyOperationCreateRequest) domain.PharmacyOperations {
+		PharmacyOperations: util.MapSlice(p.PharmacyOperations, func(p PharmacyOperationCreateRequest) domain.PharmacyOperationCreateDetails {
 			return p.ToEntity()
 		}),
 	}
@@ -112,7 +127,19 @@ func PharmacyUpdateRequestToDetails(p PharmacyUpdateRequest) domain.PharmacyUpda
 }
 
 type PharmacyOperationUpdateRequest struct {
-	Day       *string `json:"day" binding:"omitempty,no_leading_trailing_space"`
-	StartTime *string `json:"start_time" binding:"omitempty,no_leading_trailing_space"`
-	EndTime   *string `json:"end_time" binding:"omitempty,no_leading_trailing_space"`
+	Day       string `json:"day" binding:"omitempty,no_leading_trailing_space"`
+	StartTime string `json:"start_time" binding:"omitempty,no_leading_trailing_space"`
+	EndTime   string `json:"end_time" binding:"omitempty,no_leading_trailing_space"`
+}
+
+func PharmacyOperationRequestToDetails(p PharmacyOperationUpdateRequest, id int64) domain.PharmacyOperationsUpdateDetails {
+	starTime, _ := time.Parse("03:04", p.StartTime)
+	endTime, _ := time.Parse("03:04", p.EndTime)
+
+	return domain.PharmacyOperationsUpdateDetails{
+		PharmacyID: id,
+		Day:        p.Day,
+		StartTime:  starTime,
+		EndTime:    endTime,
+	}
 }
