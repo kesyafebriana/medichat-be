@@ -15,6 +15,7 @@ type DataRepository interface {
 
 	AccountRepository() AccountRepository
 	ProductRepository() ProductRepository
+	ProductDetailsRepository() ProductDetailsRepository
 	RefreshTokenRepository() RefreshTokenRepository
 	ResetPasswordTokenRepository() ResetPasswordTokenRepository
 	VerifyEmailTokenRepository() VerifyEmailTokenRepository

@@ -29,39 +29,89 @@ func NewProductService(opts ProductServiceOpts) *productService {
 	}
 }
 
-func (s *productService) CreateCategoryLevelOne(ctx context.Context, product domain.Product, file *multipart.File) (domain.Category, error) {
+func (s *productService) CreateProduct(ctx context.Context, request domain.AddProductRequest, file *multipart.File) (domain.Product, error) {
 	productRepo := s.dataRepository.ProductRepository()
-	product.Name = strings.TrimSpace(strings.ToLower(product.Name))
-	product.Slug = util.GenerateSlug(product.Name)
+	categoryRepo := s.dataRepository.CategoryRepository()
+	detailRepo := s.dataRepository.ProductDetailsRepository()
 
-	c, err := productRepo.GetByName(ctx, category.Name)
+	product:= domain.Product{}
+
+	product.IsActive = true
+	product.Name = strings.TrimSpace(strings.ToLower(request.Name))
+	product.Slug = util.GenerateSlug(request.Name)
+
+	p, err := productRepo.GetByName(ctx, product.Name)
 	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
-		return domain.Category{}, apperror.Wrap(err)
+		return domain.Product{}, apperror.Wrap(err)
 	}
 
-	if c.Name == category.Name {
-		return domain.Category{}, apperror.NewAlreadyExists("category")
+	if p.Name == request.Name {
+		return domain.Product{}, apperror.NewAlreadyExists("product")
 	}
+
+	cat,err := categoryRepo.GetById(ctx,request.ProductCategoryId)
+	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
+		return domain.Product{}, apperror.Wrap(err)
+	}
+
+	product.ProductCategoryId = cat.ID
 
 	if file != nil {
 		res, err := s.cloud.UploadImage(ctx, *file, uploader.UploadParams{})
 		if err == nil {
-			category.PhotoUrl = &res.SecureURL
+			product.Picture = &res.SecureURL
 		}
 	}
 
-	savedCategory, err := productRepo.Add(ctx, category)
-	if err != nil {
-		return domain.Category{}, apperror.Wrap(err)
+	detail := domain.ProductDetails{
+		GenericName: request.GenericName,
+		Content: request.Content,
+		Manufacturer: request.Manufacturer,
+		Description: request.Description,
+		ProductClassification: request.ProductClassification,
+		ProductForm: request.ProductForm,
+		UnitInPack: request.UnitInPack,
+		SellingUnit: request.SellingUnit,
+		Weight: request.Weight,
+		Height: request.Height,
+		Length: request.Length,
+		Width: request.Width,
 	}
 
-	return savedCategory, nil
+	det,err:= detailRepo.Add(ctx,detail);
+	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
+		return domain.Product{}, apperror.Wrap(err)
+	}
+
+	product.ProductDetailId = det.ID;
+
+	prod,err := productRepo.Add(ctx,product)
+	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
+		return domain.Product{}, apperror.Wrap(err)
+	}
+
+	if err != nil {
+		return domain.Product{}, apperror.Wrap(err)
+	}
+
+	return prod, nil
 }
 
-func (s *productService) GetCategories(ctx context.Context, query domain.CategoriesQuery) ([]domain.CategoryWithParentName, domain.PageInfo, error) {
-	productRepo := s.dataRepository.CategoryRepository()
+func (s *productService) GetProduct(ctx context.Context, slug string) (domain.Product, error) {
+	productRepo := s.dataRepository.ProductRepository()
 
-	categories, err := productRepo.GetCategoriesWithParentName(ctx, query)
+	products, err := productRepo.GetBySlug(ctx, slug)
+	if err != nil {
+		return domain.Product{}, apperror.Wrap(err)
+	}
+
+	return products, nil
+}
+
+func (s *productService) GetProducts(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, domain.PageInfo, error) {
+	productRepo := s.dataRepository.ProductRepository()
+
+	products, err := productRepo.GetProducts(ctx, query)
 	if err != nil {
 		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
@@ -73,7 +123,7 @@ func (s *productService) GetCategories(ctx context.Context, query domain.Categor
 
 	pageInfo.ItemsPerPage = int(query.Limit)
 	if query.Limit == 0 {
-		pageInfo.ItemsPerPage = len(categories)
+		pageInfo.ItemsPerPage = len(products)
 	}
 
 	if pageInfo.ItemsPerPage == 0 {
@@ -82,118 +132,78 @@ func (s *productService) GetCategories(ctx context.Context, query domain.Categor
 		pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
 	}
 
-	return categories, pageInfo, nil
+	return products, pageInfo, nil
 }
 
-func (s *productService) GetCategoriesHierarchy(ctx context.Context, query domain.CategoriesQuery) ([]domain.Category, error) {
-	productRepo := s.dataRepository.CategoryRepository()
+func (s *productService) DeleteProducts(ctx context.Context, slug string) error {
+	productRepo := s.dataRepository.ProductRepository()
 
-	categories, err := productRepo.GetCategories(ctx, query)
-	if err != nil {
-		return nil, apperror.Wrap(err)
-	}
-
-	return categories, nil
-}
-
-func (s *productService) GetCategoryBySlug(ctx context.Context, slug string) (domain.CategoryWithParentName, error) {
-	productRepo := s.dataRepository.CategoryRepository()
-
-	categories, err := productRepo.GetBySlugWithParentName(ctx, slug)
-	if err != nil {
-		return domain.CategoryWithParentName{}, apperror.Wrap(err)
-	}
-
-	return categories, nil
-}
-
-func (s *productService) DeleteCategory(ctx context.Context, slug string) error {
-	productRepo := s.dataRepository.CategoryRepository()
-
-	c, err := productRepo.GetBySlug(ctx, slug)
+	_, err := productRepo.GetBySlug(ctx, slug)
 	if err != nil {
 		return apperror.Wrap(err)
 	}
 
-	if c.ParentID != nil {
-		err = productRepo.SoftDeleteBySlug(ctx, slug)
-		if err != nil {
-			return apperror.Wrap(err)
-		}
-		return nil
-	}
-
-	q := domain.DefaultCategoriesQuery()
-	q.ParentSlug = slug
-	childs, err := productRepo.GetCategoriesWithParentName(ctx, q)
-	if err != nil {
-		return apperror.Wrap(err)
-	}
-
-	slugs := make([]string, len(childs)+1)
-	slugs[0] = slug
-	for i := 0; i < len(childs); i++ {
-		slugs[i+1] = childs[i].Category.Slug
-	}
-
-	err = productRepo.BulkSoftDeleteBySlug(ctx, slugs)
+	err = productRepo.SoftDeleteBySlug(ctx, slug)
 	if err != nil {
 		return apperror.Wrap(err)
 	}
 	return nil
 }
 
-func (s *productService) UpdateCategory(ctx context.Context, category domain.Category, file *multipart.File) (domain.Category, error) {
-	productRepo := s.dataRepository.CategoryRepository()
+func (s *productService) UpdateProduct(ctx context.Context, slug string, request domain.UpdateProductRequest, file *multipart.File) (domain.Product, error) {
+	productRepo := s.dataRepository.ProductRepository()
 
-	c, err := productRepo.GetBySlug(ctx, category.Slug)
+	detailRepo := s.dataRepository.ProductDetailsRepository()
+
+	prod, err := productRepo.GetBySlug(ctx, slug)
 	if err != nil {
 		if apperror.IsErrorCode(err, apperror.CodeNotFound) {
-			return domain.Category{}, apperror.NewEntityNotFound(fmt.Sprintf("category with slug %s", category.Slug))
+			return domain.Product{}, apperror.NewEntityNotFound(fmt.Sprintf("products with slug %s", slug))
 		}
-		return domain.Category{}, apperror.Wrap(err)
+		return domain.Product{}, apperror.Wrap(err)
 	}
 
-	if category.Name == "" {
-		category.Name = c.Name
+	detailId := prod.ProductDetailId
+	detail,err:= detailRepo.GetById(ctx,detailId);
+	if err !=nil{
+		if apperror.IsErrorCode(err, apperror.CodeNotFound) {
+            return domain.Product{}, apperror.NewEntityNotFound(fmt.Sprintf("products with slug %s", slug))
+        }
+        return domain.Product{}, apperror.Wrap(err)
 	}
 
-	if c.ParentID == nil {
-		category.ParentID = nil
-	}
+	prod.Name = strings.TrimSpace(strings.ToLower(request.Name));
 
-	if category.ParentID == nil && c.ParentID != nil {
-		category.ParentID = c.ParentID
-	}
-
-	if category.ParentID != nil && c.ParentID != nil {
-		cParent, err := productRepo.GetById(ctx, *category.ParentID)
-		if err != nil {
-			if apperror.IsErrorCode(err, apperror.CodeNotFound) {
-				return domain.Category{}, apperror.NewEntityNotFound(fmt.Sprintf("category with id %d", *category.ParentID))
-			}
-			return domain.Category{}, apperror.Wrap(err)
-		}
-
-		if cParent.ParentID != nil {
-			return domain.Category{}, apperror.NewUpdateCategoryParentRestrict()
-		}
-	}
-
-	if file != nil && c.ParentID == nil {
+	if file != nil {
 		res, err := s.cloud.UploadImage(ctx, *file, uploader.UploadParams{})
 		if err == nil {
-			category.PhotoUrl = &res.SecureURL
+			prod.Picture = &res.SecureURL
 		}
 	}
 
-	category.ID = c.ID
-	category.Name = strings.TrimSpace(strings.ToLower(category.Name))
-	category.Slug = util.GenerateSlug(category.Name)
-	updatedCategory, err := productRepo.Update(ctx, category)
-	if err != nil {
-		return domain.Category{}, apperror.Wrap(err)
-	}
+	prod.KeyWord = prod.Name +" "+ detail.GenericName
+	prod.Slug = util.GenerateSlug(prod.Name)
 
-	return updatedCategory, nil
+	detail.GenericName = request.GenericName
+	detail.Content = request.Content
+	detail.Manufacturer = request.Manufacturer
+	detail.Description = request.Description
+	detail.ProductClassification = request.ProductClassification
+	detail.ProductForm = request.ProductForm
+	detail.UnitInPack = request.UnitInPack
+	detail.SellingUnit = request.SellingUnit
+	detail.Weight = request.Weight
+	detail.Height = request.Height
+	detail.Length = request.Length
+	detail.Width = request.Width
+	updatedDetail,err:= detailRepo.Update(ctx,detail);
+	if err != nil {
+        return domain.Product{}, apperror.Wrap(err)
+    }
+	prod.ProductDetailId = updatedDetail.ID
+	updatedProduct, err := productRepo.Update(ctx, prod)
+	if err != nil {
+        return domain.Product{}, apperror.Wrap(err)
+    }
+	return updatedProduct, nil
 }

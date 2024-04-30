@@ -75,6 +75,7 @@ func scanCategoryWithParentName(r RowScanner, c *domain.CategoryWithParentName) 
 
 var (
 	productColumns               = " id, name, product_detail_id, category_id, picture, is_active  "
+	productDetailsColumns        = " id, generic_name, content, manufacturer, description, product_classification, product_form, unit_in_pack, selling_unit, weight, height, length, width  "
 )
 
 func scanProduct(r RowScanner, c *domain.Product) error {
@@ -85,5 +86,15 @@ func scanProduct(r RowScanner, c *domain.Product) error {
 		return err
 	}
 	c.Picture = toStringPtr(nullPhotoUrl)
+	return nil
+}
+
+func scanProductDetails(r RowScanner, d *domain.ProductDetails) error {
+	if err := r.Scan(
+		&d.ID, &d.GenericName, &d.Content, &d.Manufacturer, &d.Description,&d.ProductClassification,&d.ProductForm,&d.UnitInPack,&d.SellingUnit,&d.Weight,&d.Height,&d.Length,&d.Width,
+	); err != nil {
+		return err
+	}
+
 	return nil
 }

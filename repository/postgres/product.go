@@ -5,10 +5,59 @@ import (
 	"fmt"
 	"medichat-be/domain"
 	"strings"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type productRepository struct {
 	querier Querier
+}
+
+func (r *productRepository) GetProducts(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, error) {
+	sb := strings.Builder{}
+	args := pgx.NamedArgs{}
+	offset := (query.Page - 1) * query.Limit
+
+	sb.WriteString(`
+		SELECT ` + productColumns + `
+		FROM products p
+		WHERE p.deleted_at IS NULL
+	`)
+
+	if query.Term != "" {
+		sb.WriteString(` AND c.keyword ILIKE '%' || @name || '%' `)
+		args["name"] = query.Term
+	}
+
+	if query.SortBy != domain.CategorySortByParent {
+		fmt.Fprintf(&sb, " ORDER BY %s %s", query.SortBy, query.SortType)
+	}
+
+	if query.Limit != 0 {
+		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
+	}
+
+	return queryFull(
+		r.querier, ctx, sb.String(),
+		scanProduct,
+		args,
+	)
+}
+
+func (r *productRepository) GetBySlug(ctx context.Context, slug string) (domain.Product, error) {
+	q := `
+		SELECT ` + productColumns + `
+		FROM products
+		WHERE slug = $1
+		AND deleted_at IS NULL
+		LIMIT 1
+		`
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanProduct,
+		slug,
+	)
 }
 
 func (r *productRepository) GetByName(ctx context.Context, name string) (domain.Product, error) {
@@ -17,6 +66,7 @@ func (r *productRepository) GetByName(ctx context.Context, name string) (domain.
 		FROM products
 		WHERE name ilike $1
 		AND deleted_at IS NULL
+		LIMIT 1
 		`
 
 	return queryOneFull(
@@ -39,6 +89,35 @@ func (r *productRepository) GetById(ctx context.Context, id int64) (domain.Produ
 		scanProduct,
 		id,
 	)
+}
+
+func (r *productRepository) GetPageInfo(ctx context.Context, query domain.ProductsQuery) (domain.PageInfo, error) {
+	sb := strings.Builder{}
+	args := pgx.NamedArgs{}
+
+	sb.WriteString(`
+		SELECT COUNT(*) as total_data
+		FROM products c
+		WHERE c.deleted_at IS NULL
+	`)
+
+	if query.Term != "" {
+		sb.WriteString(` AND c.name ILIKE '%' || @name || '%' `)
+		args["name"] = query.Term
+	}
+
+	var totalData int64
+	row := r.querier.QueryRowContext(ctx, sb.String(), args)
+	err := row.Scan(&totalData)
+
+	if err != nil {
+		return domain.PageInfo{}, nil
+	}
+
+	return domain.PageInfo{
+		CurrentPage: int(query.Page),
+		ItemCount:   totalData,
+	}, nil
 }
 
 func (r *productRepository) Add(ctx context.Context, product domain.Product) (domain.Product, error) {

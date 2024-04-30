@@ -65,6 +65,13 @@ func (r *dataRepository) ProductRepository() domain.ProductRepository {
 	}
 }
 
+func (r *dataRepository) ProductDetailsRepository() domain.ProductDetailsRepository {
+	return &productDetailRepository{
+		querier: r.querier,
+	}
+}
+
+
 
 func (r *dataRepository) AccountRepository() domain.AccountRepository {
 	return &accountRepository{
