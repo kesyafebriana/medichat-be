@@ -133,14 +133,14 @@ func scanUserLocation(r RowScanner, ul *domain.UserLocation) error {
 }
 
 var (
-	pharmacyColumns          = " id, manager_id, logo_url, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone "
+	pharmacyColumns          = " id, manager_id, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone "
 	pharmacyOperationColumns = " id, pharmacy_id, day, start_time, end_time "
 )
 
 func scanPharmacy(r RowScanner, p *domain.Pharmacy) error {
 	var pos postgis.Point
 	if err := r.Scan(
-		&p.ID, &p.ManagerID, &p.LogoURL, &p.Name, &p.Address, &pos,
+		&p.ID, &p.ManagerID, &p.Name, &p.Address, &pos,
 		&p.PharmacistName, &p.PharmacistLicense, &p.PharmacistPhone,
 	); err != nil {
 		return err

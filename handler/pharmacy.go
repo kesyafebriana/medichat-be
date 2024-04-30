@@ -36,13 +36,7 @@ func (h *PharmacyHandler) CreatePharmacy(ctx *gin.Context) {
 		return
 	}
 
-	pharmacy, err := h.pharmacySrv.CreatePharmacy(ctx, domain.Pharmacy{
-		Name: "Kesya",
-		ManagerID: 1,
-		// PharmacistName:    req.Data.PharmacistName,
-		// PharmacistPhone:   req.Data.PharmacistPhone,
-		// PharmacistLicense: req.Data.PharmacistLicense,
-	})
+	pharmacy, err := h.pharmacySrv.CreatePharmacy(ctx, dto.PharmacyCreateToDetails(req))
 
 	if err != nil {
 		ctx.Error(err)

@@ -27,7 +27,6 @@ type Pharmacy struct {
 	Name               string
 	Address            string
 	Coordinate         Coordinate
-	LogoURL            string
 	PharmacistName     string
 	PharmacistLicense  string
 	PharmacistPhone    string
@@ -39,7 +38,6 @@ type PharmacyCreateDetails struct {
 	ManagerID          int64
 	Address            string
 	Coordinate         Coordinate
-	LogoURL            string
 	PharmacistName     string
 	PharmacistLicense  string
 	PharmacistPhone    string
@@ -54,12 +52,12 @@ type PharmacyOperationCreateDetails struct {
 }
 
 type PharmacyUpdateDetails struct {
-	ID int64
+	ID        int64
+	ManagerID int64
 
 	Name              *string
 	Address           *string
 	Coordinate        *Coordinate
-	LogoURL           *string
 	PharmacistName    *string
 	PharmacistLicense *string
 	PharmacistPhone   *string
@@ -87,7 +85,7 @@ type PharmacyRepository interface {
 	// GetByID(ctx context.Context, id int64) (Pharmacy, error)
 	// GetByName(ctx context.Context, name string) (Pharmacy, error)
 
-	Add(ctx context.Context, pharmacy Pharmacy) (Pharmacy, error)
+	Add(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
 	// Update(ctx context.Context, pharmacy Pharmacy) (Pharmacy, error)
 	// SoftDeleteById(ctx context.Context, id int64) error
 	// BulkSoftDelete(ctx context.Context, ids []int64) error
@@ -95,14 +93,14 @@ type PharmacyRepository interface {
 	// GetOperationsByPharmacyID(ctx context.Context, id int64) ([]PharmacyOperations, error)
 	// GetOperationsByDay(ctx context.Context, day string) (PharmacyOperations, error)
 
-	// AddOperation(ctx context.Context, pharmacyOperation PharmacyOperations) (PharmacyOperations, error)
+	AddOperation(ctx context.Context, pharmacyOperation PharmacyOperations) (PharmacyOperations, error)
 	// AddOperations(ctx context.Context, pharmacyOperations []PharmacyOperations) ([]PharmacyOperations, error)
 	// UpdateOperation(ctx context.Context, pharmacyOperation PharmacyOperations) (PharmacyOperations, error)
 	// SoftDeleteOperationByID(ctx context.Context, id int64) error
 }
 
 type PharmacyService interface {
-	CreatePharmacy(ctx context.Context, pharmacy Pharmacy) (Pharmacy, error)
+	CreatePharmacy(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
 	// GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, error)
 	// UpdatePharmacy(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
 	// DeletePharmacy(ctx context.Context, id int64) error
