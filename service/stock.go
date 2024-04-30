@@ -189,29 +189,28 @@ func (s *stockService) RequestStockTransferClosure(
 	return func(dr domain.DataRepository) (domain.StockMutation, error) {
 		stockRepo := dr.StockRepository()
 
-		if req.SourceID == req.TargetID {
+		if req.SourcePharmacyID == req.TargetPharmacyID {
 			return domain.StockMutation{}, apperror.NewTransferSameStock(nil)
 		}
 
-		source, err := stockRepo.GetByID(ctx, req.SourceID)
+		// TODO: get product by slug
+		product := domain.Product{}
+
+		source, err := stockRepo.GetByPharmacyAndProduct(ctx, req.SourcePharmacyID, product.ID)
 		if err != nil {
 			return domain.StockMutation{}, apperror.Wrap(err)
 		}
 
-		target, err := stockRepo.GetByID(ctx, req.TargetID)
+		target, err := stockRepo.GetByID(ctx, req.TargetPharmacyID)
 		if err != nil {
 			return domain.StockMutation{}, apperror.Wrap(err)
-		}
-
-		if source.ProductID != target.ProductID {
-			return domain.StockMutation{}, apperror.NewTransferDifferentProduct(nil)
 		}
 
 		// TODO: check target pharmacy manager
 
 		mut := domain.StockMutation{
-			SourceID: req.SourceID,
-			TargetID: req.TargetID,
+			SourceID: source.ID,
+			TargetID: target.ID,
 			Method:   domain.StockMutationManual,
 			Status:   domain.StockMutationStatusPending,
 			Amount:   req.Amount,

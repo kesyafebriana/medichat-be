@@ -29,6 +29,22 @@ func (r *stockRepository) GetByID(ctx context.Context, id int64) (domain.Stock, 
 	)
 }
 
+func (r *stockRepository) GetByPharmacyAndProduct(ctx context.Context, pharmacy_id int64, product_id int64) (domain.Stock, error) {
+	q := `
+		SELECT ` + stockColumns + `
+		FROM stocks
+		WHERE pharmacy_id = $1
+			AND product_id = $2
+			AND deleted_at IS NULL
+	`
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanStock,
+		pharmacy_id, product_id,
+	)
+}
+
 func (r *stockRepository) GetByIDAndLock(ctx context.Context, id int64) (domain.Stock, error) {
 	q := `
 		SELECT ` + stockColumns + `
