@@ -1,5 +1,7 @@
 .env
 c.out
 
+serviceAccount.json
+
 coverage.out
 coverage.html

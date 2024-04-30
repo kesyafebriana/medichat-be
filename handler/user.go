@@ -2,8 +2,10 @@ package handler
 
 import (
 	"medichat-be/apperror"
+	"medichat-be/constants"
 	"medichat-be/domain"
 	"medichat-be/dto"
+	"medichat-be/util"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +28,14 @@ func NewUserHandler(opts UserHandlerOpts) *UserHandler {
 func (h *UserHandler) CreateProfile(ctx *gin.Context) {
 	var req dto.UserCreateRequest
 
-	err := dto.ShouldBindMultipart(ctx, &req)
+	err := util.LimitContentLength(ctx, constants.MaxFileSize)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	err = dto.ShouldBindMultipart(ctx, &req)
 	if err != nil {
 		ctx.Error(apperror.NewBadRequest(err))
 		ctx.Abort()
@@ -56,7 +65,14 @@ func (h *UserHandler) CreateProfile(ctx *gin.Context) {
 func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 	var req dto.UserUpdateRequest
 
-	err := dto.ShouldBindMultipart(ctx, &req)
+	err := util.LimitContentLength(ctx, constants.MaxFileSize)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	err = dto.ShouldBindMultipart(ctx, &req)
 	if err != nil {
 		ctx.Error(apperror.NewBadRequest(err))
 		ctx.Abort()

@@ -10,18 +10,24 @@ import (
 )
 
 type SetupServerOpts struct {
-	AccountHandler    *handler.AccountHandler
-	PingHandler       *handler.PingHandler
-	GoogleAuthHandler *handler.OAuth2Handler
-	GoogleHandler     *handler.GoogleHandler
-	UserHandler       *handler.UserHandler
+	AccountHandler        *handler.AccountHandler
+	PingHandler           *handler.PingHandler
+	ChatHandler           *handler.ChatHandler
+	GoogleAuthHandler     *handler.OAuth2Handler
+	GoogleHandler         *handler.GoogleHandler
+	CategoryHandler       *handler.CategoryHandler
+	UserHandler           *handler.UserHandler
+	DoctorHandler         *handler.DoctorHandler
+	SpecializationHandler *handler.SpecializationHandler
 
 	SessionKey []byte
 
 	RequestID gin.HandlerFunc
 
-	Authenticator     gin.HandlerFunc
-	UserAuthenticator gin.HandlerFunc
+	Authenticator       gin.HandlerFunc
+	AdminAuthenticator  gin.HandlerFunc
+	UserAuthenticator   gin.HandlerFunc
+	DoctorAuthenticator gin.HandlerFunc
 
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
@@ -49,6 +55,12 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/ping",
 		opts.PingHandler.Ping,
 	)
+
+	chatGroup := apiV1Group.Group("/chat")
+
+	chatGroup.POST("/send", opts.ChatHandler.Chat)
+	chatGroup.PATCH("/close", opts.ChatHandler.CloseRoom)
+	chatGroup.POST("/create", opts.ChatHandler.CreateRoom)
 
 	authGroup := apiV1Group.Group("/auth")
 	authGroup.POST(
@@ -105,31 +117,76 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 
 	userGroup := apiV1Group.Group(
 		"/users",
+	)
+
+	userProfileGroup := userGroup.Group(
+		"/profile",
 		opts.UserAuthenticator,
 	)
-	userGroup.GET(
+	userProfileGroup.GET(
 		".",
 		opts.UserHandler.GetProfile,
 	)
-	userGroup.POST(
+	userProfileGroup.POST(
 		".",
 		opts.UserHandler.CreateProfile,
 	)
-	userGroup.PUT(
+	userProfileGroup.PUT(
 		".",
 		opts.UserHandler.UpdateProfile,
 	)
-	userGroup.POST(
+	userProfileGroup.POST(
 		"/locations",
 		opts.UserHandler.AddLocation,
 	)
-	userGroup.PUT(
+	userProfileGroup.PUT(
 		"/locations",
 		opts.UserHandler.UpdateLocation,
 	)
-	userGroup.DELETE(
+	userProfileGroup.DELETE(
 		"/locations/:id",
 		opts.UserHandler.DeleteLocation,
+	)
+
+	doctorGroup := apiV1Group.Group(
+		"/doctors",
+	)
+	doctorGroup.GET(
+		".",
+		opts.DoctorHandler.ListDoctors,
+	)
+	doctorGroup.GET(
+		"/:id",
+		opts.DoctorHandler.GetDoctorByID,
+	)
+
+	doctorProfileGroup := doctorGroup.Group(
+		"/profile",
+		opts.DoctorAuthenticator,
+	)
+	doctorProfileGroup.GET(
+		".",
+		opts.DoctorHandler.GetProfile,
+	)
+	doctorProfileGroup.POST(
+		".",
+		opts.DoctorHandler.CreateProfile,
+	)
+	doctorProfileGroup.PUT(
+		".",
+		opts.DoctorHandler.UpdateProfile,
+	)
+	doctorProfileGroup.POST(
+		"/active-status",
+		opts.DoctorHandler.SetActiveStatus,
+	)
+
+	specializationGroup := apiV1Group.Group(
+		"/specializations",
+	)
+	specializationGroup.GET(
+		".",
+		opts.SpecializationHandler.GetAll,
 	)
 
 	router.NoRoute(func(ctx *gin.Context) {
@@ -140,6 +197,15 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		))
 		ctx.Abort()
 	})
+
+	categoryGroup := apiV1Group.Group("/categories")
+	categoryGroup.GET("/", opts.Authenticator, opts.CategoryHandler.GetCategories)
+	categoryGroup.GET("/:slug", opts.Authenticator, opts.CategoryHandler.GetCategoryBySlug)
+	categoryGroup.GET("/hierarchy", opts.Authenticator, opts.CategoryHandler.GetCategoriesHierarchy)
+	categoryGroup.POST("/", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelOne)
+	categoryGroup.POST("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelTwo)
+	categoryGroup.PATCH("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.UpdateCategory)
+	categoryGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.DeleteCategory)
 
 	return router
 }

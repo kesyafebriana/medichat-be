@@ -46,6 +46,9 @@ type Config struct {
 	GoogleAPIRedirectURL  string
 
 	IsRelease bool
+	CloudinaryName string
+	CloudinaryAPIKey string
+	CloudinaryAPISecret string
 }
 
 func InitConfig() error {
@@ -80,6 +83,12 @@ func LoadConfig() (Config, error) {
 	ret.DoctorAccessSecret = os.Getenv("DOCTOR_ACCESS_SECRET")
 	ret.PharmacyManagerAccessSecret = os.Getenv("PHARMACY_MANAGER_ACCESS_SECRET")
 	ret.RefreshSecret = os.Getenv("REFRESH_SECRET")
+
+	ret.CloudinaryName = os.Getenv("CLOUDINARY_NAME")
+
+	ret.CloudinaryAPIKey = os.Getenv("CLOUDINARY_API_KEY")
+
+	ret.CloudinaryAPISecret = os.Getenv("CLOUDINARY_API_SECRET")
 
 	s = os.Getenv("ACCESS_TOKEN_LIFESPAN")
 	i, err := strconv.Atoi(s)

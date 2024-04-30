@@ -22,8 +22,10 @@ import (
 	"syscall"
 	"time"
 
+	firebase "firebase.google.com/go/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 )
 
 func main() {
@@ -88,6 +90,26 @@ func main() {
 		conf.RefreshSecret,
 		conf.RefreshTokenLifespan,
 	)
+	ctx := context.Background()
+	sa := option.WithCredentialsFile("./serviceAccount.json")
+	firebaseConfig := &firebase.Config{ProjectID: "rapunzel-medichat"}
+
+	app, err := firebase.NewApp(ctx, firebaseConfig, sa)
+	if err != nil {
+		log.Fatalf("error initializing app: %v\n", err)
+	}
+
+	client, err := app.Firestore(ctx)
+	if err != nil {
+		log.Fatalf("Error connecting to firebase %v", err)
+	}
+	defer client.Close()
+
+	cld, _ := util.NewCloudinarylProvider()
+
+	chatService := service.NewChatServiceImpl(client, cld)
+
+	chatHandler := handler.NewChatHandler(chatService)
 
 	passwordHasher := cryptoutil.NewPasswordHasherBcrypt(constants.HashCost)
 
@@ -138,6 +160,11 @@ func main() {
 		EmailProvider:                 emailProvider,
 	})
 
+	categoryService := service.NewCategoryService(service.CategoryServiceOpts{
+		DataRepository: dataRepository,
+		Cloud:          cld,
+	})
+
 	googleAuthService := service.NewOAuth2Service(service.OAuth2ServiceOpts{
 		OAuth2Provider: googleAuthProvider,
 	})
@@ -149,11 +176,24 @@ func main() {
 
 	userService := service.NewUserService(service.UserServiceOpts{
 		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+	doctorService := service.NewDoctorService(service.DoctorServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
+	specializationService := service.NewSpecializationService(service.SpecializationServiceOpts{
+		DataRepository: dataRepository,
 	})
 
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
+	})
+	categoryHandler := handler.NewCategoryHandler(handler.CategoryHandlerOpts{
+		CategorySrv: categoryService,
+		Domain:      conf.WebDomain,
 	})
 	pingHandler := handler.NewPingHandler()
 	googleAuthHandler := handler.NewOAuth2Handler(handler.OAuth2HandlerOpts{
@@ -168,6 +208,13 @@ func main() {
 	userHandler := handler.NewUserHandler(handler.UserHandlerOpts{
 		UserSrv: userService,
 	})
+	doctorHandler := handler.NewDoctorHandler(handler.DoctorHandlerOpts{
+		DoctorSrv: doctorService,
+	})
+
+	specializationHandler := handler.NewSpecializationHandler(handler.SpecializationHandlerOpts{
+		SpecializationSrv: specializationService,
+	})
 
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
@@ -175,23 +222,31 @@ func main() {
 	errorHandler := middleware.ErrorHandler()
 
 	authenticator := middleware.Authenticator(anyAccessProvider)
+	adminAuthenticator := middleware.Authenticator(adminAccessProvider)
 	userAuthenticator := middleware.Authenticator(userAccessProvider)
+	doctorAuthenticator := middleware.Authenticator(doctorAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
-		AccountHandler:    accountHandler,
-		PingHandler:       pingHandler,
-		GoogleAuthHandler: googleAuthHandler,
-		GoogleHandler:     googleHandler,
-		UserHandler:       userHandler,
+		AccountHandler:        accountHandler,
+		ChatHandler:           chatHandler,
+		PingHandler:           pingHandler,
+		GoogleAuthHandler:     googleAuthHandler,
+		GoogleHandler:         googleHandler,
+		UserHandler:           userHandler,
+		DoctorHandler:         doctorHandler,
+		SpecializationHandler: specializationHandler,
+		CategoryHandler:       categoryHandler,
 
 		SessionKey: conf.SessionKey,
 
-		RequestID:         requestIDMid,
-		Authenticator:     authenticator,
-		UserAuthenticator: userAuthenticator,
-		CorsHandler:       corsHandler,
-		Logger:            loggerMid,
-		ErrorHandler:      errorHandler,
+		RequestID:           requestIDMid,
+		Authenticator:       authenticator,
+		AdminAuthenticator:  adminAuthenticator,
+		UserAuthenticator:   userAuthenticator,
+		DoctorAuthenticator: doctorAuthenticator,
+		CorsHandler:         corsHandler,
+		Logger:              loggerMid,
+		ErrorHandler:        errorHandler,
 	})
 
 	srv := &http.Server{

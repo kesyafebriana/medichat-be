@@ -38,7 +38,7 @@ func queryFull[T any](
 	}
 	defer rows.Close()
 
-	var ret []T
+	var ret []T = make([]T, 0)
 
 	for rows.Next() {
 		var t T

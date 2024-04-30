@@ -223,6 +223,27 @@ func (r *userRepository) GetLocationByIDAndLock(
 	)
 }
 
+func (r *userRepository) IsAnyLocationActiveByUserID(
+	ctx context.Context,
+	id int64,
+) (bool, error) {
+	q := `
+		SELECT EXISTS (
+			SELECT id
+			FROM user_locations
+			WHERE user_id = $1 
+				AND is_active = true
+				AND deleted_at IS NULL
+		)
+	`
+
+	return queryOne(
+		r.querier, ctx, q,
+		boolScanDest,
+		id,
+	)
+}
+
 func (r *userRepository) AddLocation(
 	ctx context.Context,
 	ul domain.UserLocation,
