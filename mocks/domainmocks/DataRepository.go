@@ -71,6 +71,22 @@ func (_m *DataRepository) Atomic(ctx context.Context, fn domain.AtomicFuncAny) (
 	return r0, r1
 }
 
+// CategoryRepository provides a mock function with given fields:
+func (_m *DataRepository) CategoryRepository() domain.CategoryRepository {
+	ret := _m.Called()
+
+	var r0 domain.CategoryRepository
+	if rf, ok := ret.Get(0).(func() domain.CategoryRepository); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.CategoryRepository)
+		}
+	}
+
+	return r0
+}
+
 // DoctorRepository provides a mock function with given fields:
 func (_m *DataRepository) DoctorRepository() domain.DoctorRepository {
 	ret := _m.Called()
@@ -159,6 +175,22 @@ func (_m *DataRepository) SpecializationRepository() domain.SpecializationReposi
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(domain.SpecializationRepository)
+		}
+	}
+
+	return r0
+}
+
+// StockRepository provides a mock function with given fields:
+func (_m *DataRepository) StockRepository() domain.StockRepository {
+	ret := _m.Called()
+
+	var r0 domain.StockRepository
+	if rf, ok := ret.Get(0).(func() domain.StockRepository); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.StockRepository)
 		}
 	}
 
