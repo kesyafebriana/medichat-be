@@ -84,3 +84,27 @@ func scanUserLocation(r RowScanner, ul *domain.UserLocation) error {
 	ul.Coordinate = p.ToCoordinate()
 	return nil
 }
+
+var (
+	pharmacyColumns          = " id, manager_id, logo_url, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone "
+	pharmacyOperationColumns = " id, pharmacy_id, day, start_time, end_time "
+)
+
+func scanPharmacy(r RowScanner, p *domain.Pharmacy) error {
+	var pos postgis.Point
+	if err := r.Scan(
+		&p.ID, &p.ManagerID, &p.LogoURL, &p.Name, &p.Address, &pos,
+		&p.PharmacistName, &p.PharmacistLicense, &p.PharmacistPhone,
+	); err != nil {
+		return err
+	}
+	p.Coordinate = pos.ToCoordinate()
+	return nil
+}
+
+func ScanPharmacyOperation(r RowScanner, p *domain.PharmacyOperations) error {
+	if err := r.Scan(&p.ID, &p.PharmacyID, &p.Day, &p.StartTime, &p.EndTime); err != nil {
+		return err
+	}
+	return nil
+}
