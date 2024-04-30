@@ -93,6 +93,7 @@ type PharmacyRepository interface {
 
 	// GetOperationsByDay(ctx context.Context, day string) (PharmacyOperations, error)
 	GetPharmacyOperationsByPharmacyId(ctx context.Context, id int64) ([]PharmacyOperations, error)
+	GetPharmacyOperationsByPharmacyIdAndLock(ctx context.Context, id int64) ([]PharmacyOperations, error)
 	AddOperation(ctx context.Context, pharmacyOperation PharmacyOperationCreateDetails) (PharmacyOperations, error)
 	UpdateOperation(ctx context.Context, pharmacyOperation PharmacyOperationsUpdateDetails) (PharmacyOperations, error)
 	SoftDeleteOperationByID(ctx context.Context, id int64) error
@@ -107,5 +108,4 @@ type PharmacyService interface {
 	GetOperationsById(ctx context.Context, id int64) ([]PharmacyOperations, error)
 	AddOperation(ctx context.Context, pharmacyOperation PharmacyOperationCreateDetails) (PharmacyOperations, error)
 	UpdateOperations(ctx context.Context, pharmacyOperation []PharmacyOperationsUpdateDetails) ([]PharmacyOperations, error)
-	// DeleteOperationByID(ctx context.Context, id int64) error
 }

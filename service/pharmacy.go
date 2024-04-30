@@ -71,7 +71,7 @@ func (s *pharmacyService) UpdateOperations(ctx context.Context, pharmacyOperatio
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 	var res []domain.PharmacyOperations
 
-	o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, pharmacyOperations[0].PharmacyID)
+	o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyIdAndLock(ctx, pharmacyOperations[0].PharmacyID)
 	if err != nil {
 		return []domain.PharmacyOperations{}, apperror.Wrap(err)
 	}

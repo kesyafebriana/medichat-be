@@ -87,3 +87,17 @@ func (r *pharmacyRepository) GetPharmacyOperationsByPharmacyId(ctx context.Conte
 		ScanPharmacyOperation, id,
 	)
 }
+
+func (r *pharmacyRepository) GetPharmacyOperationsByPharmacyIdAndLock(ctx context.Context, id int64) ([]domain.PharmacyOperations, error) {
+	q := `
+	SELECT ` + pharmacyOperationColumns + ` 
+	FROM pharmacy_operations
+	WHERE pharmacy_id = $1 AND deleted_at IS NULL
+	FOR UPDATE
+	`
+
+	return queryFull(
+		r.querier, ctx, q,
+		ScanPharmacyOperation, id,
+	)
+}
