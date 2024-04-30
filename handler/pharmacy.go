@@ -77,6 +77,29 @@ func (h *PharmacyHandler) UpdatePharmacy(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, dto.ResponseCreated(dto.NewPharmacyResponse(pharmacy)))
 }
 
+func (h *PharmacyHandler) DeletePharmacy(ctx *gin.Context) {
+	var uri dto.IDPathRequest
+
+	err := ctx.ShouldBindUri(&uri)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	err = h.pharmacySrv.DeletePharmacy(ctx, uri.ID)
+	if err != nil {
+		ctx.Error(err)
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusNoContent,
+		nil,
+	)
+}
+
 func (h *PharmacyHandler) GetPharmacyOperations(ctx *gin.Context) {
 	var req dto.IDPathRequest
 

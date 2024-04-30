@@ -63,6 +63,17 @@ func (s *pharmacyService) UpdatePharmacy(ctx context.Context, pharmacy domain.Ph
 	return p, nil
 }
 
+func (s *pharmacyService) DeletePharmacy(ctx context.Context, id int64) error {
+	pharmacyRepo := s.dataRepository.PharmacyRepository()
+
+	err := pharmacyRepo.SoftDeleteById(ctx, id)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	return nil
+}
+
 func (s *pharmacyService) AddOperation(ctx context.Context, pharmacyOperation domain.PharmacyOperationCreateDetails) (domain.PharmacyOperations, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 

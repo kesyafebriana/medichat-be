@@ -119,6 +119,10 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/:id",
 		opts.PharmacyHandler.UpdatePharmacy,
 	)
+	pharmacyGroup.DELETE(
+		"/:id",
+		opts.PharmacyHandler.DeletePharmacy,
+	)
 	pharmacyGroup.GET(
 		"/:id/operations",
 		opts.PharmacyHandler.GetPharmacyOperations,

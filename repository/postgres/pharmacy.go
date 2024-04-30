@@ -49,6 +49,20 @@ func (r *pharmacyRepository) Update(ctx context.Context, pharmacy domain.Pharmac
 	)
 }
 
+func (r *pharmacyRepository) SoftDeleteById(ctx context.Context, id int64) error {
+	q := `
+		UPDATE pharmacies
+		SET deleted_at = now(),
+			updated_at = now()
+		WHERE id = $1
+	`
+
+	return exec(
+		r.querier, ctx, q,
+		id,
+	)
+}
+
 func (r *pharmacyRepository) AddOperation(ctx context.Context, pharmacyOperation domain.PharmacyOperationCreateDetails) (domain.PharmacyOperations, error) {
 	q := `
 		INSERT INTO pharmacy_operations(pharmacy_id, day, start_time, end_time)
