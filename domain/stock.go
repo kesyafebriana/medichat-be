@@ -25,9 +25,8 @@ const (
 type Stock struct {
 	ID int64
 
-	ProductID   int64
-	ProductSlug string
-	PharmacyID  int64
+	ProductID  int64
+	PharmacyID int64
 
 	Stock int
 	Price int
@@ -45,6 +44,14 @@ type StockJoined struct {
 		ID   int64
 		Name string
 	}
+
+	Stock int
+	Price int
+}
+
+type StockCreateDetail struct {
+	ProductSlug string
+	PharmacyID  int64
 
 	Stock int
 	Price int
@@ -93,15 +100,16 @@ type StockMutationJoined struct {
 	Method string
 	Status string
 
-	Amount int64
+	Amount int
 
 	Timestamp time.Time
 }
 
 type StockTransferRequest struct {
-	SourceID int64
-	TargetID int64
-	Amount   int
+	SourcePharmacyID int64
+	TargetPharmacyID int64
+	ProductSlug      string
+	Amount           int
 }
 
 type StockListDetails struct {
@@ -135,6 +143,7 @@ type StockMutationListDetails struct {
 
 type StockRepository interface {
 	GetByID(ctx context.Context, id int64) (Stock, error)
+	GetByPharmacyAndProduct(ctx context.Context, pharmacy_id int64, product_id int64) (Stock, error)
 	GetByIDAndLock(ctx context.Context, id int64) (Stock, error)
 	GetPageInfo(ctx context.Context, det StockListDetails) (PageInfo, error)
 	List(ctx context.Context, det StockListDetails) ([]StockJoined, error)
