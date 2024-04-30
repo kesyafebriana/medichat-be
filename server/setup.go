@@ -115,6 +115,10 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/",
 		opts.PharmacyHandler.CreatePharmacy,
 	)
+	pharmacyGroup.PUT(
+		"/:id",
+		opts.PharmacyHandler.UpdatePharmacy,
+	)
 	pharmacyGroup.GET(
 		"/:id/operations",
 		opts.PharmacyHandler.GetPharmacyOperations,

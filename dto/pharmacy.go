@@ -107,19 +107,20 @@ func PharmacyCreateToDetails(p PharmacyCreateRequest) domain.PharmacyCreateDetai
 }
 
 type PharmacyUpdateRequest struct {
-	Name              *string        `json:"name" binding:"omitempty,no_leading_trailing_space"`
-	Address           *string        `json:"address" binding:"omitempty,no_leading_trailing_space"`
-	Coordinate        *CoordinateDTO `json:"coordinate" binding:"omitempty"`
-	PharmacistName    *string        `json:"pharmacist_name" binding:"omitempty,no_leading_trailing_space"`
-	PharmacistLicense *string        `json:"pharmacist_license" binding:"omitempty,no_leading_trailing_space"`
-	PharmacistPhone   *string        `json:"pharmacist_phone" binding:"omitempty,no_leading_trailing_space"`
+	Name              string        `json:"name" binding:"omitempty,no_leading_trailing_space"`
+	Address           string        `json:"address" binding:"omitempty,no_leading_trailing_space"`
+	Coordinate        CoordinateDTO `json:"coordinate" binding:"omitempty"`
+	PharmacistName    string        `json:"pharmacist_name" binding:"omitempty,no_leading_trailing_space"`
+	PharmacistLicense string        `json:"pharmacist_license" binding:"omitempty,no_leading_trailing_space"`
+	PharmacistPhone   string        `json:"pharmacist_phone" binding:"omitempty,no_leading_trailing_space"`
 }
 
-func PharmacyUpdateRequestToDetails(p PharmacyUpdateRequest) domain.PharmacyUpdateDetails {
+func PharmacyUpdateRequestToDetails(p PharmacyUpdateRequest, id int64) domain.PharmacyUpdateDetails {
 	return domain.PharmacyUpdateDetails{
+		ID:                id,
 		Name:              p.Name,
 		Address:           p.Address,
-		Coordinate:        (*domain.Coordinate)(p.Coordinate),
+		Coordinate:        (domain.Coordinate)(p.Coordinate),
 		PharmacistName:    p.PharmacistName,
 		PharmacistLicense: p.PharmacistLicense,
 		PharmacistPhone:   p.PharmacistPhone,

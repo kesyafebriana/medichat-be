@@ -55,12 +55,12 @@ type PharmacyUpdateDetails struct {
 	ID        int64
 	ManagerID int64
 
-	Name              *string
-	Address           *string
-	Coordinate        *Coordinate
-	PharmacistName    *string
-	PharmacistLicense *string
-	PharmacistPhone   *string
+	Name              string
+	Address           string
+	Coordinate        Coordinate
+	PharmacistName    string
+	PharmacistLicense string
+	PharmacistPhone   string
 }
 
 type PharmacyOperationsUpdateDetails struct {
@@ -87,7 +87,7 @@ type PharmacyRepository interface {
 	// GetByName(ctx context.Context, name string) (Pharmacy, error)
 
 	Add(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
-	// Update(ctx context.Context, pharmacy Pharmacy) (Pharmacy, error)
+	Update(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
 	// SoftDeleteById(ctx context.Context, id int64) error
 	// BulkSoftDelete(ctx context.Context, ids []int64) error
 
@@ -102,7 +102,7 @@ type PharmacyRepository interface {
 type PharmacyService interface {
 	CreatePharmacy(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
 	// GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, error)
-	// UpdatePharmacy(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
+	UpdatePharmacy(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
 	// DeletePharmacy(ctx context.Context, id int64) error
 
 	GetOperationsById(ctx context.Context, id int64) ([]PharmacyOperations, error)

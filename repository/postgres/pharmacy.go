@@ -28,6 +28,27 @@ func (r *pharmacyRepository) Add(ctx context.Context, pharmacy domain.PharmacyCr
 	)
 }
 
+func (r *pharmacyRepository) Update(ctx context.Context, pharmacy domain.PharmacyUpdateDetails) (domain.Pharmacy, error) {
+	q := `
+		UPDATE pharmacies
+		SET name = $1,
+			address = $2,
+			coordinate = $3,
+			pharmacist_name = $4,
+			pharmacist_license = $5,
+			pharmacist_phone = $6
+		WHERE id = $7 RETURNING
+	` + pharmacyColumns
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanPharmacy,
+		pharmacy.Name, pharmacy.Address, postgis.NewPointFromCoordinate(pharmacy.Coordinate),
+		pharmacy.PharmacistName, pharmacy.PharmacistLicense, pharmacy.PharmacistPhone,
+		pharmacy.ID,
+	)
+}
+
 func (r *pharmacyRepository) AddOperation(ctx context.Context, pharmacyOperation domain.PharmacyOperationCreateDetails) (domain.PharmacyOperations, error) {
 	q := `
 		INSERT INTO pharmacy_operations(pharmacy_id, day, start_time, end_time)

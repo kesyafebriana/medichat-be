@@ -45,6 +45,24 @@ func (s *pharmacyService) CreatePharmacy(ctx context.Context, pharmacy domain.Ph
 	return p, nil
 }
 
+func (s *pharmacyService) UpdatePharmacy(ctx context.Context, pharmacy domain.PharmacyUpdateDetails) (domain.Pharmacy, error) {
+	pharmacyRepo := s.dataRepository.PharmacyRepository()
+
+	p, err := pharmacyRepo.Update(ctx, pharmacy)
+	if err != nil {
+		return domain.Pharmacy{}, apperror.Wrap(err)
+	}
+
+	o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, p.ID)
+	if err != nil {
+		return domain.Pharmacy{}, apperror.Wrap(err)
+	} 
+
+	p.PharmacyOperations = o
+
+	return p, nil
+}
+
 func (s *pharmacyService) AddOperation(ctx context.Context, pharmacyOperation domain.PharmacyOperationCreateDetails) (domain.PharmacyOperations, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 
