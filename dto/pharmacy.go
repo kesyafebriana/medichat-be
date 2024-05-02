@@ -19,6 +19,11 @@ type PharmacyResponse struct {
 	PharmacyOperations []PharmacyOperationResponse `json:"pharmacy_operations"`
 }
 
+type PharmaciesResponse struct {
+	Pharmacies []PharmacyResponse
+	PageInfo   PageInfoResponse
+}
+
 type PharmacySlugParams struct {
 	Slug string `uri:"slug" binding:"required"`
 }
@@ -38,14 +43,16 @@ func NewPharmacyResponse(pharmacy domain.Pharmacy) PharmacyResponse {
 	}
 }
 
-func NewPharmaciesResponse(pharmacy []domain.Pharmacy) []PharmacyResponse {
-	var pharmacies []PharmacyResponse
+func NewPharmaciesResponse(pharmacy []domain.Pharmacy, pageInfo domain.PageInfo) PharmaciesResponse {
+	var res PharmaciesResponse
 
 	for _, v := range pharmacy {
-		pharmacies = append(pharmacies, NewPharmacyResponse(v))
+		res.Pharmacies = append(res.Pharmacies, NewPharmacyResponse(v))
 	}
 
-	return pharmacies
+	res.PageInfo = NewPageInfoResponse(pageInfo)
+
+	return res
 }
 
 type PharmacyOperationResponse struct {
@@ -172,6 +179,7 @@ type PharmacyListQuery struct {
 	SortBy    *string  `form:"sort_by"`
 	Sort      *string  `form:"sort"`
 	Limit     *int     `form:"limit"`
+	Page      *int     `form:"page"`
 }
 
 func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
@@ -181,9 +189,18 @@ func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
 		ManagerID: p.ManagerID,
 		Longitude: p.Longitude,
 		Latitude:  p.Latitude,
-		// Limit:     int64(*p.Limit),
-		// SortBy:    *p.SortBy,
-		// SortType:  *p.Sort,
+		Limit:     10,
+		Page:      1,
+		SortBy:    *p.SortBy,
+		SortType:  *p.Sort,
+	}
+
+	if p.Limit != nil {
+		query.Limit = *p.Limit
+	}
+
+	if p.Page != nil {
+		query.Page = *p.Page
 	}
 
 	if p.StartTime != nil {

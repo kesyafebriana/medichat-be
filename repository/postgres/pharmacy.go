@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"log"
 	"medichat-be/domain"
 	"medichat-be/repository/postgis"
 	"strings"
@@ -86,6 +87,86 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		scanPharmacy,
 		args...,
 	)
+}
+
+func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.PharmaciesQuery) (domain.PageInfo, error) {
+	sb := strings.Builder{}
+	var args = make([]any, 0)
+	var idx = 1
+	offset := (query.Page - 1) * query.Limit
+
+	sb.WriteString(`
+		SELECT COUNT(p.*) as total_data 
+		FROM pharmacies p
+		WHERE p.deleted_at IS NULL
+	`)
+
+	if query.Name != nil {
+		fmt.Fprintf(&sb, ` AND p.name ILIKE $%d 
+		`, idx)
+		idx++
+		args = append(args, *query.Name)
+	}
+
+	if query.ManagerID != nil {
+		fmt.Fprintf(&sb, ` AND p.manager_id = $%d 
+		`, idx)
+		idx++
+		args = append(args, *query.ManagerID)
+	}
+
+	if query.Longitude != nil && query.Latitude != nil {
+		fmt.Fprintf(&sb, ` AND ST_DWithin(p.coordinate, ST_MakePoint($%d, $%d)::geography, 2500)
+		`, idx, idx+1)
+		idx += 2
+		args = append(args, *query.Longitude, *query.Latitude)
+	}
+
+	if query.Day != nil || query.StartTime != nil || query.EndTime != nil {
+		sb.WriteString(`
+			AND p.id IN (
+			SELECT o.pharmacy_id
+			FROM pharmacy_operations o
+			WHERE o.deleted_at IS NULL
+		`)
+
+		if query.Day != nil {
+			fmt.Fprintf(&sb, `AND o.day = $%d
+		`, idx)
+			idx++
+			args = append(args, *query.Day)
+		}
+
+		if query.StartTime != nil {
+			fmt.Fprintf(&sb, `AND o.start_time <= '0001-01-01 %s:00 BC'
+		`, *query.StartTime)
+		}
+
+		if query.EndTime != nil {
+			fmt.Fprintf(&sb, `AND o.end_time >= '0001-01-01 %s:00 BC'
+		`, *query.EndTime)
+		}
+
+		sb.WriteString(`)`)
+	}
+
+	if query.Limit != 0 {
+		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
+	}
+
+	log.Print(sb.String())
+	var totalData int64
+	row := r.querier.QueryRowContext(ctx, sb.String(), args...)
+	err := row.Scan(&totalData)
+
+	if err != nil {
+		return domain.PageInfo{}, nil
+	}
+
+	return domain.PageInfo{
+		CurrentPage: int(query.Page),
+		ItemCount:   totalData,
+	}, nil
 }
 
 func (r *pharmacyRepository) GetBySlug(ctx context.Context, slug string) (domain.Pharmacy, error) {

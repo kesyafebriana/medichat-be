@@ -83,8 +83,8 @@ type PharmaciesQuery struct {
 	Longitude   *float64
 	Latitude    *float64
 	Name        *string
-	Page        int64
-	Limit       int64
+	Page        int
+	Limit       int
 	SortBy      string
 	SortType    string
 }
@@ -92,6 +92,7 @@ type PharmaciesQuery struct {
 type PharmacyRepository interface {
 	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, error)
 	GetBySlug(ctx context.Context, slug string) (Pharmacy, error)
+	GetPageInfo(ctx context.Context, query PharmaciesQuery) (PageInfo, error)
 
 	Add(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
 	Update(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
@@ -106,7 +107,7 @@ type PharmacyRepository interface {
 
 type PharmacyService interface {
 	CreatePharmacy(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
-	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, error)
+	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, PageInfo, error)
 	GetPharmacyBySlug(ctx context.Context, slug string) (Pharmacy, error)
 	UpdatePharmacy(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
 	DeletePharmacyBySlug(ctx context.Context, slug string) error

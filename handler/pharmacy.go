@@ -43,7 +43,7 @@ func (h *PharmacyHandler) GetPharmacies(ctx *gin.Context) {
 		return
 	}
 
-	p, err := h.pharmacySrv.GetPharmacies(ctx, query)
+	p, pInfo, err := h.pharmacySrv.GetPharmacies(ctx, query)
 
 	if err != nil {
 		ctx.Error(err)
@@ -53,7 +53,7 @@ func (h *PharmacyHandler) GetPharmacies(ctx *gin.Context) {
 
 	ctx.JSON(
 		http.StatusOK,
-		dto.ResponseOk(dto.NewPharmaciesResponse(p)),
+		dto.ResponseOk(dto.NewPharmaciesResponse(p, pInfo)),
 	)
 }
 
