@@ -187,6 +187,11 @@ func main() {
 		DataRepository: dataRepository,
 	})
 
+	paymentService := service.NewPaymentService(service.PaymentServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
@@ -216,6 +221,10 @@ func main() {
 		SpecializationSrv: specializationService,
 	})
 
+	paymentHandler := handler.NewPaymentHandler(handler.PaymentHandlerOpts{
+		PaymentSrv: paymentService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
@@ -236,6 +245,7 @@ func main() {
 		DoctorHandler:         doctorHandler,
 		SpecializationHandler: specializationHandler,
 		CategoryHandler:       categoryHandler,
+		PaymentHandler:        paymentHandler,
 
 		SessionKey: conf.SessionKey,
 

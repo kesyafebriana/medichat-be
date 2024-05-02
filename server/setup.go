@@ -19,6 +19,7 @@ type SetupServerOpts struct {
 	UserHandler           *handler.UserHandler
 	DoctorHandler         *handler.DoctorHandler
 	SpecializationHandler *handler.SpecializationHandler
+	PaymentHandler        *handler.PaymentHandler
 
 	SessionKey []byte
 
@@ -206,6 +207,24 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	categoryGroup.POST("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelTwo)
 	categoryGroup.PATCH("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.UpdateCategory)
 	categoryGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.DeleteCategory)
+
+	paymentGroup := apiV1Group.Group("/payments")
+	paymentGroup.GET(
+		".",
+		opts.PaymentHandler.ListPayments,
+	)
+	paymentGroup.GET(
+		"/:invoice_number",
+		opts.PaymentHandler.GetPaymentByInvoiceNumber,
+	)
+	paymentGroup.POST(
+		"/:invoice_number/upload",
+		opts.PaymentHandler.UploadPayment,
+	)
+	paymentGroup.POST(
+		"/:invoice_number/confirm",
+		opts.PaymentHandler.ConfirmPayment,
+	)
 
 	return router
 }
