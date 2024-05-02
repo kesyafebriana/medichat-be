@@ -47,7 +47,7 @@ func (q PaymentListQuery) ToDetails() domain.PaymentListDetails {
 }
 
 type PaymentInvoiceNumberURI struct {
-	InvoiceNumber string `json:"invoice_number" binding:"required"`
+	InvoiceNumber string `uri:"invoice_number" binding:"required"`
 }
 
 type PaymentUploadRequest = MultipartForm[
