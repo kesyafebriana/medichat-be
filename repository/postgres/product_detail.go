@@ -25,15 +25,15 @@ func (r *productDetailRepository) GetById(ctx context.Context, id int64) (domain
 
 func (r *productDetailRepository) Add(ctx context.Context, detail domain.ProductDetails) (domain.ProductDetails, error) {
 	q := `
-		INSERT INTO product_details(generic_name, content, manufacturer, description, product_classification, product_form, unit_in_pack, selling_unit, weight, height, length, width)
+		INSERT INTO product_details(generic_name, content, manufacturer, description, product_classification, product_form, unit_in_pack, selling_unit, weight, height, length, width, composition)
 		VALUES
-		($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING ` + productDetailsColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanProductDetails,
-		detail.GenericName, detail.Content, detail.Manufacturer, detail.Description, detail.ProductClassification, detail.ProductForm, detail.UnitInPack, detail.SellingUnit, detail.Weight, detail.Height, detail.Length, detail.Width,
+		detail.GenericName, detail.Content, detail.Manufacturer, detail.Description, detail.ProductClassification, detail.ProductForm, detail.UnitInPack, detail.SellingUnit, detail.Weight, detail.Height, detail.Length, detail.Width, detail.Composition,
 	)
 }
 
@@ -52,12 +52,13 @@ func (r *productDetailRepository) Update(ctx context.Context, detail domain.Prod
 			height = $10,
 			length = $11,
 			width = $12,
-		WHERE id = $13 RETURNING ` + categoryColumns
+			composition = $13,
+		WHERE id = $14 RETURNING ` + categoryColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanProductDetails,
-		detail.GenericName, detail.Content, detail.Manufacturer, detail.Description, detail.ProductClassification, detail.ProductForm, detail.UnitInPack, detail.SellingUnit, detail.Weight, detail.Height, detail.Length, detail.Width,detail.ID,
+		detail.GenericName, detail.Content, detail.Manufacturer, detail.Description, detail.ProductClassification, detail.ProductForm, detail.UnitInPack, detail.SellingUnit, detail.Weight, detail.Height, detail.Length, detail.Composition, detail.Width,detail.ID,
 	)
 }
 

@@ -76,6 +76,8 @@ type UpdateProductRequest struct{
 type ProductsQuery struct {
 	Page       int64
 	Limit      int64
+	Latitude   *float64
+	Longitude  *float64
 	Term       string
 	SortBy     string
 	SortType   string
@@ -99,6 +101,8 @@ type ProductRepository interface {
 	GetById(ctx context.Context, id int64) (Product, error)
 	GetPageInfo(ctx context.Context, query ProductsQuery) (PageInfo, error)
 	GetProducts(ctx context.Context, query ProductsQuery) ([]Product, error)
+	GetProductsFromArea(ctx context.Context, query ProductsQuery) ([]Product, error)
+	GetPageInfoFromArea(ctx context.Context, query ProductsQuery) (PageInfo, error)
 	GetBySlug(ctx context.Context, slug string) (Product, error)
 	Add(ctx context.Context, product Product) (Product, error)
 	Update(ctx context.Context, product Product) (Product, error)
@@ -115,6 +119,7 @@ type ProductDetailsRepository interface {
 type ProductService interface {
 	GetProduct(ctx context.Context, slug string) (Product, error)
 	GetProducts(ctx context.Context, query ProductsQuery) ([]Product, PageInfo, error)
+	GetProductLocation(ctx context.Context, query ProductsQuery) ([]Product, PageInfo, error)
 	CreateProduct(ctx context.Context, request AddProductRequest, file *multipart.File) (Product, error)
 	DeleteProducts(ctx context.Context, slug string) error
 	UpdateProduct(ctx context.Context, slug string, request UpdateProductRequest, file *multipart.File) (Product, error)

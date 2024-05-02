@@ -69,6 +69,7 @@ func (s *productService) CreateProduct(ctx context.Context, request domain.AddPr
 		GenericName: request.GenericName,
 		Content: request.Content,
 		Manufacturer: request.Manufacturer,
+		Composition: request.Composition,
 		Description: request.Description,
 		ProductClassification: request.ProductClassification,
 		ProductForm: request.ProductForm,
@@ -110,6 +111,34 @@ func (s *productService) GetProduct(ctx context.Context, slug string) (domain.Pr
 	return products, nil
 }
 
+func (s *productService) GetProductLocation(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, domain.PageInfo, error) {
+	productRepo := s.dataRepository.ProductRepository()
+
+	products, err := productRepo.GetProductsFromArea(ctx, query)
+	if err != nil {
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+
+	pageInfo, err := productRepo.GetPageInfoFromArea(ctx, query)
+	if err != nil {
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	pageInfo.ItemsPerPage = int(query.Limit)
+	if query.Limit == 0 {
+		pageInfo.ItemsPerPage = len(products)
+	}
+
+	if pageInfo.ItemsPerPage == 0 {
+		pageInfo.PageCount = 0
+	} else {
+		pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
+	}
+
+	return products, pageInfo, nil
+}
+
 func (s *productService) GetProducts(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, domain.PageInfo, error) {
 	productRepo := s.dataRepository.ProductRepository()
 
@@ -117,8 +146,6 @@ func (s *productService) GetProducts(ctx context.Context, query domain.ProductsQ
 	if err != nil {
 		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
-
-	fmt.Println(products);
 
 	pageInfo, err := productRepo.GetPageInfo(ctx, query)
 	if err != nil {

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"medichat-be/apperror"
 	"medichat-be/domain"
 	"strings"
 
@@ -12,6 +13,93 @@ import (
 type productRepository struct {
 	querier Querier
 }
+
+func (r *productRepository) GetProductsFromArea(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, error) {
+	sb := strings.Builder{}
+	args := make([]any, 0)
+	var idx = 1
+	offset := (query.Page - 1) * query.Limit
+
+	_,err := fmt.Fprintf(&sb, ` SELECT DISTINCT p.id, p.name, p.product_detail_id, p.category_id, p.picture, p.is_active from products p inner join
+		(select pharma.id as pharmacy_id,pharma.name, stock.product_id as product_id from
+			(SELECT id, name, address, coordinate FROM pharmacies
+			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 2500)) as pharma
+			inner join (select s.id,s.product_id,s.pharmacy_id from stocks s where s.deleted_at is null and stock >=0) as stock
+		on pharma.id = stock.pharmacy_id) as pp
+		on p.id = pp.product_id
+	`, idx, idx+1)
+	idx += 2
+	args = append(args, *query.Longitude, *query.Latitude)
+	if err != nil {
+		return []domain.Product{}, apperror.Wrap(err)
+	}
+
+	if query.Term != "" {
+
+		fmt.Fprintf(&sb,`AND c.keyword ILIKE $%d`,idx)
+		args = append(args, query.Term)
+		idx += 1
+
+	}
+
+	if query.SortBy != domain.CategorySortByParent {
+		query.SortBy = "p."+query.SortBy
+		fmt.Fprintf(&sb, " ORDER BY %v %v", query.SortBy,query.SortType)
+
+	}
+
+	if query.Limit != 0 {
+		fmt.Fprintf(&sb, " OFFSET $%d LIMIT $%d ", idx, idx+1)
+		args = append(args, offset,query.Limit)
+		idx += 2
+	}
+	return queryFull(
+		r.querier, ctx, sb.String(),
+		scanProduct,
+		args...,
+	)
+}
+
+func (r *productRepository) GetPageInfoFromArea(ctx context.Context, query domain.ProductsQuery) (domain.PageInfo, error) {
+	sb := strings.Builder{}
+	args := make([]any, 0)
+	var idx = 1
+
+	_,err := fmt.Fprintf(&sb, ` SELECT COUNT(DISTINCT p.id) as total_data from products p inner join
+		(select pharma.id as pharmacy_id,pharma.name, stock.product_id as product_id from
+			(SELECT id, name, address, coordinate FROM pharmacies
+			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 2500)) as pharma
+			inner join (select s.id,s.product_id,s.pharmacy_id from stocks s where s.deleted_at is null and stock >=0) as stock
+		on pharma.id = stock.pharmacy_id) as pp
+		on p.id = pp.product_id
+	`, idx, idx+1)
+	idx += 2
+	args = append(args, *query.Longitude, *query.Latitude)
+	if err != nil {
+		return domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+
+	if query.Term != "" {
+		fmt.Fprintf(&sb,`AND c.name ILIKE $%d`,idx)
+		args = append(args, query.Term)
+		idx += 1
+	}
+
+	var totalData int64
+	row := r.querier.QueryRowContext(ctx, sb.String(), args...)
+	err = row.Scan(&totalData)
+
+	if err != nil {
+		return domain.PageInfo{}, nil
+	}
+
+	return domain.PageInfo{
+		CurrentPage: int(query.Page),
+		ItemCount:   totalData,
+	}, nil
+}
+
 
 func (r *productRepository) GetProducts(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, error) {
 	sb := strings.Builder{}
@@ -122,15 +210,15 @@ func (r *productRepository) GetPageInfo(ctx context.Context, query domain.Produc
 
 func (r *productRepository) Add(ctx context.Context, product domain.Product) (domain.Product, error) {
 	q := `
-		INSERT INTO products(name,category_id, product_detail_id, picture, slug, is_active)
+		INSERT INTO products(name,category_id, product_detail_id, picture, slug, is_active, keyword)
 		VALUES
-		($1, $2, $3, $4, $5, $6)
+		($1, $2, $3, $4, $5, $6, $7)
 		RETURNING ` + productColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanProduct,
-		product.Name, product.ProductCategoryId, product.ProductDetailId, product.Picture, product.Slug, product.IsActive,
+		product.Name, product.ProductCategoryId, product.ProductDetailId, product.Picture, product.Slug, product.IsActive, product.KeyWord,
 	)
 }
 
@@ -143,12 +231,13 @@ func (r *productRepository) Update(ctx context.Context, product domain.Product) 
 			picture = $4
 			slug = $5
 			is_active = $6
-		WHERE id = $5 RETURNING ` + categoryColumns
+			keyword = $7
+		WHERE id = $8 RETURNING ` + categoryColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanProduct,
-		product.Name, product.ProductCategoryId, product.ProductDetailId, product.Picture, product.Slug, product.IsActive,
+		product.Name, product.ProductCategoryId, product.ProductDetailId, product.Picture, product.Slug, product.IsActive, product.KeyWord, product.ID,
 	)
 }
 

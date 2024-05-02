@@ -9,6 +9,7 @@ import (
 type CreateProductForm struct {
 	Name  string                `form:"name" binding:"required"`
 	GenericName string `form:"generic_name" binding:"required"`
+	Composition string `form:"composition" binding:"required"`
 	Content string `form:"content" binding:"required"`
 	Manufacturer string `form:"manufacturer" binding:"required"`
 	Description string `form:"description" binding:"required"`
@@ -40,6 +41,7 @@ type UpdateProductForm struct {
 
 	Name  string                `form:"name"`
 	GenericName string `form:"generic_name"`
+	Composition string `form:"composition"`
 	Content string `form:"content"`
 	Manufacturer string `form:"manufacturer"`
 	Description string `form:"description"`
@@ -61,6 +63,8 @@ type GetProductsQuery struct {
 	Page       int64  `form:"page" binding:"numeric,omitempty,min=1"`
 	Limit      int64  `form:"limit" binding:"numeric,omitempty,min=1"`
 	Term       string `form:"term"`
+	Longitude *float64 `form:"long"`
+	Latitude  *float64 `form:"lat"`
 	SortBy     string `form:"sort_by" binding:"omitempty,oneof=name slug"`
 	SortType   string `form:"sort_type" binding:"omitempty,oneof=ASC DESC"`
 }
@@ -74,6 +78,7 @@ type ProductResponse struct {
 	Slug     string  `json:"slug"`
 	Picture *string `json:"photo_url,omitempty"`
 }
+
 
 func (q *GetProductsQuery) ToProductsQuery() domain.ProductsQuery {
 	var page int64 = q.Page
@@ -101,6 +106,8 @@ func (q *GetProductsQuery) ToProductsQuery() domain.ProductsQuery {
 		Page:       page,
 		Limit:      q.Limit,
 		Term:       q.Term,
+		Latitude: q.Latitude,
+		Longitude: q.Longitude,
 		SortBy:     sortBy,
 		SortType:   sortType,
 	}

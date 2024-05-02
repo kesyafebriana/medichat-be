@@ -46,6 +46,28 @@ func (h *ProductHandler) GetProducts(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewProductsResponse(products, pageInfo)))
 }
 
+func (h *ProductHandler) GetProductsFromArea(ctx *gin.Context) {
+	var query dto.GetProductsQuery
+
+	err := ctx.ShouldBindQuery(&query)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+
+	products, pageInfo, err := h.productsrv.GetProductLocation(ctx,query.ToProductsQuery() )
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewProductsResponse(products, pageInfo)))
+}
+
 func (h *ProductHandler) GetProductBySlug(ctx *gin.Context) {
 	var params dto.CategorySlugParams
 
@@ -102,6 +124,7 @@ func (h *ProductHandler) CreateProduct(ctx *gin.Context) {
 		Description: form.Description,
 		ProductClassification: form.ProductClassification,
 		ProductForm: form.ProductForm,
+		Composition: form.Composition,
 		UnitInPack: form.UnitInPack,
 		SellingUnit: form.SellingUnit,
 		Weight: form.Weight,

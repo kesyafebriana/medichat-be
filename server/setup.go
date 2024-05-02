@@ -241,7 +241,8 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	categoryGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.DeleteCategory)
 
 	productGroup := apiV1Group.Group("/product")
-	productGroup.GET("/", opts.Authenticator, opts.ProductHandler.GetProducts)
+	productGroup.GET("/", opts.Authenticator, opts.ProductHandler.GetProductsFromArea)
+	productGroup.GET("/list", opts.Authenticator, opts.ProductHandler.GetProducts)
 	productGroup.GET("/:slug", opts.Authenticator, opts.ProductHandler.GetProductBySlug)
 	productGroup.POST("/", opts.AdminAuthenticator, opts.ProductHandler.CreateProduct)
 	productGroup.PATCH("/", opts.AdminAuthenticator, opts.ProductHandler.UpdateProduct)
