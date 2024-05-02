@@ -74,7 +74,20 @@ type OrderListDetails struct {
 	Limit int
 }
 
+type OrderItemCreateDetails struct {
+	ProductSlug string
+	Amount      int
+}
+
 type OrderCreateDetails struct {
+	UserID           int64
+	PharmacySlug     string
+	ShipmentMethodID int64
+
+	Address    string
+	Coordinate Coordinate
+
+	Items []OrderItemCreateDetails
 }
 
 type OrderRepository interface {
@@ -95,8 +108,9 @@ type OrderService interface {
 	List(ctx context.Context, dets OrderListDetails) ([]Order, PageInfo, error)
 	GetByID(ctx context.Context, id int64) (Order, error)
 
+	GetCartInfo(ctx context.Context, dets OrderCreateDetails) (Order, error)
 	AddOrder(ctx context.Context, dets OrderCreateDetails) (Order, error)
 	SendOrder(ctx context.Context, id int64) error
-	ConfirmSentOrder(ctx context.Context, id int64) error
+	FinishOrder(ctx context.Context, id int64) error
 	CancelOrder(ctx context.Context, id int64) error
 }
