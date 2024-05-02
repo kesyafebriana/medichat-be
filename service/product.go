@@ -40,6 +40,8 @@ func (s *productService) CreateProduct(ctx context.Context, request domain.AddPr
 	product.Name = strings.TrimSpace(strings.ToLower(request.Name))
 	product.Slug = util.GenerateSlug(request.Name)
 
+	product.KeyWord = product.Name + " " + request.Manufacturer + " "+request.Composition
+
 	p, err := productRepo.GetByName(ctx, product.Name)
 	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
 		return domain.Product{}, apperror.Wrap(err)

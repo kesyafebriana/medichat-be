@@ -23,6 +23,7 @@ type ProductDetails struct{
 	ID int64
 	GenericName string
 	Content string
+	Composition string
 	Manufacturer string
 	Description string
 	ProductClassification string
@@ -40,6 +41,7 @@ type AddProductRequest struct{
 	ProductCategoryId int64
 
 	GenericName string
+	Composition string
 	Content string
 	Manufacturer string
 	Description string
