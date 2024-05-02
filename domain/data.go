@@ -28,6 +28,9 @@ type DataRepository interface {
 
 	SpecializationRepository() SpecializationRepository
 	PharmacyRepository() PharmacyRepository
+
+	PaymentRepository() PaymentRepository
+	OrderRepository() OrderRepository
 }
 
 func RunAtomic[T any](
