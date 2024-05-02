@@ -37,25 +37,40 @@ func (s *stockService) GetByID(
 func (s *stockService) List(
 	ctx context.Context,
 	det domain.StockListDetails,
-) ([]domain.StockJoined, error) {
+) ([]domain.StockJoined, domain.PageInfo, error) {
 	stockRepo := s.dataRepository.StockRepository()
+
+	pageInfo, err := stockRepo.GetPageInfo(ctx, det)
+	if err != nil {
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
+	}
 
 	stocks, err := stockRepo.List(ctx, det)
 	if err != nil {
-		return nil, apperror.Wrap(err)
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
 
-	return stocks, nil
+	return stocks, pageInfo, nil
 }
 
 func (s *stockService) AddClosure(
 	ctx context.Context,
-	stock domain.Stock,
+	det domain.StockCreateDetail,
 ) domain.AtomicFunc[domain.Stock] {
 	return func(dr domain.DataRepository) (domain.Stock, error) {
 		stockRepo := dr.StockRepository()
 
+		// TODO: get product by slug
+		product := domain.Product{}
+
 		// TODO: check pharmacy manager
+
+		stock := domain.Stock{
+			ProductID:  product.ID,
+			PharmacyID: det.PharmacyID,
+			Stock:      det.Stock,
+			Price:      det.Price,
+		}
 
 		stock, err := stockRepo.Add(ctx, stock)
 		if err != nil {
@@ -68,7 +83,7 @@ func (s *stockService) AddClosure(
 
 func (s *stockService) Add(
 	ctx context.Context,
-	stock domain.Stock,
+	stock domain.StockCreateDetail,
 ) (domain.Stock, error) {
 	return domain.RunAtomic(
 		s.dataRepository,
@@ -171,15 +186,20 @@ func (s *stockService) GetMutationByID(
 func (s *stockService) ListMutations(
 	ctx context.Context,
 	det domain.StockMutationListDetails,
-) ([]domain.StockMutationJoined, error) {
+) ([]domain.StockMutationJoined, domain.PageInfo, error) {
 	stockRepo := s.dataRepository.StockRepository()
+
+	pageInfo, err := stockRepo.GetMutationPageInfo(ctx, det)
+	if err != nil {
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
+	}
 
 	muts, err := stockRepo.ListMutations(ctx, det)
 	if err != nil {
-		return nil, apperror.Wrap(err)
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
 
-	return muts, nil
+	return muts, pageInfo, nil
 }
 
 func (s *stockService) RequestStockTransferClosure(

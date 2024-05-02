@@ -164,14 +164,14 @@ type StockRepository interface {
 
 type StockService interface {
 	GetByID(ctx context.Context, id int64) (Stock, error)
-	List(ctx context.Context, det StockListDetails) ([]StockJoined, error)
+	List(ctx context.Context, det StockListDetails) ([]StockJoined, PageInfo, error)
 
-	Add(ctx context.Context, s Stock) (Stock, error)
+	Add(ctx context.Context, s StockCreateDetail) (Stock, error)
 	Update(ctx context.Context, det StockUpdateDetail) (Stock, error)
 	DeleteByID(ctx context.Context, id int64) error
 
 	GetMutationByID(ctx context.Context, id int64) (StockMutation, error)
-	ListMutations(ctx context.Context, det StockMutationListDetails) ([]StockMutationJoined, error)
+	ListMutations(ctx context.Context, det StockMutationListDetails) ([]StockMutationJoined, PageInfo, error)
 
 	RequestStockTransfer(ctx context.Context, r StockTransferRequest) (StockMutation, error)
 	ApproveStockTransfer(ctx context.Context, id int64) (StockMutation, error)
