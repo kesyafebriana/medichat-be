@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	OrderStatusWaitingPayment      = "Waiting for payment"
-	OrderStatusWaitingConfirmation = "Waiting for payment confirmation"
-	OrderStatusProcessed           = "Processed"
-	OrderStatusSent                = "Sent"
-	OrderStatusConfirmed           = "Order confirmed"
-	OrderStatusCancelled           = "Cancelled"
+	OrderStatusWaitingPayment      = "waiting for payment"
+	OrderStatusWaitingConfirmation = "Waiting for confirmation"
+	OrderStatusProcessing          = "processing"
+	OrderStatusSent                = "sent"
+	OrderStatusFinished            = "finished"
+	OrderStatusCancelled           = "cancelled"
 )
 
 type Order struct {
@@ -85,6 +85,7 @@ type OrderRepository interface {
 
 	Add(ctx context.Context, order Order) (Order, error)
 	UpdateStatusByID(ctx context.Context, id int64, status string) error
+	UpdateStatusByPaymentID(ctx context.Context, id int64, status string) error
 
 	ListItemsByOrderID(ctx context.Context, id int64) ([]OrderItem, error)
 	AddItem(ctx context.Context, item OrderItem) (OrderItem, error)
