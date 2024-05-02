@@ -45,7 +45,7 @@ type Order struct {
 
 	Status     string
 	OrderedAt  time.Time
-	FinishedAt time.Time
+	FinishedAt *time.Time
 
 	Items []OrderItem
 }
@@ -53,12 +53,14 @@ type Order struct {
 type OrderItem struct {
 	ID int64
 
-	OrderID   int64
-	ProductID int64
-	Price     int
+	OrderID int64
+	Product struct {
+		ID   int64
+		Slug string
+		Name string
+	}
 
-	ProductName string
-
+	Price  int
 	Amount int
 }
 
@@ -67,6 +69,9 @@ type OrderListDetails struct {
 	PharmacyID        *int64
 	PharmacyManagerID *int64
 	Status            *string
+
+	Page  int
+	Limit int
 }
 
 type OrderCreateDetails struct {
