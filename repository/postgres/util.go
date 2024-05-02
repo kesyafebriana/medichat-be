@@ -241,14 +241,41 @@ func scanProductDetails(r RowScanner, d *domain.ProductDetails) error {
 
 var (
 	paymentColumns = `
-		id, invoice_number, file_url, is_confirmed, amount
+		id, invoice_number, user_id, file_url, is_confirmed, amount
+	`
+
+	selectPaymentJoined = `
+		SELECT
+			p.id, p.invoice_number, u.id, u.name, 
+			p.file_url, p.is_confirmed, p.amount
+		FROM
+			payments p
+			JOIN users u ON p.user_id = u.id
+	`
+
+	countPaymentJoined = `
+		SELECT COUNT(p.id)
+		FROM
+			payments p
+			JOIN users u ON p.user_id = u.id
 	`
 )
 
 func scanPayment(r RowScanner, p *domain.Payment) error {
 	nullURL := sql.NullString{}
 	if err := r.Scan(
-		&p.ID, &p.InvoiceNumber, &nullURL, &p.IsConfirmed, &p.Amount,
+		&p.ID, &p.InvoiceNumber, &p.User.ID, &nullURL, &p.IsConfirmed, &p.Amount,
+	); err != nil {
+		return err
+	}
+	p.FileURL = toStringPtr(nullURL)
+	return nil
+}
+
+func scanPaymentJoined(r RowScanner, p *domain.Payment) error {
+	nullURL := sql.NullString{}
+	if err := r.Scan(
+		&p.ID, &p.InvoiceNumber, &p.User.ID, &p.User.Name, &nullURL, &p.IsConfirmed, &p.Amount,
 	); err != nil {
 		return err
 	}

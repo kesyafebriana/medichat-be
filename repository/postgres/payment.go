@@ -20,24 +20,27 @@ func (r *paymentRepository) buildListQuery(sel string, dets domain.PaymentListDe
 
 	sb.WriteString(sel)
 	sb.WriteString(`
-		WHERE deleted_at IS NULL
+		WHERE p.deleted_at IS NULL
 	`)
 
 	if dets.IsConfirmed != nil {
 		sb.WriteString(`
-			AND is_confirmed = @isConfirmed
+			AND p.is_confirmed = @isConfirmed
 		`)
 		args["isConfirmed"] = *dets.IsConfirmed
+	}
+	if dets.UserID != nil {
+		sb.WriteString(`
+			AND p.user_id = @userID
+		`)
+		args["userID"] = *dets.UserID
 	}
 
 	return sb, args
 }
 
 func (r *paymentRepository) GetPageInfo(ctx context.Context, dets domain.PaymentListDetails) (domain.PageInfo, error) {
-	sb, args := r.buildListQuery(`
-		SELECT COUNT(*)
-		FROM payments
-	`, dets)
+	sb, args := r.buildListQuery(countOrderJoined, dets)
 
 	count, err := queryOne(
 		r.querier, ctx, sb.String(),
@@ -57,10 +60,7 @@ func (r *paymentRepository) GetPageInfo(ctx context.Context, dets domain.Payment
 }
 
 func (r *paymentRepository) List(ctx context.Context, dets domain.PaymentListDetails) ([]domain.Payment, error) {
-	sb, args := r.buildListQuery(`
-		SELECT `+paymentColumns+`
-		FROM payments
-	`, dets)
+	sb, args := r.buildListQuery(selectPaymentJoined, dets)
 	offset := (dets.Page - 1) * dets.Limit
 
 	fmt.Fprintf(
