@@ -82,6 +82,7 @@ func (s *paymentService) UploadPaymentClosure(
 	return func(dr domain.DataRepository) (any, error) {
 		paymentRepo := dr.PaymentRepository()
 		userRepo := dr.UserRepository()
+		orderRepo := dr.OrderRepository()
 
 		accountID, err := util.GetAccountIDFromContext(ctx)
 		if err != nil {
@@ -120,7 +121,13 @@ func (s *paymentService) UploadPaymentClosure(
 			return nil, apperror.Wrap(err)
 		}
 
-		// TODO: set order statuses to waiting confirmation.
+		err = orderRepo.UpdateStatusByPaymentID(
+			ctx, payment.ID,
+			domain.OrderStatusWaitingConfirmation,
+		)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
 
 		return nil, nil
 	}
@@ -146,6 +153,7 @@ func (s *paymentService) ConfirmPaymentClosure(
 	return func(dr domain.DataRepository) (any, error) {
 		paymentRepo := dr.PaymentRepository()
 		accuntRepo := dr.AccountRepository()
+		orderRepo := dr.OrderRepository()
 
 		accountID, err := util.GetAccountIDFromContext(ctx)
 		if err != nil {
@@ -178,7 +186,13 @@ func (s *paymentService) ConfirmPaymentClosure(
 			return nil, apperror.Wrap(err)
 		}
 
-		// TODO: set order statuses to processing.
+		err = orderRepo.UpdateStatusByPaymentID(
+			ctx, payment.ID,
+			domain.OrderStatusProcessing,
+		)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
 
 		return nil, nil
 	}

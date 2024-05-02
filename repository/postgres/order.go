@@ -169,6 +169,20 @@ func (r *orderRepository) UpdateStatusByID(ctx context.Context, id int64, status
 	)
 }
 
+func (r *orderRepository) UpdateStatusByPaymentID(ctx context.Context, id int64, status string) error {
+	q := `
+		UPDATE orders
+		SET status = $2,
+			updated_at = now()
+		WHERE payment_id = $1
+	`
+
+	return exec(
+		r.querier, ctx, q,
+		id, status,
+	)
+}
+
 func (r *orderRepository) ListItemsByOrderID(ctx context.Context, id int64) ([]domain.OrderItem, error) {
 	q := selectOrderItemJoined + `
 		WHERE AND oi.id = $1
