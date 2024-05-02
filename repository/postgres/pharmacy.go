@@ -10,12 +10,24 @@ type pharmacyRepository struct {
 	querier Querier
 }
 
+func (r *pharmacyRepository) GetBySlug(ctx context.Context, slug string) (domain.Pharmacy, error) {
+	q := `
+		SELECT ` + pharmacyColumns + `FROM pharmacies
+		WHERE slug = $1
+	`
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanPharmacy, slug,
+	)
+}
+
 func (r *pharmacyRepository) Add(ctx context.Context, pharmacy domain.PharmacyCreateDetails) (domain.Pharmacy, error) {
 	q := `
 		INSERT INTO pharmacies(name, manager_id, address, coordinate, 
-		pharmacist_name, pharmacist_license, pharmacist_phone)
+		pharmacist_name, pharmacist_license, pharmacist_phone, slug)
 		VALUES
-		($1, $2, $3, $4, $5, $6, $7)
+		($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING
 	` + pharmacyColumns
 
@@ -24,7 +36,8 @@ func (r *pharmacyRepository) Add(ctx context.Context, pharmacy domain.PharmacyCr
 		scanPharmacy,
 		pharmacy.Name, pharmacy.ManagerID, pharmacy.Address,
 		postgis.NewPointFromCoordinate(pharmacy.Coordinate),
-		pharmacy.PharmacistName, pharmacy.PharmacistLicense, pharmacy.PharmacistPhone,
+		pharmacy.PharmacistName, pharmacy.PharmacistLicense,
+		pharmacy.PharmacistPhone, pharmacy.Slug,
 	)
 }
 
@@ -37,7 +50,7 @@ func (r *pharmacyRepository) Update(ctx context.Context, pharmacy domain.Pharmac
 			pharmacist_name = $4,
 			pharmacist_license = $5,
 			pharmacist_phone = $6
-		WHERE id = $7 RETURNING
+		WHERE slug = $7 RETURNING
 	` + pharmacyColumns
 
 	return queryOneFull(
@@ -45,21 +58,21 @@ func (r *pharmacyRepository) Update(ctx context.Context, pharmacy domain.Pharmac
 		scanPharmacy,
 		pharmacy.Name, pharmacy.Address, postgis.NewPointFromCoordinate(pharmacy.Coordinate),
 		pharmacy.PharmacistName, pharmacy.PharmacistLicense, pharmacy.PharmacistPhone,
-		pharmacy.ID,
+		pharmacy.Slug,
 	)
 }
 
-func (r *pharmacyRepository) SoftDeleteById(ctx context.Context, id int64) error {
+func (r *pharmacyRepository) SoftDeleteBySlug(ctx context.Context, slug string) error {
 	q := `
 		UPDATE pharmacies
 		SET deleted_at = now(),
 			updated_at = now()
-		WHERE id = $1
+		WHERE slug = $1
 	`
 
 	return exec(
 		r.querier, ctx, q,
-		id,
+		slug,
 	)
 }
 
@@ -92,7 +105,7 @@ func (r *pharmacyRepository) UpdateOperation(ctx context.Context, pharmacyOperat
 		r.querier, ctx, q,
 		ScanPharmacyOperation,
 		pharmacyOperation.Day, pharmacyOperation.StartTime,
-		pharmacyOperation.EndTime, pharmacyOperation.PharmacyID, pharmacyOperation.ID,
+		pharmacyOperation.EndTime, pharmacyOperation.PharmacyId, pharmacyOperation.ID,
 	)
 }
 

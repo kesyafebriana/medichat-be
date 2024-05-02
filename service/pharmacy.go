@@ -4,6 +4,7 @@ import (
 	"context"
 	"medichat-be/apperror"
 	"medichat-be/domain"
+	"medichat-be/util"
 )
 
 type pharmacyService struct {
@@ -23,6 +24,7 @@ func NewPharmacyService(opts PharmacyServiceOpts) *pharmacyService {
 func (s *pharmacyService) CreatePharmacy(ctx context.Context, pharmacy domain.PharmacyCreateDetails) (domain.Pharmacy, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 	var pharmacyOperations []domain.PharmacyOperations
+	pharmacy.Slug = util.GenerateSlug(pharmacy.Name)
 
 	p, err := pharmacyRepo.Add(ctx, pharmacy)
 	if err != nil {
@@ -56,17 +58,22 @@ func (s *pharmacyService) UpdatePharmacy(ctx context.Context, pharmacy domain.Ph
 	o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, p.ID)
 	if err != nil {
 		return domain.Pharmacy{}, apperror.Wrap(err)
-	} 
+	}
 
 	p.PharmacyOperations = o
 
 	return p, nil
 }
 
-func (s *pharmacyService) DeletePharmacy(ctx context.Context, id int64) error {
+func (s *pharmacyService) DeletePharmacyBySlug(ctx context.Context, slug string) error {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 
-	err := pharmacyRepo.SoftDeleteById(ctx, id)
+	_, err := pharmacyRepo.GetBySlug(ctx, slug)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	err = pharmacyRepo.SoftDeleteBySlug(ctx, slug)
 	if err != nil {
 		return apperror.Wrap(err)
 	}
@@ -77,6 +84,13 @@ func (s *pharmacyService) DeletePharmacy(ctx context.Context, id int64) error {
 func (s *pharmacyService) AddOperation(ctx context.Context, pharmacyOperation domain.PharmacyOperationCreateDetails) (domain.PharmacyOperations, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 
+	p, err := pharmacyRepo.GetBySlug(ctx, pharmacyOperation.Slug)
+	if err != nil {
+		return domain.PharmacyOperations{}, apperror.Wrap(err)
+	}
+
+	pharmacyOperation.PharmacyID = p.ID
+
 	o, err := pharmacyRepo.AddOperation(ctx, pharmacyOperation)
 	if err != nil {
 		return domain.PharmacyOperations{}, apperror.Wrap(err)
@@ -85,10 +99,15 @@ func (s *pharmacyService) AddOperation(ctx context.Context, pharmacyOperation do
 	return o, nil
 }
 
-func (s *pharmacyService) GetOperationsById(ctx context.Context, id int64) ([]domain.PharmacyOperations, error) {
+func (s *pharmacyService) GetOperationsBySlug(ctx context.Context, slug string) ([]domain.PharmacyOperations, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 
-	o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, id)
+	p, err := pharmacyRepo.GetBySlug(ctx, slug)
+	if err != nil {
+		return []domain.PharmacyOperations{}, apperror.Wrap(err)
+	}
+
+	o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, p.ID)
 	if err != nil {
 		return []domain.PharmacyOperations{}, apperror.Wrap(err)
 	}
@@ -100,7 +119,12 @@ func (s *pharmacyService) UpdateOperations(ctx context.Context, pharmacyOperatio
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 	var res []domain.PharmacyOperations
 
-	o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyIdAndLock(ctx, pharmacyOperations[0].PharmacyID)
+	p, err := pharmacyRepo.GetBySlug(ctx, pharmacyOperations[0].Slug)
+	if err != nil {
+		return []domain.PharmacyOperations{}, apperror.Wrap(err)
+	}
+
+	o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyIdAndLock(ctx, p.ID)
 	if err != nil {
 		return []domain.PharmacyOperations{}, apperror.Wrap(err)
 	}
@@ -113,6 +137,8 @@ func (s *pharmacyService) UpdateOperations(ctx context.Context, pharmacyOperatio
 	}
 
 	for _, v := range pharmacyOperations {
+		v.PharmacyId = p.ID
+
 		if oDays[v.Day] {
 			v.ID = oIds[v.Day]
 			oUpdate, err := pharmacyRepo.UpdateOperation(ctx, v)
@@ -125,7 +151,7 @@ func (s *pharmacyService) UpdateOperations(ctx context.Context, pharmacyOperatio
 		}
 
 		oCreate, err := pharmacyRepo.AddOperation(ctx, domain.PharmacyOperationCreateDetails{
-			PharmacyID: v.PharmacyID,
+			PharmacyID: v.PharmacyId,
 			Day:        v.Day,
 			StartTime:  v.StartTime,
 			EndTime:    v.EndTime,

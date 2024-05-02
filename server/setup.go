@@ -62,10 +62,6 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	chatGroup.POST("/send", opts.ChatHandler.Chat)
 	chatGroup.PATCH("/close", opts.ChatHandler.CloseRoom)
 	chatGroup.POST("/create", opts.ChatHandler.CreateRoom)
-	apiV1Group.POST(
-		"/pharmacies",
-		opts.PharmacyHandler.CreatePharmacy,
-	)
 
 	authGroup := apiV1Group.Group("/auth")
 	authGroup.POST(
@@ -116,19 +112,19 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		opts.PharmacyHandler.CreatePharmacy,
 	)
 	pharmacyGroup.PUT(
-		"/:id",
+		"/:slug",
 		opts.PharmacyHandler.UpdatePharmacy,
 	)
 	pharmacyGroup.DELETE(
-		"/:id",
+		"/:slug",
 		opts.PharmacyHandler.DeletePharmacy,
 	)
 	pharmacyGroup.GET(
-		"/:id/operations",
+		"/:slug/operations",
 		opts.PharmacyHandler.GetPharmacyOperations,
 	)
 	pharmacyGroup.PUT(
-		"/:id/operations",
+		"/:slug/operations",
 		opts.PharmacyHandler.UpdatePharmacyOperations,
 	)
 

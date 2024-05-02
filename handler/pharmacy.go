@@ -48,7 +48,7 @@ func (h *PharmacyHandler) CreatePharmacy(ctx *gin.Context) {
 }
 
 func (h *PharmacyHandler) UpdatePharmacy(ctx *gin.Context) {
-	var uri dto.IDPathRequest
+	var uri dto.PharmacySlugParams
 
 	err := ctx.ShouldBindUri(&uri)
 	if err != nil {
@@ -66,7 +66,7 @@ func (h *PharmacyHandler) UpdatePharmacy(ctx *gin.Context) {
 		return
 	}
 
-	pharmacy, err := h.pharmacySrv.UpdatePharmacy(ctx, dto.PharmacyUpdateRequestToDetails(req, uri.ID))
+	pharmacy, err := h.pharmacySrv.UpdatePharmacy(ctx, dto.PharmacyUpdateRequestToDetails(req, uri.Slug))
 
 	if err != nil {
 		ctx.Error(err)
@@ -78,7 +78,7 @@ func (h *PharmacyHandler) UpdatePharmacy(ctx *gin.Context) {
 }
 
 func (h *PharmacyHandler) DeletePharmacy(ctx *gin.Context) {
-	var uri dto.IDPathRequest
+	var uri dto.PharmacySlugParams
 
 	err := ctx.ShouldBindUri(&uri)
 	if err != nil {
@@ -87,7 +87,7 @@ func (h *PharmacyHandler) DeletePharmacy(ctx *gin.Context) {
 		return
 	}
 
-	err = h.pharmacySrv.DeletePharmacy(ctx, uri.ID)
+	err = h.pharmacySrv.DeletePharmacyBySlug(ctx, uri.Slug)
 	if err != nil {
 		ctx.Error(err)
 		ctx.Abort()
@@ -101,7 +101,7 @@ func (h *PharmacyHandler) DeletePharmacy(ctx *gin.Context) {
 }
 
 func (h *PharmacyHandler) GetPharmacyOperations(ctx *gin.Context) {
-	var req dto.IDPathRequest
+	var req dto.PharmacySlugParams
 
 	err := ctx.ShouldBindUri(&req)
 	if err != nil {
@@ -110,7 +110,7 @@ func (h *PharmacyHandler) GetPharmacyOperations(ctx *gin.Context) {
 		return
 	}
 
-	pharmacyOperations, err := h.pharmacySrv.GetOperationsById(ctx, req.ID)
+	pharmacyOperations, err := h.pharmacySrv.GetOperationsBySlug(ctx, req.Slug)
 
 	if err != nil {
 		ctx.Error(err)
@@ -126,7 +126,7 @@ func (h *PharmacyHandler) GetPharmacyOperations(ctx *gin.Context) {
 
 func (h *PharmacyHandler) UpdatePharmacyOperations(ctx *gin.Context) {
 	var reqEntity []domain.PharmacyOperationsUpdateDetails
-	var uri dto.IDPathRequest
+	var uri dto.PharmacySlugParams
 
 	err := ctx.ShouldBindUri(&uri)
 	if err != nil {
@@ -145,7 +145,7 @@ func (h *PharmacyHandler) UpdatePharmacyOperations(ctx *gin.Context) {
 	}
 
 	for _, v := range req {
-		reqEntity = append(reqEntity, dto.PharmacyOperationRequestToDetails(v, uri.ID))
+		reqEntity = append(reqEntity, dto.PharmacyOperationRequestToDetails(v, uri.Slug))
 	}
 
 	newO, err := h.pharmacySrv.UpdateOperations(ctx, reqEntity)

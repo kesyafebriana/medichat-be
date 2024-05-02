@@ -9,6 +9,7 @@ import (
 type PharmacyResponse struct {
 	ID                 int64                       `json:"id"`
 	Name               string                      `json:"name"`
+	Slug               string                      `json:"slug"`
 	ManagerID          int64                       `json:"manager_id"`
 	Address            string                      `json:"address"`
 	Coordinate         CoordinateDTO               `json:"coordinate"`
@@ -18,10 +19,15 @@ type PharmacyResponse struct {
 	PharmacyOperations []PharmacyOperationResponse `json:"pharmacy_operations"`
 }
 
+type PharmacySlugParams struct {
+	Slug string `uri:"slug" binding:"required"`
+}
+
 func NewPharmacyResponse(pharmacy domain.Pharmacy) PharmacyResponse {
 	return PharmacyResponse{
 		ID:                 pharmacy.ID,
 		ManagerID:          pharmacy.ManagerID,
+		Slug:               pharmacy.Slug,
 		Name:               pharmacy.Name,
 		Address:            pharmacy.Address,
 		Coordinate:         CoordinateDTO(pharmacy.Coordinate),
@@ -115,9 +121,9 @@ type PharmacyUpdateRequest struct {
 	PharmacistPhone   string        `json:"pharmacist_phone" binding:"omitempty,no_leading_trailing_space"`
 }
 
-func PharmacyUpdateRequestToDetails(p PharmacyUpdateRequest, id int64) domain.PharmacyUpdateDetails {
+func PharmacyUpdateRequestToDetails(p PharmacyUpdateRequest, slug string) domain.PharmacyUpdateDetails {
 	return domain.PharmacyUpdateDetails{
-		ID:                id,
+		Slug:              slug,
 		Name:              p.Name,
 		Address:           p.Address,
 		Coordinate:        (domain.Coordinate)(p.Coordinate),
@@ -133,14 +139,14 @@ type PharmacyOperationUpdateRequest struct {
 	EndTime   string `json:"end_time" binding:"omitempty,no_leading_trailing_space"`
 }
 
-func PharmacyOperationRequestToDetails(p PharmacyOperationUpdateRequest, id int64) domain.PharmacyOperationsUpdateDetails {
+func PharmacyOperationRequestToDetails(p PharmacyOperationUpdateRequest, slug string) domain.PharmacyOperationsUpdateDetails {
 	starTime, _ := time.Parse("03:04", p.StartTime)
 	endTime, _ := time.Parse("03:04", p.EndTime)
 
 	return domain.PharmacyOperationsUpdateDetails{
-		PharmacyID: id,
-		Day:        p.Day,
-		StartTime:  starTime,
-		EndTime:    endTime,
+		Slug:      slug,
+		Day:       p.Day,
+		StartTime: starTime,
+		EndTime:   endTime,
 	}
 }
