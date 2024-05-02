@@ -189,11 +189,16 @@ func main() {
 
 	productService := service.NewProductService(service.ProductServiceOpts{
 		DataRepository: dataRepository,
-        Cloud:  cld,
+		Cloud:          cld,
 	})
 
 	pharmacyService := service.NewPharmacyService(service.PharmacyServiceOpts{
 		DataRepository: dataRepository,
+	})
+
+	paymentService := service.NewPaymentService(service.PaymentServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
 	})
 
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
@@ -233,6 +238,10 @@ func main() {
 		PharmacySrv: pharmacyService,
 	})
 
+	paymentHandler := handler.NewPaymentHandler(handler.PaymentHandlerOpts{
+		PaymentSrv: paymentService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
@@ -254,8 +263,9 @@ func main() {
 		SpecializationHandler: specializationHandler,
 		CategoryHandler:       categoryHandler,
 
-		ProductHandler: productHandler,
-		PharmacyHandler:       pharmacyHandler,
+		ProductHandler:  productHandler,
+		PharmacyHandler: pharmacyHandler,
+		PaymentHandler:  paymentHandler,
 
 		SessionKey: conf.SessionKey,
 
