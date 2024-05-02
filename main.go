@@ -189,7 +189,7 @@ func main() {
 
 	productService := service.NewProductService(service.ProductServiceOpts{
 		DataRepository: dataRepository,
-        Cloud:  cld,
+		Cloud:          cld,
 	})
 
 	pharmacyService := service.NewPharmacyService(service.PharmacyServiceOpts{
@@ -199,6 +199,10 @@ func main() {
 	pharmacyManagerService := service.NewPharmacyManagerService(service.PharmacyManagerServiceOpts{
 		DataRepository: dataRepository,
 		CloudProvider:  cld,
+	})
+
+	stockService := service.NewStockService(service.StockServiceOpts{
+		DataRepository: dataRepository,
 	})
 
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
@@ -242,6 +246,10 @@ func main() {
 		PharmacyManagerSrv: pharmacyManagerService,
 	})
 
+	stockHandler := handler.NewStockHandler(handler.StockHandlerOpts{
+		StockSrv: stockService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
@@ -263,9 +271,10 @@ func main() {
 		DoctorHandler:          doctorHandler,
 		SpecializationHandler:  specializationHandler,
 		CategoryHandler:        categoryHandler,
-		ProductHandler: 		productHandler,
+		ProductHandler:         productHandler,
 		PharmacyHandler:        pharmacyHandler,
 		PharmacyManagerHandler: pharmacyManagerHandler,
+		StockHandler:           stockHandler,
 
 		SessionKey: conf.SessionKey,
 

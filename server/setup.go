@@ -21,7 +21,9 @@ type SetupServerOpts struct {
 	SpecializationHandler  *handler.SpecializationHandler
 	PharmacyHandler        *handler.PharmacyHandler
 	PharmacyManagerHandler *handler.PharmacyManagerHandler
-	ProductHandler    *handler.ProductHandler
+
+	ProductHandler *handler.ProductHandler
+	StockHandler   *handler.StockHandler
 
 	SessionKey []byte
 
@@ -275,6 +277,50 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	productGroup.POST("/", opts.AdminAuthenticator, opts.ProductHandler.CreateProduct)
 	productGroup.PATCH("/", opts.AdminAuthenticator, opts.ProductHandler.UpdateProduct)
 	productGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.ProductHandler.DeleteProduct)
+
+	stockGroup := apiV1Group.Group("/stocks")
+	stockGroup.GET(
+		".",
+		opts.StockHandler.ListStocks,
+	)
+	stockGroup.GET(
+		"/:id",
+		opts.StockHandler.GetStockByID,
+	)
+	stockGroup.POST(
+		".",
+		opts.StockHandler.AddStock,
+	)
+	stockGroup.PATCH(
+		".",
+		opts.StockHandler.UpdateStock,
+	)
+	stockGroup.DELETE(
+		"/:id",
+		opts.StockHandler.DeleteStock,
+	)
+
+	mutationGroup := stockGroup.Group("/mutations")
+	mutationGroup.GET(
+		".",
+		opts.StockHandler.ListMutations,
+	)
+	mutationGroup.GET(
+		"/:id",
+		opts.StockHandler.GetMutationByID,
+	)
+	mutationGroup.POST(
+		".",
+		opts.StockHandler.RequestTransfer,
+	)
+	mutationGroup.POST(
+		"/:id/approve",
+		opts.StockHandler.ApproveTransfer,
+	)
+	mutationGroup.POST(
+		"/:id/cancel",
+		opts.StockHandler.CancelTransfer,
+	)
 
 	return router
 }

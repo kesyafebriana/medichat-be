@@ -4,6 +4,7 @@ import (
 	"medichat-be/apperror"
 	"medichat-be/domain"
 	"medichat-be/dto"
+	"medichat-be/util"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,10 +33,27 @@ func (h *StockHandler) ListStocks(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
+
+	det := q.ToDetails()
+
+	stocks, page, err := h.stockSrv.List(ctx, det)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(map[string]any{
+			"page_info": dto.NewPageInfoResponse(page),
+			"stocks":    util.MapSlice(stocks, dto.NewStockJoinedResponse),
+		}),
+	)
 }
 
 func (h *StockHandler) AddStock(ctx *gin.Context) {
-	var req dto.StockUpdateRequest
+	var req dto.StockCreateRequest
 
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
@@ -43,6 +61,43 @@ func (h *StockHandler) AddStock(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
+
+	det := req.ToDetails()
+
+	stock, err := h.stockSrv.Add(ctx, det)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusCreated,
+		dto.ResponseCreated(dto.NewStockResponse(stock)),
+	)
+}
+
+func (h *StockHandler) GetStockByID(ctx *gin.Context) {
+	var req dto.IDPathRequest
+
+	err := ctx.ShouldBindUri(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	stock, err := h.stockSrv.GetByID(ctx, req.ID)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewStockResponse(stock)),
+	)
 }
 
 func (h *StockHandler) UpdateStock(ctx *gin.Context) {
@@ -103,6 +158,45 @@ func (h *StockHandler) ListMutations(ctx *gin.Context) {
 		return
 	}
 
+	det := q.ToDetails()
+
+	muts, page, err := h.stockSrv.ListMutations(ctx, det)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(map[string]any{
+			"page_info":       dto.NewPageInfoResponse(page),
+			"stock_mutations": util.MapSlice(muts, dto.NewStockMutationJoinedResponse),
+		}),
+	)
+}
+
+func (h *StockHandler) GetMutationByID(ctx *gin.Context) {
+	var req dto.IDPathRequest
+
+	err := ctx.ShouldBindUri(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	mut, err := h.stockSrv.GetMutationByID(ctx, req.ID)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewStockMutationResponse(mut)),
+	)
 }
 
 func (h *StockHandler) RequestTransfer(ctx *gin.Context) {
