@@ -54,7 +54,6 @@ func (r *paymentRepository) GetPageInfo(ctx context.Context, dets domain.Payment
 		ItemCount:    count,
 		PageCount:    int((count - 1 + int64(dets.Limit)) / int64(dets.Limit)),
 	}, nil
-
 }
 
 func (r *paymentRepository) List(ctx context.Context, dets domain.PaymentListDetails) ([]domain.Payment, error) {

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"medichat-be/apperror"
 	"medichat-be/domain"
 	"medichat-be/repository/postgis"
 )
@@ -201,4 +202,114 @@ func scanPayment(r RowScanner, p *domain.Payment) error {
 	}
 	p.FileURL = toStringPtr(nullURL)
 	return nil
+}
+
+var (
+	orderColumns = `
+		id, user_id, pharmacy_id, payment_id, shipment_method_id,
+		address, coordinate, 
+		n_items, subtotal, shipment_fee, total,
+		status, ordered_at, finished_at
+	`
+
+	selectOrderJoined = `
+		SELECT
+			o.id, 
+			u.id, u.name
+			ph.id, ph.slug, ph.name,
+			py.id, py.invoice_number,
+			sm.id, sm.name,
+			o.address, o.coordinate, 
+			o.n_items, o.subtotal, o.shipment_fee, o.total, 
+			o.status, o.ordered_at, o.finished_at
+		FROM orders o
+			JOIN users u ON o.user_id = u.id
+			JOIN pharmacies ph ON o.pharmacy_id = ph.id
+			JOIN payments py ON o.payment_id = py.id
+			JOIN shipment_methods sm ON o.shimpent_method_id = sm.id
+	`
+
+	countOrderJoined = `
+		SELECT COUNT(o.id)
+		FROM orders o
+			JOIN users u ON o.user_id = u.id
+			JOIN pharmacies ph ON o.pharmacy_id = ph.id
+			JOIN payments py ON o.payment_id = py.id
+			JOIN shipment_methods sm ON o.shimpent_method_id = sm.id
+	`
+
+	orderItemColumns = `
+		id, order_id, product_id, price, amount
+	`
+
+	selectOrderItemJoined = `
+		SELECT
+			oi.id, oi.order_id,
+			pd.id, pd.slug, pd.name,
+			oi.price, oi.amount
+		FROM order_items oi
+			JOIN products pd ON oi.product_id = pd.id
+	`
+)
+
+func scanOrder(r RowScanner, o *domain.Order) error {
+	u := &o.User
+	ph := &o.Pharmacy
+	py := &o.Payment
+	sm := &o.ShipmentMethod
+	nullFinished := sql.NullTime{}
+	point := postgis.Point{}
+	if err := r.Scan(
+		&o.ID, &u.ID, &ph.ID, &py.ID, &sm.ID,
+		&o.Address, &point,
+		&o.NItems, &o.Subtotal, &o.ShipmentFee, &o.Total,
+		&o.Status, &o.OrderedAt, &nullFinished,
+	); err != nil {
+		return apperror.Wrap(err)
+	}
+	o.Coordinate = point.ToCoordinate()
+	o.FinishedAt = toTimePtr(nullFinished)
+	return nil
+}
+
+func scanOrderJoined(r RowScanner, o *domain.Order) error {
+	u := &o.User
+	ph := &o.Pharmacy
+	py := &o.Payment
+	sm := &o.ShipmentMethod
+	nullFinished := sql.NullTime{}
+	point := postgis.Point{}
+	if err := r.Scan(
+		&o.ID,
+		&u.ID, &u.Name,
+		&ph.ID, &ph.Slug, &ph.Name,
+		&py.ID, &py.InvoiceNumber,
+		&sm.ID, &sm.Name,
+		&o.Address, &point,
+		&o.NItems, &o.Subtotal, &o.ShipmentFee, &o.Total,
+		&o.Status, &o.OrderedAt, &nullFinished,
+	); err != nil {
+		return apperror.Wrap(err)
+	}
+	o.Coordinate = point.ToCoordinate()
+	o.FinishedAt = toTimePtr(nullFinished)
+	return nil
+}
+
+func scanOrderItem(r RowScanner, oi *domain.OrderItem) error {
+	pd := &oi.Product
+	return r.Scan(
+		&oi.ID, &oi.OrderID,
+		&pd.ID,
+		&oi.Price, &oi.Amount,
+	)
+}
+
+func scanOrderItemJoined(r RowScanner, oi *domain.OrderItem) error {
+	pd := &oi.Product
+	return r.Scan(
+		&oi.ID, &oi.OrderID,
+		&pd.ID, &pd.Slug, &pd.Name,
+		&oi.Price, &oi.Amount,
+	)
 }
