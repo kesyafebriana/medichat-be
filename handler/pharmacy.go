@@ -215,3 +215,63 @@ func (h *PharmacyHandler) UpdatePharmacyOperations(ctx *gin.Context) {
 		dto.ResponseCreated(dto.NewPharmacyOperationsResponse(newO)),
 	)
 }
+
+func (h *PharmacyHandler) GetShipmentMethodsBySlug(ctx *gin.Context) {
+	var req dto.PharmacySlugParams
+
+	err := ctx.ShouldBindUri(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	sh, err := h.pharmacySrv.GetShipmentMethodBySlug(ctx, req.Slug)
+	if err != nil {
+		ctx.Error(err)
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewPharmacyShipmentMethodsResponse(sh)),
+	)
+}
+
+func (h *PharmacyHandler) UpdateShipmentMethodsBySlug(ctx *gin.Context) {
+	var uri dto.PharmacySlugParams
+	var reqEntity []domain.PharmacyShipmentMethodsUpdateDetails
+
+	err := ctx.ShouldBindUri(&uri)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	var req []dto.PharmacyShipmentMethodUpdateRequest
+
+	err = ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	for _, v := range req {
+		reqEntity = append(reqEntity, dto.PharmacyShipmentMethodRequestToDetails(v, uri.Slug))
+	}
+
+	sh, err := h.pharmacySrv.UpdateShipmentMethod(ctx, reqEntity)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewPharmacyShipmentMethodsResponse(sh)),
+	)
+}

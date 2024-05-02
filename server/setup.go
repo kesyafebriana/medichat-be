@@ -135,6 +135,14 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/:slug/operations",
 		opts.PharmacyHandler.UpdatePharmacyOperations,
 	)
+	pharmacyGroup.GET(
+		"/:slug/shipments",
+		opts.PharmacyHandler.GetShipmentMethodsBySlug,
+	)
+	pharmacyGroup.PUT(
+		"/:slug/shipments",
+		opts.PharmacyHandler.UpdateShipmentMethodsBySlug,
+	)
 
 	googleGroup := apiV1Group.Group("/google")
 	googleGroup.GET(

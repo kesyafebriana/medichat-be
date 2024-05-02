@@ -120,3 +120,9 @@ func (r *dataRepository) PharmacyRepository() domain.PharmacyRepository {
 		querier: r.querier,
 	}
 }
+
+func (r *dataRepository) ShipmentMethodRepository() domain.ShipmentMethodRepository {
+	return &shipmentMethodRepository{
+		querier: r.querier,
+	}
+}

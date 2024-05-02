@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"log"
 	"medichat-be/domain"
 	"medichat-be/repository/postgis"
 	"strings"
@@ -154,7 +153,6 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
 
-	log.Print(sb.String())
 	var totalData int64
 	row := r.querier.QueryRowContext(ctx, sb.String(), args...)
 	err := row.Scan(&totalData)
@@ -306,5 +304,63 @@ func (r *pharmacyRepository) GetPharmacyOperationsByPharmacyIdAndLock(ctx contex
 	return queryFull(
 		r.querier, ctx, q,
 		ScanPharmacyOperation, id,
+	)
+}
+
+func (r *pharmacyRepository) GetShipmentMethodsByPharmacyId(ctx context.Context, id int64) ([]domain.PharmacyShipmentMethods, error) {
+	q := `
+		SELECT ` + PharmacyShipmentMethodColumns + `
+		FROM pharmacy_shipment_methods
+		WHERE deleted_at IS NULL AND pharmacy_id = $1
+	`
+
+	return queryFull(
+		r.querier, ctx, q,
+		ScanPharmacyShipmentMethod,
+		id,
+	)
+}
+
+func (r *pharmacyRepository) GetShipmentMethodsByPharmacyIdAndLock(ctx context.Context, id int64) ([]domain.PharmacyShipmentMethods, error) {
+	q := `
+		SELECT ` + PharmacyShipmentMethodColumns + `
+		FROM pharmacy_shipment_methods
+		WHERE deleted_at IS NULL AND pharmacy_id = $1
+		FOR UPDATE
+	`
+
+	return queryFull(
+		r.querier, ctx, q,
+		ScanPharmacyShipmentMethod,
+		id,
+	)
+}
+
+func (r *pharmacyRepository) AddShipmentMethod(ctx context.Context, pharmacyCourier domain.PharmacyShipmentMethodsCreateDetails) (domain.PharmacyShipmentMethods, error) {
+	q := `
+		INSERT INTO pharmacy_shipment_methods(pharmacy_id, shipment_method_id)
+		VALUES($1, $2)
+		RETURNING
+	` + PharmacyShipmentMethodColumns
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		ScanPharmacyShipmentMethod,
+		pharmacyCourier.PharmacyID,
+		pharmacyCourier.ShipmentMethodID,
+	)
+}
+
+func (r *pharmacyRepository) SoftDeleteShipmentMethodByID(ctx context.Context, id int64) error {
+	q := `
+		UPDATE pharmacy_shipment_methods
+		SET deleted_at = now(),
+			updated_at = now()
+		WHERE id = $1
+	`
+
+	return execOne(
+		r.querier, ctx, q,
+		id,
 	)
 }
