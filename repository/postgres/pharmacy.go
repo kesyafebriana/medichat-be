@@ -2,18 +2,99 @@ package postgres
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"medichat-be/domain"
 	"medichat-be/repository/postgis"
+	"strings"
 )
 
 type pharmacyRepository struct {
 	querier Querier
 }
 
+func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.PharmaciesQuery) ([]domain.Pharmacy, error) {
+	sb := strings.Builder{}
+	var args = make([]any, 0)
+	var idx = 1
+	offset := (query.Page - 1) * query.Limit
+
+	sb.WriteString(`
+		SELECT ` + pharmacyJoinedColumns + `
+		FROM pharmacies p
+		WHERE p.deleted_at IS NULL
+	`)
+
+	if query.Name != nil {
+		fmt.Fprintf(&sb, ` AND p.name ILIKE $%d 
+		`, idx)
+		idx++
+		args = append(args, *query.Name)
+	}
+
+	if query.ManagerID != nil {
+		fmt.Fprintf(&sb, ` AND p.manager_id = $%d 
+		`, idx)
+		idx++
+		args = append(args, *query.ManagerID)
+	}
+
+	if query.Longitude != nil && query.Latitude != nil {
+		fmt.Fprintf(&sb, ` AND ST_DWithin(p.coordinate, ST_MakePoint($%d, $%d)::geography, 2500)
+		`, idx, idx+1)
+		idx += 2
+		args = append(args, *query.Longitude, *query.Latitude)
+	}
+
+	if query.Day != nil || query.StartTime != nil || query.EndTime != nil {
+		sb.WriteString(`
+			AND p.id IN (
+			SELECT o.pharmacy_id
+			FROM pharmacy_operations o
+			WHERE o.deleted_at IS NULL
+		`)
+
+		if query.Day != nil {
+			fmt.Fprintf(&sb, `AND o.day = $%d
+		`, idx)
+			idx++
+			args = append(args, *query.Day)
+		}
+
+		if query.StartTime != nil {
+			fmt.Fprintf(&sb, `AND o.start_time <= '0001-01-01 %s:00 BC'
+		`, *query.StartTime)
+		}
+
+		if query.EndTime != nil {
+			fmt.Fprintf(&sb, `AND o.end_time >= '0001-01-01 %s:00 BC'
+		`, *query.EndTime)
+		}
+
+		sb.WriteString(`)`)
+	}
+
+	if query.SortBy == domain.PharmacySortByName {
+		fmt.Fprintf(&sb, " ORDER BY %s %s", query.SortBy, query.SortType)
+	}
+
+	if query.Limit != 0 {
+		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
+	}
+
+	log.Print(sb.String())
+
+	return queryFull(
+		r.querier, ctx, sb.String(),
+		scanPharmacy,
+		args...,
+	)
+}
+
 func (r *pharmacyRepository) GetBySlug(ctx context.Context, slug string) (domain.Pharmacy, error) {
 	q := `
 		SELECT ` + pharmacyColumns + `FROM pharmacies
-		WHERE slug = $1
+		WHERE slug = $1 AND deleted_at IS NULL
 	`
 
 	return queryOneFull(

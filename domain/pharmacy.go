@@ -75,25 +75,28 @@ type PharmacyOperationsUpdateDetails struct {
 }
 
 type PharmaciesQuery struct {
-	ManagerID *int64
-	City      *string
-	Page      int64
-	Limit     int64
-	SortBy    string
-	SortType  string
+	ManagerID   *int64
+	Day         *string
+	StartTime   *string
+	EndTime     *string
+	ProductSlug *string
+	Longitude   *float64
+	Latitude    *float64
+	Name        *string
+	Page        int64
+	Limit       int64
+	SortBy      string
+	SortType    string
 }
 
 type PharmacyRepository interface {
-	// GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, error)
-	// GetByID(ctx context.Context, id int64) (Pharmacy, error)
-	// GetByName(ctx context.Context, name string) (Pharmacy, error)
+	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, error)
 	GetBySlug(ctx context.Context, slug string) (Pharmacy, error)
 
 	Add(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
 	Update(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
 	SoftDeleteBySlug(ctx context.Context, slug string) error
 
-	// GetOperationsByDay(ctx context.Context, day string) (PharmacyOperations, error)
 	GetPharmacyOperationsByPharmacyId(ctx context.Context, id int64) ([]PharmacyOperations, error)
 	GetPharmacyOperationsByPharmacyIdAndLock(ctx context.Context, id int64) ([]PharmacyOperations, error)
 	AddOperation(ctx context.Context, pharmacyOperation PharmacyOperationCreateDetails) (PharmacyOperations, error)
@@ -103,7 +106,8 @@ type PharmacyRepository interface {
 
 type PharmacyService interface {
 	CreatePharmacy(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
-	// GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, error)
+	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, error)
+	GetPharmacyBySlug(ctx context.Context, slug string) (Pharmacy, error)
 	UpdatePharmacy(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
 	DeletePharmacyBySlug(ctx context.Context, slug string) error
 

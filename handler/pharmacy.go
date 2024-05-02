@@ -26,6 +26,61 @@ func NewPharmacyHandler(opts PharmacyHandlerOpts) *PharmacyHandler {
 	}
 }
 
+func (h *PharmacyHandler) GetPharmacies(ctx *gin.Context) {
+	var q dto.PharmacyListQuery
+
+	err := ctx.ShouldBindQuery(&q)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	query, err := q.ToDetails()
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	p, err := h.pharmacySrv.GetPharmacies(ctx, query)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewPharmaciesResponse(p)),
+	)
+}
+
+func (h *PharmacyHandler) GetPharmacyBySlug(ctx *gin.Context) {
+	var uri dto.PharmacySlugParams
+
+	err := ctx.ShouldBindUri(&uri)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	pharmacy, err := h.pharmacySrv.GetPharmacyBySlug(ctx, uri.Slug)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewPharmacyResponse(pharmacy)),
+	)
+}
+
 func (h *PharmacyHandler) CreatePharmacy(ctx *gin.Context) {
 	var req dto.PharmacyCreateRequest
 

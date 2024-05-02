@@ -21,6 +21,34 @@ func NewPharmacyService(opts PharmacyServiceOpts) *pharmacyService {
 	}
 }
 
+func (s *pharmacyService) GetPharmacies(ctx context.Context, query domain.PharmaciesQuery) ([]domain.Pharmacy, error) {
+	pharmacyRepo := s.dataRepository.PharmacyRepository()
+	p, err := pharmacyRepo.GetPharmacies(ctx, query)
+	if err != nil {
+		return []domain.Pharmacy{}, apperror.Wrap(err)
+	}
+
+	return p, nil
+}
+
+func (s *pharmacyService) GetPharmacyBySlug(ctx context.Context, slug string) (domain.Pharmacy, error) {
+	pharmacyRepo := s.dataRepository.PharmacyRepository()
+
+	p, err := pharmacyRepo.GetBySlug(ctx, slug)
+	if err != nil {
+		return domain.Pharmacy{}, apperror.Wrap(err)
+	}
+
+	o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, p.ID)
+	if err != nil {
+		return domain.Pharmacy{}, apperror.Wrap(err)
+	}
+
+	p.PharmacyOperations = o
+
+	return p, nil
+}
+
 func (s *pharmacyService) CreatePharmacy(ctx context.Context, pharmacy domain.PharmacyCreateDetails) (domain.Pharmacy, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 	var pharmacyOperations []domain.PharmacyOperations

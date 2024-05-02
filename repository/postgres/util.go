@@ -134,6 +134,7 @@ func scanUserLocation(r RowScanner, ul *domain.UserLocation) error {
 
 var (
 	pharmacyColumns          = " id, manager_id, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone, slug "
+	pharmacyJoinedColumns    = " p.id, p.manager_id, p.name, p.address, p.coordinate, p.pharmacist_name, p.pharmacist_license, p.pharmacist_phone, p.slug "
 	pharmacyOperationColumns = " id, pharmacy_id, day, start_time, end_time "
 )
 

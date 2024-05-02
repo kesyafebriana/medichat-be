@@ -107,9 +107,17 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	)
 
 	pharmacyGroup := apiV1Group.Group("/pharmacies")
+	pharmacyGroup.GET(
+		"/",
+		opts.PharmacyHandler.GetPharmacies,
+	)
 	pharmacyGroup.POST(
 		"/",
 		opts.PharmacyHandler.CreatePharmacy,
+	)
+	pharmacyGroup.GET(
+		"/:slug",
+		opts.PharmacyHandler.GetPharmacyBySlug,
 	)
 	pharmacyGroup.PUT(
 		"/:slug",

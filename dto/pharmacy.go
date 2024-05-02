@@ -38,6 +38,16 @@ func NewPharmacyResponse(pharmacy domain.Pharmacy) PharmacyResponse {
 	}
 }
 
+func NewPharmaciesResponse(pharmacy []domain.Pharmacy) []PharmacyResponse {
+	var pharmacies []PharmacyResponse
+
+	for _, v := range pharmacy {
+		pharmacies = append(pharmacies, NewPharmacyResponse(v))
+	}
+
+	return pharmacies
+}
+
 type PharmacyOperationResponse struct {
 	ID        int64  `json:"id"`
 	Day       string `json:"day"`
@@ -149,4 +159,50 @@ func PharmacyOperationRequestToDetails(p PharmacyOperationUpdateRequest, slug st
 		StartTime: starTime,
 		EndTime:   endTime,
 	}
+}
+
+type PharmacyListQuery struct {
+	ManagerID *int64   `form:"manager_id"`
+	Name      *string  `form:"name"`
+	Day       *string  `form:"day"`
+	StartTime *string  `form:"start_time"`
+	EndTime   *string  `form:"end_time"`
+	Longitude *float64 `form:"long"`
+	Latitude  *float64 `form:"lat"`
+	SortBy    *string  `form:"sort_by"`
+	Sort      *string  `form:"sort"`
+	Limit     *int     `form:"limit"`
+}
+
+func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
+	query := domain.PharmaciesQuery{
+		Name:      p.Name,
+		Day:       p.Day,
+		ManagerID: p.ManagerID,
+		Longitude: p.Longitude,
+		Latitude:  p.Latitude,
+		// Limit:     int64(*p.Limit),
+		// SortBy:    *p.SortBy,
+		// SortType:  *p.Sort,
+	}
+
+	if p.StartTime != nil {
+		_, err := time.Parse("03:04", *p.StartTime)
+		if err != nil {
+			return domain.PharmaciesQuery{}, err
+		}
+
+		query.StartTime = p.StartTime
+	}
+
+	if p.EndTime != nil {
+		_, err := time.Parse("03:04", *p.EndTime)
+		if err != nil {
+			return domain.PharmaciesQuery{}, err
+		}
+
+		query.EndTime = p.EndTime
+	}
+
+	return query, nil
 }
