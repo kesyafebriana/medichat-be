@@ -8,13 +8,16 @@ import (
 type Payment struct {
 	ID            int64
 	InvoiceNumber string
-	FileURL       string
+	FileURL       *string
 	IsConfirmed   bool
 	Amount        int
 }
 
 type PaymentListDetails struct {
 	IsConfirmed *bool
+
+	Page  int
+	Limit int
 }
 
 type PaymentRepository interface {
