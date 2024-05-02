@@ -194,11 +194,12 @@ var (
 
 	selectPaymentJoined = `
 		SELECT
-			p.id, p.invoice_number, u.id, u.name, 
+			p.id, p.invoice_number, u.id, a.name, 
 			p.file_url, p.is_confirmed, p.amount
 		FROM
 			payments p
 			JOIN users u ON p.user_id = u.id
+			JOIN accounts a ON u.account_id = a.id
 	`
 
 	countPaymentJoined = `
@@ -242,7 +243,7 @@ var (
 	selectOrderJoined = `
 		SELECT
 			o.id, 
-			u.id, u.name
+			u.id, a.name
 			ph.id, ph.slug, ph.name,
 			py.id, py.invoice_number,
 			sm.id, sm.name,
@@ -251,9 +252,10 @@ var (
 			o.status, o.ordered_at, o.finished_at
 		FROM orders o
 			JOIN users u ON o.user_id = u.id
+			JOIN accounts a ON u.account_id = a.id
 			JOIN pharmacies ph ON o.pharmacy_id = ph.id
 			JOIN payments py ON o.payment_id = py.id
-			JOIN shipment_methods sm ON o.shimpent_method_id = sm.id
+			JOIN shipment_methods sm ON o.shipment_method_id = sm.id
 	`
 
 	countOrderJoined = `
@@ -262,7 +264,7 @@ var (
 			JOIN users u ON o.user_id = u.id
 			JOIN pharmacies ph ON o.pharmacy_id = ph.id
 			JOIN payments py ON o.payment_id = py.id
-			JOIN shipment_methods sm ON o.shimpent_method_id = sm.id
+			JOIN shipment_methods sm ON o.shipment_method_id = sm.id
 	`
 
 	orderItemColumns = `
