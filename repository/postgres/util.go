@@ -185,3 +185,20 @@ func scanSpecialization(r RowScanner, s *domain.Specialization) error {
 		&s.ID, &s.Name,
 	)
 }
+
+var (
+	paymentColumns = `
+		id, invoice_number, file_url, is_confirmed, amount
+	`
+)
+
+func scanPayment(r RowScanner, p *domain.Payment) error {
+	nullURL := sql.NullString{}
+	if err := r.Scan(
+		&p.ID, &p.InvoiceNumber, &nullURL, &p.IsConfirmed, &p.Amount,
+	); err != nil {
+		return err
+	}
+	p.FileURL = toStringPtr(nullURL)
+	return nil
+}
