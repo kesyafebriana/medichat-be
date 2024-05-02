@@ -192,6 +192,11 @@ func main() {
 		CloudProvider:  cld,
 	})
 
+	orderService := service.NewOrderService(service.OrderServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
@@ -225,6 +230,10 @@ func main() {
 		PaymentSrv: paymentService,
 	})
 
+	orderHandler := handler.NewOrderHandler(handler.OrderHandlerOpts{
+		OrderSrv: orderService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
@@ -246,6 +255,7 @@ func main() {
 		SpecializationHandler: specializationHandler,
 		CategoryHandler:       categoryHandler,
 		PaymentHandler:        paymentHandler,
+		OrderHandler:          orderHandler,
 
 		SessionKey: conf.SessionKey,
 

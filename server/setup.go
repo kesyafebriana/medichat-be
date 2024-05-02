@@ -20,6 +20,7 @@ type SetupServerOpts struct {
 	DoctorHandler         *handler.DoctorHandler
 	SpecializationHandler *handler.SpecializationHandler
 	PaymentHandler        *handler.PaymentHandler
+	OrderHandler          *handler.OrderHandler
 
 	SessionKey []byte
 
@@ -224,6 +225,36 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	paymentGroup.POST(
 		"/:invoice_number/confirm",
 		opts.PaymentHandler.ConfirmPayment,
+	)
+
+	orderGroup := apiV1Group.Group("/orders")
+	orderGroup.GET(
+		".",
+		opts.OrderHandler.ListOrders,
+	)
+	orderGroup.GET(
+		"/:id",
+		opts.OrderHandler.ListOrders,
+	)
+	orderGroup.POST(
+		"/cart-info",
+		opts.OrderHandler.ListOrders,
+	)
+	orderGroup.POST(
+		".",
+		opts.OrderHandler.ListOrders,
+	)
+	orderGroup.POST(
+		"/:id/send",
+		opts.OrderHandler.ListOrders,
+	)
+	orderGroup.POST(
+		"/:id/finish",
+		opts.OrderHandler.ListOrders,
+	)
+	orderGroup.POST(
+		"/:id/cancel",
+		opts.OrderHandler.ListOrders,
 	)
 
 	return router
