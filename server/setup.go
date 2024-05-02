@@ -19,7 +19,8 @@ type SetupServerOpts struct {
 	UserHandler           *handler.UserHandler
 	DoctorHandler         *handler.DoctorHandler
 	SpecializationHandler *handler.SpecializationHandler
-	
+		PharmacyHandler       *handler.PharmacyHandler
+
 	ProductHandler    *handler.ProductHandler
 
 	SessionKey []byte
@@ -105,6 +106,36 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/profile",
 		opts.Authenticator,
 		opts.AccountHandler.GetProfile,
+	)
+
+	pharmacyGroup := apiV1Group.Group("/pharmacies")
+	pharmacyGroup.GET(
+		"/",
+		opts.PharmacyHandler.GetPharmacies,
+	)
+	pharmacyGroup.POST(
+		"/",
+		opts.PharmacyHandler.CreatePharmacy,
+	)
+	pharmacyGroup.GET(
+		"/:slug",
+		opts.PharmacyHandler.GetPharmacyBySlug,
+	)
+	pharmacyGroup.PUT(
+		"/:slug",
+		opts.PharmacyHandler.UpdatePharmacy,
+	)
+	pharmacyGroup.DELETE(
+		"/:slug",
+		opts.PharmacyHandler.DeletePharmacy,
+	)
+	pharmacyGroup.GET(
+		"/:slug/operations",
+		opts.PharmacyHandler.GetPharmacyOperations,
+	)
+	pharmacyGroup.PUT(
+		"/:slug/operations",
+		opts.PharmacyHandler.UpdatePharmacyOperations,
 	)
 
 	googleGroup := apiV1Group.Group("/google")

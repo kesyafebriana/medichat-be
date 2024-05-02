@@ -133,6 +133,32 @@ func scanUserLocation(r RowScanner, ul *domain.UserLocation) error {
 }
 
 var (
+	pharmacyColumns          = " id, manager_id, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone, slug "
+	pharmacyJoinedColumns    = " p.id, p.manager_id, p.name, p.address, p.coordinate, p.pharmacist_name, p.pharmacist_license, p.pharmacist_phone, p.slug "
+	pharmacyOperationColumns = " id, pharmacy_id, day, start_time, end_time "
+)
+
+func scanPharmacy(r RowScanner, p *domain.Pharmacy) error {
+	var pos postgis.Point
+	if err := r.Scan(
+		&p.ID, &p.ManagerID, &p.Name, &p.Address, &pos,
+		&p.PharmacistName, &p.PharmacistLicense,
+		&p.PharmacistPhone, &p.Slug,
+	); err != nil {
+		return err
+	}
+	p.Coordinate = pos.ToCoordinate()
+	return nil
+}
+
+func ScanPharmacyOperation(r RowScanner, p *domain.PharmacyOperations) error {
+	if err := r.Scan(&p.ID, &p.PharmacyID, &p.Day, &p.StartTime, &p.EndTime); err != nil {
+		return err
+	}
+	return nil
+}
+
+var (
 	doctorColumns = `
 		id, account_id, specialization_id, str, work_location, gender,
 		phone_number, is_active, start_work_date, price, certificate_url,
