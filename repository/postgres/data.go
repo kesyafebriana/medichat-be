@@ -114,3 +114,15 @@ func (r *dataRepository) SpecializationRepository() domain.SpecializationReposit
 		querier: r.querier,
 	}
 }
+
+func (r *dataRepository) PaymentRepository() domain.PaymentRepository {
+	return &paymentRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) OrderRepository() domain.OrderRepository {
+	return &orderRepository{
+		querier: r.querier,
+	}
+}
