@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"log"
 	"medichat-be/domain"
 	"medichat-be/repository/postgis"
 	"strings"
@@ -81,8 +80,6 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 	if query.Limit != 0 {
 		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
-
-	log.Print(sb.String())
 
 	return queryFull(
 		r.querier, ctx, sb.String(),
