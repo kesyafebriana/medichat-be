@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"time"
 )
 
 func fromStringPtr(s *string) sql.NullString {
@@ -30,6 +31,21 @@ func fromInt64Ptr(i *int64) sql.NullInt64 {
 func toInt64Ptr(ni sql.NullInt64) *int64 {
 	if ni.Valid {
 		return &ni.Int64
+	}
+	return nil
+}
+
+func fromTimePtr(t *time.Time) sql.NullTime {
+	var ret sql.NullTime
+	if t != nil {
+		ret.Valid, ret.Time = true, *t
+	}
+	return ret
+}
+
+func toTimePtr(nt sql.NullTime) *time.Time {
+	if nt.Valid {
+		return &nt.Time
 	}
 	return nil
 }
