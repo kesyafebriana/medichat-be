@@ -15,7 +15,7 @@ type orderRepository struct {
 	querier Querier
 }
 
-func (r *orderRepository) buildListQuery(sel string, dets domain.OrderListDetails) (strings.Builder, pgx.NamedArgs) {
+func (r *orderRepository) buildListQuery(sel string, dets domain.OrderListDetails) (*strings.Builder, pgx.NamedArgs) {
 	sb := strings.Builder{}
 	args := pgx.NamedArgs{}
 
@@ -56,7 +56,7 @@ func (r *orderRepository) buildListQuery(sel string, dets domain.OrderListDetail
 		args["status"] = *dets.Status
 	}
 
-	return sb, args
+	return &sb, args
 }
 
 func (r *orderRepository) GetPageInfo(ctx context.Context, dets domain.OrderListDetails) (domain.PageInfo, error) {
@@ -88,7 +88,7 @@ func (r *orderRepository) List(ctx context.Context, dets domain.OrderListDetails
 	`)
 
 	fmt.Fprintf(
-		&sb,
+		sb,
 		` OFFSET %d LIMIT %d `,
 		offset,
 		dets.Limit,

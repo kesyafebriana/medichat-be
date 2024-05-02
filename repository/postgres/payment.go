@@ -14,7 +14,7 @@ type paymentRepository struct {
 	querier Querier
 }
 
-func (r *paymentRepository) buildListQuery(sel string, dets domain.PaymentListDetails) (strings.Builder, pgx.NamedArgs) {
+func (r *paymentRepository) buildListQuery(sel string, dets domain.PaymentListDetails) (*strings.Builder, pgx.NamedArgs) {
 	var sb strings.Builder
 	args := pgx.NamedArgs{}
 
@@ -36,11 +36,11 @@ func (r *paymentRepository) buildListQuery(sel string, dets domain.PaymentListDe
 		args["userID"] = *dets.UserID
 	}
 
-	return sb, args
+	return &sb, args
 }
 
 func (r *paymentRepository) GetPageInfo(ctx context.Context, dets domain.PaymentListDetails) (domain.PageInfo, error) {
-	sb, args := r.buildListQuery(countOrderJoined, dets)
+	sb, args := r.buildListQuery(countPaymentJoined, dets)
 
 	count, err := queryOne(
 		r.querier, ctx, sb.String(),
@@ -64,7 +64,7 @@ func (r *paymentRepository) List(ctx context.Context, dets domain.PaymentListDet
 	offset := (dets.Page - 1) * dets.Limit
 
 	fmt.Fprintf(
-		&sb,
+		sb,
 		` OFFSET %d LIMIT %d `,
 		offset,
 		dets.Limit,
