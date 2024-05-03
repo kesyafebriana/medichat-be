@@ -58,27 +58,27 @@ func (s *orderService) GetByID(ctx context.Context, id int64) (domain.Order, err
 	return order, err
 }
 
-func (s *orderService) GetCartInfo(ctx context.Context, dets domain.OrderCreateDetails) (domain.Order, error) {
+func (s *orderService) GetCartInfo(ctx context.Context, dets []domain.OrderCreateDetails) (domain.Orders, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (s *orderService) AddOrderClosure(
+func (s *orderService) AddOrdersClosure(
 	ctx context.Context,
-	dets domain.OrderCreateDetails,
-) domain.AtomicFunc[domain.Order] {
-	return func(dr domain.DataRepository) (domain.Order, error) {
+	dets []domain.OrderCreateDetails,
+) domain.AtomicFunc[domain.Orders] {
+	return func(dr domain.DataRepository) (domain.Orders, error) {
 		panic("not implemented") // TODO: Implement
 	}
 }
 
-func (s *orderService) AddOrder(
+func (s *orderService) AddOrders(
 	ctx context.Context,
-	dets domain.OrderCreateDetails,
-) (domain.Order, error) {
+	dets []domain.OrderCreateDetails,
+) (domain.Orders, error) {
 	return domain.RunAtomic(
 		s.dataRepository,
 		ctx,
-		s.AddOrderClosure(ctx, dets),
+		s.AddOrdersClosure(ctx, dets),
 	)
 }
 

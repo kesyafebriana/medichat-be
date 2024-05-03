@@ -64,9 +64,15 @@ type OrderItem struct {
 	Amount int
 }
 
+type Orders struct {
+	Orders []Order
+	Total  int
+}
+
 type OrderListDetails struct {
 	UserID            *int64
 	PharmacyID        *int64
+	PharmacySlug      *string
 	PharmacyManagerID *int64
 	Status            *string
 
@@ -108,8 +114,8 @@ type OrderService interface {
 	List(ctx context.Context, dets OrderListDetails) ([]Order, PageInfo, error)
 	GetByID(ctx context.Context, id int64) (Order, error)
 
-	GetCartInfo(ctx context.Context, dets OrderCreateDetails) (Order, error)
-	AddOrder(ctx context.Context, dets OrderCreateDetails) (Order, error)
+	GetCartInfo(ctx context.Context, dets []OrderCreateDetails) (Orders, error)
+	AddOrders(ctx context.Context, dets []OrderCreateDetails) (Orders, error)
 	SendOrder(ctx context.Context, id int64) error
 	FinishOrder(ctx context.Context, id int64) error
 	CancelOrder(ctx context.Context, id int64) error
