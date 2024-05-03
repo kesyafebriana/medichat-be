@@ -103,8 +103,6 @@ func (u *chatServiceImpl) PostFile(req *dto.ChatMessage,roomId string,ctx *gin.C
 		stringType = "message/image"
 	}
 
-	
-
 	if(fileType == "application/pdf" || fileType == "image/png" || fileType == "image/jpeg" || fileType == "image/webp"){
 		opts := util.SendFileOpts{
 			Context: ctx,

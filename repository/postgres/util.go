@@ -133,6 +133,32 @@ func scanUserLocation(r RowScanner, ul *domain.UserLocation) error {
 }
 
 var (
+	pharmacyColumns          = " id, manager_id, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone, slug "
+	pharmacyJoinedColumns    = " p.id, p.manager_id, p.name, p.address, p.coordinate, p.pharmacist_name, p.pharmacist_license, p.pharmacist_phone, p.slug "
+	pharmacyOperationColumns = " id, pharmacy_id, day, start_time, end_time "
+)
+
+func scanPharmacy(r RowScanner, p *domain.Pharmacy) error {
+	var pos postgis.Point
+	if err := r.Scan(
+		&p.ID, &p.ManagerID, &p.Name, &p.Address, &pos,
+		&p.PharmacistName, &p.PharmacistLicense,
+		&p.PharmacistPhone, &p.Slug,
+	); err != nil {
+		return err
+	}
+	p.Coordinate = pos.ToCoordinate()
+	return nil
+}
+
+func ScanPharmacyOperation(r RowScanner, p *domain.PharmacyOperations) error {
+	if err := r.Scan(&p.ID, &p.PharmacyID, &p.Day, &p.StartTime, &p.EndTime); err != nil {
+		return err
+	}
+	return nil
+}
+
+var (
 	doctorColumns = `
 		id, account_id, specialization_id, str, work_location, gender,
 		phone_number, is_active, start_work_date, price, certificate_url,
@@ -184,4 +210,30 @@ func scanSpecialization(r RowScanner, s *domain.Specialization) error {
 	return r.Scan(
 		&s.ID, &s.Name,
 	)
+}
+
+var (
+	productColumns               = " id, name, product_detail_id, category_id, picture, is_active  "
+	productDetailsColumns        = " id, generic_name, content, manufacturer, description, product_classification, product_form, unit_in_pack, selling_unit, weight, height, length, width  "
+)
+
+func scanProduct(r RowScanner, c *domain.Product) error {
+	var nullPhotoUrl sql.NullString
+	if err := r.Scan(
+		&c.ID, &c.Name, &c.ProductDetailId, &c.ProductCategoryId, &nullPhotoUrl,&c.IsActive,
+	); err != nil {
+		return err
+	}
+	c.Picture = toStringPtr(nullPhotoUrl)
+	return nil
+}
+
+func scanProductDetails(r RowScanner, d *domain.ProductDetails) error {
+	if err := r.Scan(
+		&d.ID, &d.GenericName, &d.Content, &d.Manufacturer, &d.Description,&d.ProductClassification,&d.ProductForm,&d.UnitInPack,&d.SellingUnit,&d.Weight,&d.Height,&d.Length,&d.Width,
+	); err != nil {
+		return err
+	}
+
+	return nil
 }

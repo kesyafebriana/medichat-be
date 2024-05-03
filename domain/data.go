@@ -14,6 +14,8 @@ type DataRepository interface {
 	Sleep(ctx context.Context, duration time.Duration) error
 
 	AccountRepository() AccountRepository
+	ProductRepository() ProductRepository
+	ProductDetailsRepository() ProductDetailsRepository
 	RefreshTokenRepository() RefreshTokenRepository
 	ResetPasswordTokenRepository() ResetPasswordTokenRepository
 	VerifyEmailTokenRepository() VerifyEmailTokenRepository
@@ -25,6 +27,7 @@ type DataRepository interface {
 	PharmacyManagerRepository() PharmacyManagerRepository
 
 	SpecializationRepository() SpecializationRepository
+	PharmacyRepository() PharmacyRepository
 }
 
 func RunAtomic[T any](
