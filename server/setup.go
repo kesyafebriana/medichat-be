@@ -10,25 +10,27 @@ import (
 )
 
 type SetupServerOpts struct {
-	AccountHandler        *handler.AccountHandler
-	PingHandler           *handler.PingHandler
-	ChatHandler           *handler.ChatHandler
-	GoogleAuthHandler     *handler.OAuth2Handler
-	GoogleHandler         *handler.GoogleHandler
-	CategoryHandler       *handler.CategoryHandler
-	UserHandler           *handler.UserHandler
-	DoctorHandler         *handler.DoctorHandler
-	SpecializationHandler *handler.SpecializationHandler
-	PharmacyHandler       *handler.PharmacyHandler
+	AccountHandler         *handler.AccountHandler
+	PingHandler            *handler.PingHandler
+	ChatHandler            *handler.ChatHandler
+	GoogleAuthHandler      *handler.OAuth2Handler
+	GoogleHandler          *handler.GoogleHandler
+	CategoryHandler        *handler.CategoryHandler
+	UserHandler            *handler.UserHandler
+	DoctorHandler          *handler.DoctorHandler
+	SpecializationHandler  *handler.SpecializationHandler
+	PharmacyHandler        *handler.PharmacyHandler
+	PharmacyManagerHandler *handler.PharmacyManagerHandler
 
 	SessionKey []byte
 
 	RequestID gin.HandlerFunc
 
-	Authenticator       gin.HandlerFunc
-	AdminAuthenticator  gin.HandlerFunc
-	UserAuthenticator   gin.HandlerFunc
-	DoctorAuthenticator gin.HandlerFunc
+	Authenticator                gin.HandlerFunc
+	AdminAuthenticator           gin.HandlerFunc
+	UserAuthenticator            gin.HandlerFunc
+	DoctorAuthenticator          gin.HandlerFunc
+	PharmacyManagerAuthenticator gin.HandlerFunc
 
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
@@ -106,6 +108,13 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		opts.AccountHandler.GetProfile,
 	)
 
+	adminGroup := apiV1Group.Group("/admin")
+	adminGroup.POST(
+		"/pharmacy-managers",
+		opts.AdminAuthenticator,
+		opts.PharmacyManagerHandler.CreateProfile,
+	)
+
 	pharmacyGroup := apiV1Group.Group("/pharmacies")
 	pharmacyGroup.GET(
 		"/",
@@ -113,6 +122,7 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	)
 	pharmacyGroup.POST(
 		"/",
+		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyHandler.CreatePharmacy,
 	)
 	pharmacyGroup.GET(
@@ -121,10 +131,12 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	)
 	pharmacyGroup.PUT(
 		"/:slug",
+		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyHandler.UpdatePharmacy,
 	)
 	pharmacyGroup.DELETE(
 		"/:slug",
+		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyHandler.DeletePharmacy,
 	)
 	pharmacyGroup.GET(
@@ -133,6 +145,7 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	)
 	pharmacyGroup.PUT(
 		"/:slug/operations",
+		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyHandler.UpdatePharmacyOperations,
 	)
 	pharmacyGroup.GET(
@@ -141,6 +154,7 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	)
 	pharmacyGroup.PUT(
 		"/:slug/shipments",
+		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyHandler.UpdateShipmentMethodsBySlug,
 	)
 

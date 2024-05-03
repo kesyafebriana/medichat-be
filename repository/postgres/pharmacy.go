@@ -207,6 +207,7 @@ func (r *pharmacyRepository) Update(ctx context.Context, pharmacy domain.Pharmac
 			pharmacist_name = $4,
 			pharmacist_license = $5,
 			pharmacist_phone = $6
+			updated_at = now()
 		WHERE slug = $7 RETURNING
 	` + pharmacyColumns
 
@@ -255,6 +256,7 @@ func (r *pharmacyRepository) UpdateOperation(ctx context.Context, pharmacyOperat
 			start_time = $2,
 			end_time = $3,
 			pharmacy_id = $4
+			updated_at = now()
 		WHERE id = $5 RETURNING
 	` + pharmacyOperationColumns
 

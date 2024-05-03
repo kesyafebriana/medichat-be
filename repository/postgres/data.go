@@ -106,7 +106,9 @@ func (r *dataRepository) DoctorRepository() domain.DoctorRepository {
 }
 
 func (r *dataRepository) PharmacyManagerRepository() domain.PharmacyManagerRepository {
-	return nil
+	return &pharmacyManagerRepository{
+		querier: r.querier,
+	}
 }
 
 func (r *dataRepository) SpecializationRepository() domain.SpecializationRepository {

@@ -144,6 +144,31 @@ func scanShipmentMethod(r RowScanner, s *domain.ShipmentMethod) error {
 }
 
 var (
+	pharmacyManagerColumns       = " id, account_id "
+	pharmacyManagerJoinedColumns = `
+		p.id,
+		p.account_id, a.email, a.email_verified, a.role, a.account_type,
+		a.name, a.photo_url, a.profile_set
+	`
+)
+
+func scanPharmacyManager(r RowScanner, p *domain.PharmacyManager) error {
+	if err := r.Scan(&p.ID, &p.Account.ID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func scanPharmacyManagerJoined(r RowScanner, p *domain.PharmacyManager) error {
+	if err := r.Scan(&p.ID, &p.Account.ID, &p.Account.Email, &p.Account.EmailVerified,
+		&p.Account.Role, &p.Account.AccountType, &p.Account.Name, &p.Account.PhotoURL,
+		&p.Account.ProfileSet); err != nil {
+		return err
+	}
+	return nil
+}
+
+var (
 	pharmacyColumns               = " id, manager_id, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone, slug "
 	pharmacyJoinedColumns         = " p.id, p.manager_id, p.name, p.address, p.coordinate, p.pharmacist_name, p.pharmacist_license, p.pharmacist_phone, p.slug "
 	pharmacyOperationColumns      = " id, pharmacy_id, day, start_time, end_time "
