@@ -7,6 +7,8 @@ import (
 	"medichat-be/constants"
 	"medichat-be/domain"
 	"medichat-be/util"
+
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
 type pharmacyManagerService struct {
@@ -74,5 +76,77 @@ func (s *pharmacyManagerService) CreatePharmacyManager(
 		s.dataRepository,
 		ctx,
 		s.CreateClosure(ctx, creds),
+	)
+}
+
+func (s *pharmacyManagerService) CreateProfileClosure(
+	ctx context.Context,
+	dets domain.PharmacyManagerCreateDetails,
+) domain.AtomicFunc[domain.PharmacyManager] {
+	return func(dr domain.DataRepository) (domain.PharmacyManager, error) {
+		accountRepo := dr.AccountRepository()
+		pharmacyManagerRepo := dr.PharmacyManagerRepository()
+
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return domain.PharmacyManager{}, apperror.Wrap(err)
+		}
+
+		exists, err := pharmacyManagerRepo.IsExistByAccountID(ctx, accountID)
+		if err != nil {
+			return domain.PharmacyManager{}, apperror.Wrap(err)
+		}
+		if exists {
+			return domain.PharmacyManager{}, apperror.NewAlreadyExists("pharmacy manager")
+		}
+
+		account, err := accountRepo.GetByIDAndLock(ctx, accountID)
+		if err != nil {
+			return domain.PharmacyManager{}, apperror.Wrap(err)
+		}
+		if account.Role != domain.AccountRolePharmacyManager {
+			return domain.PharmacyManager{}, apperror.NewForbidden(nil)
+		}
+
+		pharmacyManager := domain.PharmacyManager{
+			Account: domain.Account{
+				ID: accountID,
+			},
+		}
+
+		account.Name = dets.Name
+		if dets.Photo != nil {
+			res, err := s.cloudProvider.UploadImage(ctx, dets.Photo, uploader.UploadParams{})
+			if err != nil {
+				return domain.PharmacyManager{}, apperror.Wrap(err)
+			}
+			account.PhotoURL = res.SecureURL
+		}
+
+		account, err = accountRepo.Update(ctx, account)
+		if err != nil {
+			return domain.PharmacyManager{}, apperror.Wrap(err)
+		}
+
+		err = accountRepo.ProfileSetByID(ctx, accountID)
+		if err != nil {
+			return domain.PharmacyManager{}, apperror.Wrap(err)
+		}
+
+		account.ProfileSet = true
+		pharmacyManager.Account = account
+
+		return pharmacyManager, nil
+	}
+}
+
+func (s *pharmacyManagerService) CreateProfilePharmacyManager(
+	ctx context.Context,
+	p domain.PharmacyManagerCreateDetails,
+) (domain.PharmacyManager, error) {
+	return domain.RunAtomic(
+		s.dataRepository,
+		ctx,
+		s.CreateProfileClosure(ctx, p),
 	)
 }

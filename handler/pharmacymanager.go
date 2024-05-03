@@ -2,8 +2,10 @@ package handler
 
 import (
 	"medichat-be/apperror"
+	"medichat-be/constants"
 	"medichat-be/domain"
 	"medichat-be/dto"
+	"medichat-be/util"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -23,7 +25,7 @@ func NewPharmacyManagerHandler(opts PharmacyManagerHandlerOpts) *PharmacyManager
 	}
 }
 
-func (h *PharmacyManagerHandler) CreateProfile(ctx *gin.Context) {
+func (h *PharmacyManagerHandler) CreateAccount(ctx *gin.Context) {
 	var req dto.AccountRegisterRequest
 
 	err := ctx.ShouldBindJSON(&req)
@@ -39,6 +41,43 @@ func (h *PharmacyManagerHandler) CreateProfile(ctx *gin.Context) {
 	if err != nil {
 		ctx.Error(apperror.Wrap(err))
 		ctx.Abort()
+	}
+
+	ctx.JSON(
+		http.StatusCreated,
+		dto.ResponseCreated(nil),
+	)
+}
+
+func (h *PharmacyManagerHandler) CreateProfile(ctx *gin.Context) {
+	var req dto.PharmacyManagerCreateRequest
+
+	err := util.LimitContentLength(ctx, constants.MaxFileSize)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	err = dto.ShouldBindMultipart(ctx, &req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	dets, err := dto.PharmacyManagerCreateRequestToDetails(req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	_, err = h.pharmacyManagerSrv.CreateProfilePharmacyManager(ctx, dets)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
 	}
 
 	ctx.JSON(

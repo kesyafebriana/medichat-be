@@ -112,6 +112,13 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	adminGroup.POST(
 		"/pharmacy-managers",
 		opts.AdminAuthenticator,
+		opts.PharmacyManagerHandler.CreateAccount,
+	)
+
+	pharmacyManagerGroup := apiV1Group.Group("/managers")
+	pharmacyManagerGroup.POST(
+		".",
+		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyManagerHandler.CreateProfile,
 	)
 

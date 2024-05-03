@@ -30,5 +30,6 @@ type PharmacyManagerRepository interface {
 
 type PharmacyManagerService interface {
 	CreatePharmacyManager(ctx context.Context, creds AccountRegisterCredentials) (Account, error)
+	CreateProfilePharmacyManager(ctx context.Context, p PharmacyManagerCreateDetails) (PharmacyManager, error)
 	// GetPharmacyManagers(ctx context.Context) (PharmacyManager, error)
 }
