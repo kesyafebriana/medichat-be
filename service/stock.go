@@ -4,6 +4,7 @@ import (
 	"context"
 	"medichat-be/apperror"
 	"medichat-be/domain"
+	"medichat-be/util"
 )
 
 type stockService struct {
@@ -59,20 +60,42 @@ func (s *stockService) AddClosure(
 ) domain.AtomicFunc[domain.Stock] {
 	return func(dr domain.DataRepository) (domain.Stock, error) {
 		stockRepo := dr.StockRepository()
+		productRepo := dr.ProductRepository()
+		pharmacyRepo := dr.PharmacyRepository()
+		managerRepo := dr.PharmacyManagerRepository()
 
-		// TODO: get product by slug
-		product := domain.Product{}
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return domain.Stock{}, apperror.Wrap(err)
+		}
 
-		// TODO: check pharmacy manager
+		manager, err := managerRepo.GetByAccountID(ctx, accountID)
+		if err != nil {
+			return domain.Stock{}, apperror.Wrap(err)
+		}
+
+		product, err := productRepo.GetBySlug(ctx, det.ProductSlug)
+		if err != nil {
+			return domain.Stock{}, apperror.Wrap(err)
+		}
+
+		pharmacy, err := pharmacyRepo.GetBySlug(ctx, det.PharmacySlug)
+		if err != nil {
+			return domain.Stock{}, apperror.Wrap(err)
+		}
+
+		if pharmacy.ManagerID != manager.ID {
+			return domain.Stock{}, apperror.NewForbidden(nil)
+		}
 
 		stock := domain.Stock{
 			ProductID:  product.ID,
-			PharmacyID: det.PharmacyID,
+			PharmacyID: pharmacy.ID,
 			Stock:      det.Stock,
 			Price:      det.Price,
 		}
 
-		stock, err := stockRepo.Add(ctx, stock)
+		stock, err = stockRepo.Add(ctx, stock)
 		if err != nil {
 			return domain.Stock{}, apperror.Wrap(err)
 		}
@@ -98,13 +121,22 @@ func (s *stockService) UpdateClosure(
 ) domain.AtomicFunc[domain.Stock] {
 	return func(dr domain.DataRepository) (domain.Stock, error) {
 		stockRepo := dr.StockRepository()
+		managerRepo := dr.PharmacyManagerRepository()
+
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return domain.Stock{}, apperror.Wrap(err)
+		}
+
+		_, err = managerRepo.GetByAccountID(ctx, accountID)
+		if err != nil {
+			return domain.Stock{}, apperror.Wrap(err)
+		}
 
 		stock, err := stockRepo.GetByIDAndLock(ctx, det.ID)
 		if err != nil {
 			return domain.Stock{}, apperror.Wrap(err)
 		}
-
-		// TODO: check pharmacy manager
 
 		if det.Stock != nil {
 			stock.Stock = *det.Stock
@@ -139,13 +171,22 @@ func (s *stockService) DeleteClosure(
 ) domain.AtomicFunc[any] {
 	return func(dr domain.DataRepository) (any, error) {
 		stockRepo := dr.StockRepository()
+		managerRepo := dr.PharmacyManagerRepository()
 
-		_, err := stockRepo.GetByIDAndLock(ctx, id)
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return domain.Stock{}, apperror.Wrap(err)
+		}
+
+		_, err = managerRepo.GetByAccountID(ctx, accountID)
+		if err != nil {
+			return domain.Stock{}, apperror.Wrap(err)
+		}
+
+		_, err = stockRepo.GetByIDAndLock(ctx, id)
 		if err != nil {
 			return nil, apperror.Wrap(err)
 		}
-
-		// TODO: check pharmacy manager
 
 		err = stockRepo.SoftDeleteByID(ctx, id)
 		if err != nil {
@@ -208,25 +249,52 @@ func (s *stockService) RequestStockTransferClosure(
 ) domain.AtomicFunc[domain.StockMutation] {
 	return func(dr domain.DataRepository) (domain.StockMutation, error) {
 		stockRepo := dr.StockRepository()
+		productRepo := dr.ProductRepository()
+		pharmacyRepo := dr.PharmacyRepository()
+		managerRepo := dr.PharmacyManagerRepository()
 
-		if req.SourcePharmacyID == req.TargetPharmacyID {
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return domain.StockMutation{}, apperror.Wrap(err)
+		}
+
+		manager, err := managerRepo.GetByAccountID(ctx, accountID)
+		if err != nil {
+			return domain.StockMutation{}, apperror.Wrap(err)
+		}
+
+		if req.SourcePharmacySlug == req.TargetPharmacySlug {
 			return domain.StockMutation{}, apperror.NewTransferSameStock(nil)
 		}
 
-		// TODO: get product by slug
-		product := domain.Product{}
-
-		source, err := stockRepo.GetByPharmacyAndProduct(ctx, req.SourcePharmacyID, product.ID)
+		product, err := productRepo.GetBySlug(ctx, req.ProductSlug)
 		if err != nil {
 			return domain.StockMutation{}, apperror.Wrap(err)
 		}
 
-		target, err := stockRepo.GetByID(ctx, req.TargetPharmacyID)
+		sourcePharma, err := pharmacyRepo.GetBySlug(ctx, req.SourcePharmacySlug)
 		if err != nil {
 			return domain.StockMutation{}, apperror.Wrap(err)
 		}
 
-		// TODO: check target pharmacy manager
+		targetPharma, err := pharmacyRepo.GetBySlug(ctx, req.TargetPharmacySlug)
+		if err != nil {
+			return domain.StockMutation{}, apperror.Wrap(err)
+		}
+
+		if targetPharma.ManagerID != manager.ID {
+			return domain.StockMutation{}, apperror.NewForbidden(nil)
+		}
+
+		source, err := stockRepo.GetByPharmacyAndProduct(ctx, sourcePharma.ID, product.ID)
+		if err != nil {
+			return domain.StockMutation{}, apperror.Wrap(err)
+		}
+
+		target, err := stockRepo.GetByPharmacyAndProduct(ctx, targetPharma.ID, product.ID)
+		if err != nil {
+			return domain.StockMutation{}, apperror.Wrap(err)
+		}
 
 		mut := domain.StockMutation{
 			SourceID: source.ID,

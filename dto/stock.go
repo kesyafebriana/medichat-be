@@ -29,6 +29,7 @@ type StockJoinedResponse struct {
 	} `json:"product"`
 	Pharmacy struct {
 		ID   int64  `json:"id"`
+		Slug string `json:"slug"`
 		Name string `json:"name"`
 	} `json:"pharmacy"`
 
@@ -41,8 +42,8 @@ func NewStockJoinedResponse(s domain.StockJoined) StockJoinedResponse {
 }
 
 type StockCreateRequest struct {
-	ProductSlug string `json:"product_slug" binding:"required"`
-	PharmacyID  int64  `json:"pharmacy_id" binding:"required"`
+	ProductSlug  string `json:"product_slug" binding:"required"`
+	PharmacySlug string `json:"pharmacy_slug" binding:"required"`
 
 	Stock int `json:"stock" binding:"min=0"`
 	Price int `json:"price" binding:"min=0"`
@@ -74,7 +75,7 @@ type StockMutationResponse struct {
 
 	Amount int `json:"amount"`
 
-	Timestamp time.Time `json:"timestamp"`
+	Timestamp time.Time `json:"created_at"`
 }
 
 func NewStockMutationResponse(s domain.StockMutation) StockMutationResponse {
@@ -87,11 +88,13 @@ type StockMutationJoinedResponse struct {
 	Source struct {
 		ID           int64  `json:"id"`
 		PharmacyID   int64  `json:"pharmacy_id"`
+		PharmacySlug string "json:\"pharmacy_slug\""
 		PharmacyName string `json:"pharmacy_name"`
 	} `json:"source"`
 	Target struct {
 		ID           int64  `json:"id"`
 		PharmacyID   int64  `json:"pharmacy_id"`
+		PharmacySlug string "json:\"pharmacy_slug\""
 		PharmacyName string `json:"pharmacy_name"`
 	} `json:"target"`
 	Product struct {
@@ -114,6 +117,7 @@ func NewStockMutationJoinedResponse(s domain.StockMutationJoined) StockMutationJ
 		Source: struct {
 			ID           int64  "json:\"id\""
 			PharmacyID   int64  "json:\"pharmacy_id\""
+			PharmacySlug string "json:\"pharmacy_slug\""
 			PharmacyName string "json:\"pharmacy_name\""
 		}{
 			ID:           s.Source.ID,
@@ -123,6 +127,7 @@ func NewStockMutationJoinedResponse(s domain.StockMutationJoined) StockMutationJ
 		Target: struct {
 			ID           int64  "json:\"id\""
 			PharmacyID   int64  "json:\"pharmacy_id\""
+			PharmacySlug string "json:\"pharmacy_slug\""
 			PharmacyName string "json:\"pharmacy_name\""
 		}{
 			ID:           s.Target.ID,
@@ -146,10 +151,10 @@ func NewStockMutationJoinedResponse(s domain.StockMutationJoined) StockMutationJ
 }
 
 type StockTransferRequest struct {
-	SourcePharmacyID int64  `json:"source_pharmacy_id"`
-	TargetPharmacyID int64  `json:"target_pharmacy_id"`
-	ProductSlug      string `json:"product_slug"`
-	Amount           int    `json:"amount"`
+	SourcePharmacySlug string `json:"source_pharmacy_slug"`
+	TargetPharmacySlug string `json:"target_pharmacy_slug"`
+	ProductSlug        string `json:"product_slug"`
+	Amount             int    `json:"amount"`
 }
 
 func (r StockTransferRequest) ToRequest() domain.StockTransferRequest {
@@ -157,38 +162,87 @@ func (r StockTransferRequest) ToRequest() domain.StockTransferRequest {
 }
 
 type StockListQuery struct {
-	ProductSlug *string `form:"product_slug"`
-	ProductName *string `form:"product_name"`
-	PharmacyID  *int64  `form:"pharmacy_id"`
+	ProductSlug  *string `form:"product_slug"`
+	ProductName  *string `form:"product_name"`
+	PharmacySlug *string `form:"pharmacy_slug"`
 
-	SortBy  string `form:"sort_by"`
-	SortAsc bool   `form:"sort_asc"`
+	SortBy *string `form:"sort_by"`
+	Sort   *string `form:"sort"`
 
-	Page  int `form:"page"`
-	Limit int `form:"limit"`
+	Page  *int `form:"page"`
+	Limit *int `form:"limit"`
 }
 
 func (q StockListQuery) ToDetails() domain.StockListDetails {
-	return domain.StockListDetails(q)
+	ret := domain.StockListDetails{
+		ProductSlug:  q.ProductSlug,
+		ProductName:  q.ProductName,
+		PharmacySlug: q.PharmacySlug,
+		SortBy:       domain.StockSortByProductName,
+		SortAsc:      true,
+		Page:         1,
+		Limit:        10,
+	}
+
+	if q.SortBy != nil {
+		ret.SortBy = *q.SortBy
+	}
+	if q.Sort != nil {
+		ret.SortAsc = *q.Sort == "asc"
+	}
+	if q.Page != nil {
+		ret.Page = *q.Page
+	}
+	if q.Limit != nil {
+		ret.Limit = *q.Limit
+	}
+
+	return ret
 }
 
 type StockMutationListQuery struct {
 	ProductSlug *string `form:"product_slug"`
 	ProductName *string `form:"product_name"`
 
-	SourcePharmacyID *int64 `form:"source_pharmacy_id"`
-	TargetPharmacyID *int64 `form:"target_pharmacy_id"`
+	SourcePharmacySlug *string `form:"source_pharmacy_slug"`
+	TargetPharmacySlug *string `form:"target_pharmacy_slug"`
 
 	Method *string `form:"method"`
 	Status *string `form:"status"`
 
-	SortBy  string `form:"sort_by"`
-	SortAsc bool   `form:"sort_asc"`
+	SortBy *string `form:"sort_by"`
+	Sort   *string `form:"sort"`
 
-	Page  int `form:"page"`
-	Limit int `form:"limit"`
+	Page  *int `form:"page"`
+	Limit *int `form:"limit"`
 }
 
 func (q StockMutationListQuery) ToDetails() domain.StockMutationListDetails {
-	return domain.StockMutationListDetails(q)
+	ret := domain.StockMutationListDetails{
+		ProductSlug:        q.ProductSlug,
+		ProductName:        q.ProductName,
+		SourcePharmacySlug: q.SourcePharmacySlug,
+		TargetPharmacySlug: q.TargetPharmacySlug,
+		Method:             q.Method,
+		Status:             q.Status,
+		SortBy:             "created_at",
+		SortAsc:            true,
+		Page:               1,
+		Limit:              10,
+	}
+
+	if q.SortBy != nil {
+		ret.SortBy = *q.SortBy
+	}
+	if q.Sort != nil {
+		ret.SortAsc = *q.Sort == "asc"
+	}
+	if q.Page != nil {
+		ret.Page = *q.Page
+	}
+	if q.Limit != nil {
+		ret.Limit = *q.Limit
+	}
+
+	return ret
 }

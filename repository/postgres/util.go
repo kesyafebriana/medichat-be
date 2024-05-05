@@ -294,7 +294,7 @@ var (
 		SELECT
 			st.id,
 			pd.id, pd.slug, pd.name,
-			ph.id, ph.name,
+			ph.id, ph.slug, ph.name,
 			st.stock, st.price
 		FROM stocks st
 			JOIN pharmacies ph ON st.pharmacy_id = ph.id
@@ -311,8 +311,8 @@ var (
 	selectStockMutationJoined = `
 		SELECT 
 			sm.id, 
-			st1.id, ph1.id, ph1.name,
-			st2.id, ph2.id, ph2.name,
+			st1.id, ph1.id, ph1.slug, ph1.name,
+			st2.id, ph2.id, ph2.slug, ph2.name,
 			pd.id, pd.slug, pd.name,
 			sm.method, sm.status, sm.amount, sm.created_at
 		FROM stock_mutations sm
@@ -350,7 +350,7 @@ func scanStockJoined(r RowScanner, s *domain.StockJoined) error {
 	return r.Scan(
 		&s.ID,
 		&s.Product.ID, &s.Product.Slug, &s.Product.Name,
-		&s.Pharmacy.ID, &s.Pharmacy.Name,
+		&s.Pharmacy.ID, &s.Pharmacy.Slug, &s.Pharmacy.Name,
 		&s.Stock, &s.Price,
 	)
 }
@@ -358,8 +358,8 @@ func scanStockJoined(r RowScanner, s *domain.StockJoined) error {
 func scanStockMutationJoined(r RowScanner, sm *domain.StockMutationJoined) error {
 	return r.Scan(
 		&sm.ID,
-		&sm.Source.ID, &sm.Source.PharmacyID, &sm.Source.PharmacyName,
-		&sm.Target.ID, &sm.Target.PharmacyID, &sm.Target.PharmacyName,
+		&sm.Source.ID, &sm.Source.PharmacyID, &sm.Source.PharmacySlug, &sm.Source.PharmacyName,
+		&sm.Target.ID, &sm.Target.PharmacyID, &sm.Target.PharmacySlug, &sm.Target.PharmacyName,
 		&sm.Product.ID, &sm.Product.Slug, &sm.Product.Name,
 		&sm.Method, &sm.Status, &sm.Amount, &sm.Timestamp,
 	)

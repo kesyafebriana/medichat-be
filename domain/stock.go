@@ -42,6 +42,7 @@ type StockJoined struct {
 	}
 	Pharmacy struct {
 		ID   int64
+		Slug string
 		Name string
 	}
 
@@ -50,8 +51,8 @@ type StockJoined struct {
 }
 
 type StockCreateDetail struct {
-	ProductSlug string
-	PharmacyID  int64
+	ProductSlug  string
+	PharmacySlug string
 
 	Stock int
 	Price int
@@ -84,11 +85,13 @@ type StockMutationJoined struct {
 	Source struct {
 		ID           int64
 		PharmacyID   int64
+		PharmacySlug string
 		PharmacyName string
 	}
 	Target struct {
 		ID           int64
 		PharmacyID   int64
+		PharmacySlug string
 		PharmacyName string
 	}
 	Product struct {
@@ -106,16 +109,16 @@ type StockMutationJoined struct {
 }
 
 type StockTransferRequest struct {
-	SourcePharmacyID int64
-	TargetPharmacyID int64
-	ProductSlug      string
-	Amount           int
+	SourcePharmacySlug string
+	TargetPharmacySlug string
+	ProductSlug        string
+	Amount             int
 }
 
 type StockListDetails struct {
-	ProductSlug *string
-	ProductName *string
-	PharmacyID  *int64
+	ProductSlug  *string
+	ProductName  *string
+	PharmacySlug *string
 
 	SortBy  string
 	SortAsc bool
@@ -128,8 +131,8 @@ type StockMutationListDetails struct {
 	ProductSlug *string
 	ProductName *string
 
-	SourcePharmacyID *int64
-	TargetPharmacyID *int64
+	SourcePharmacySlug *string
+	TargetPharmacySlug *string
 
 	Method *string
 	Status *string

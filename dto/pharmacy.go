@@ -60,7 +60,7 @@ func NewPharmaciesResponse(pharmacy []domain.Pharmacy, pageInfo domain.PageInfo)
 type PharmacyOperationResponse struct {
 	ID        int64  `json:"id"`
 	Day       string `json:"day"`
-	StartTime string `json:"start_time`
+	StartTime string `json:"start_time"`
 	EndTime   string `json:"end_time"`
 }
 

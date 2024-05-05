@@ -61,20 +61,20 @@ func (r *stockRepository) GetByIDAndLock(ctx context.Context, id int64) (domain.
 	)
 }
 
-func (r *stockRepository) buildListQuery(sel string, det domain.StockListDetails) (strings.Builder, pgx.NamedArgs) {
+func (r *stockRepository) buildListQuery(sel string, det domain.StockListDetails) (*strings.Builder, pgx.NamedArgs) {
 	var sb strings.Builder
 	args := pgx.NamedArgs{}
 
-	sb.WriteString(countStockJoined)
+	sb.WriteString(sel)
 	sb.WriteString(`
 		WHERE st.deleted_at IS NULL
 	`)
 
-	if det.PharmacyID != nil {
+	if det.PharmacySlug != nil {
 		sb.WriteString(`
-			AND st.pharmacy_id = @pharmacyID
+			AND ph.slug = @pharmacySlug
 		`)
-		args["pharmacyID"] = *det.PharmacyID
+		args["pharmacySlug"] = *det.PharmacySlug
 	}
 	if det.ProductSlug != nil {
 		sb.WriteString(`
@@ -89,7 +89,7 @@ func (r *stockRepository) buildListQuery(sel string, det domain.StockListDetails
 		args["productName"] = *det.ProductName
 	}
 
-	return sb, args
+	return &sb, args
 }
 
 func (r *stockRepository) GetPageInfo(ctx context.Context, det domain.StockListDetails) (domain.PageInfo, error) {
@@ -106,7 +106,7 @@ func (r *stockRepository) List(ctx context.Context, det domain.StockListDetails)
 	sb, args := r.buildListQuery(selectStockJoined, det)
 	offset := (det.Page - 1) * det.Limit
 
-	sortCol := "ph.name"
+	sortCol := "pd.name"
 
 	switch det.SortBy {
 	case domain.StockSortByProductName:
@@ -120,15 +120,15 @@ func (r *stockRepository) List(ctx context.Context, det domain.StockListDetails)
 	}
 
 	fmt.Fprintf(
-		&sb,
-		` SORT BY %s %s, d.id %s `,
+		sb,
+		` ORDER BY %s %s, st.id %s `,
 		sortCol,
 		getSortOrder(det.SortAsc),
 		getSortOrder(det.SortAsc),
 	)
 
 	fmt.Fprintf(
-		&sb,
+		sb,
 		` OFFSET %d LIMIT %d `,
 		offset,
 		det.Limit,
@@ -221,26 +221,26 @@ func (r *stockRepository) GetMutationByIDAndLock(ctx context.Context, id int64) 
 	)
 }
 
-func (r *stockRepository) buildListMutationQuery(sel string, det domain.StockMutationListDetails) (strings.Builder, pgx.NamedArgs) {
+func (r *stockRepository) buildListMutationQuery(sel string, det domain.StockMutationListDetails) (*strings.Builder, pgx.NamedArgs) {
 	var sb strings.Builder
 	args := pgx.NamedArgs{}
 
 	sb.WriteString(sel)
 	sb.WriteString(`
-		WHERE st.deleted_at IS NULL
+		WHERE sm.deleted_at IS NULL
 	`)
 
-	if det.SourcePharmacyID != nil {
+	if det.SourcePharmacySlug != nil {
 		sb.WriteString(`
-			AND st1.pharmacy_id = @sourcePharmacyID
+			AND ph1.slug = @sourcePharmacySlug
 		`)
-		args["sourcePharmacyID"] = *det.SourcePharmacyID
+		args["sourcePharmacySlug"] = *det.SourcePharmacySlug
 	}
-	if det.TargetPharmacyID != nil {
+	if det.TargetPharmacySlug != nil {
 		sb.WriteString(`
-			AND st2.pharmacy_id = @targetPharmacyID
+			AND ph2.slug = @targetPharmacySlug
 		`)
-		args["targetPharmacyID"] = *det.TargetPharmacyID
+		args["targetPharmacySlug"] = *det.TargetPharmacySlug
 	}
 	if det.ProductSlug != nil {
 		sb.WriteString(`
@@ -267,7 +267,7 @@ func (r *stockRepository) buildListMutationQuery(sel string, det domain.StockMut
 		args["status"] = *det.Method
 	}
 
-	return sb, args
+	return &sb, args
 }
 
 func (r *stockRepository) GetMutationPageInfo(ctx context.Context, det domain.StockMutationListDetails) (domain.PageInfo, error) {
@@ -284,7 +284,7 @@ func (r *stockRepository) ListMutations(ctx context.Context, det domain.StockMut
 	sb, args := r.buildListMutationQuery(selectStockMutationJoined, det)
 	offset := (det.Page - 1) * det.Limit
 
-	sortCol := "sm.timestamp"
+	sortCol := "sm.created_at"
 
 	switch det.SortBy {
 	case domain.StockSortByProductName:
@@ -298,15 +298,15 @@ func (r *stockRepository) ListMutations(ctx context.Context, det domain.StockMut
 	}
 
 	fmt.Fprintf(
-		&sb,
-		` SORT BY %s %s, d.id %s `,
+		sb,
+		` ORDER BY %s %s, sm.id %s `,
 		sortCol,
 		getSortOrder(det.SortAsc),
 		getSortOrder(det.SortAsc),
 	)
 
 	fmt.Fprintf(
-		&sb,
+		sb,
 		` OFFSET %d LIMIT %d `,
 		offset,
 		det.Limit,
