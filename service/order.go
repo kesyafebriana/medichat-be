@@ -5,6 +5,7 @@ import (
 	"medichat-be/apperror"
 	"medichat-be/domain"
 	"medichat-be/util"
+	"time"
 )
 
 type orderService struct {
@@ -58,8 +59,112 @@ func (s *orderService) GetByID(ctx context.Context, id int64) (domain.Order, err
 	return order, err
 }
 
+func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, dets []domain.OrderCreateDetails) (domain.Orders, error) {
+	productRepo := dr.ProductRepository()
+	pharmacyRepo := dr.PharmacyRepository()
+	userRepo := dr.UserRepository()
+
+	accountID, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return domain.Orders{}, apperror.Wrap(err)
+	}
+
+	user, err := userRepo.GetByAccountID(ctx, accountID)
+	if err != nil {
+		return domain.Orders{}, apperror.Wrap(err)
+	}
+
+	orders := domain.Orders{
+		Orders: []domain.Order{},
+		Total:  0,
+	}
+
+	var orderID int64 = 1
+	var itemID int64 = 1
+
+	for _, det := range dets {
+		pharmacy, err := pharmacyRepo.GetBySlug(ctx, det.PharmacySlug)
+		if err != nil {
+			return domain.Orders{}, apperror.Wrap(err)
+		}
+
+		order := domain.Order{
+			ID: orderID,
+			User: struct {
+				ID   int64
+				Name string
+			}{
+				ID:   user.ID,
+				Name: user.Account.Name,
+			},
+			Pharmacy: struct {
+				ID   int64
+				Slug string
+				Name string
+			}{
+				ID:   pharmacy.ID,
+				Slug: pharmacy.Slug,
+				Name: pharmacy.Name,
+			},
+			Address:     det.Address,
+			Coordinate:  det.Coordinate,
+			NItems:      0,
+			Subtotal:    0,
+			ShipmentFee: 0,
+			Total:       0,
+			Status:      domain.OrderStatusWaitingPayment,
+			OrderedAt:   time.Now(),
+			FinishedAt:  nil,
+			Items:       []domain.OrderItem{},
+		}
+
+		for _, it := range det.Items {
+			product, err := productRepo.GetBySlug(ctx, it.ProductSlug)
+			if err != nil {
+				return domain.Orders{}, apperror.Wrap(err)
+			}
+
+			// TODO: get stock in pharmacy
+			price := 0
+
+			order.Items = append(order.Items, domain.OrderItem{
+				ID:      itemID,
+				OrderID: order.ID,
+				Product: struct {
+					ID   int64
+					Slug string
+					Name string
+				}{
+					ID:   product.ID,
+					Slug: product.Slug,
+					Name: product.Name,
+				},
+				Price:  price,
+				Amount: it.Amount,
+			})
+
+			order.Subtotal += price * it.Amount
+			order.NItems += it.Amount
+			itemID++
+		}
+
+		// TODO: calculate shipment fee
+		shipmentFee := 0
+
+		order.ShipmentFee = shipmentFee
+		order.Total = order.Subtotal + order.ShipmentFee
+
+		orders.Total += order.Total
+		orders.Orders = append(orders.Orders, order)
+
+		orderID++
+	}
+
+	return orders, nil
+}
+
 func (s *orderService) GetCartInfo(ctx context.Context, dets []domain.OrderCreateDetails) (domain.Orders, error) {
-	panic("not implemented") // TODO: Implement
+	return s.getOrders(s.dataRepository, ctx, dets)
 }
 
 func (s *orderService) AddOrdersClosure(
@@ -67,7 +172,55 @@ func (s *orderService) AddOrdersClosure(
 	dets []domain.OrderCreateDetails,
 ) domain.AtomicFunc[domain.Orders] {
 	return func(dr domain.DataRepository) (domain.Orders, error) {
-		panic("not implemented") // TODO: Implement
+		orderRepo := dr.OrderRepository()
+		paymentRepo := dr.PaymentRepository()
+
+		orders, err := s.getOrders(dr, ctx, dets)
+		if err != nil {
+			return domain.Orders{}, apperror.Wrap(err)
+		}
+
+		payment := domain.Payment{
+			InvoiceNumber: util.GenerateInvoiceNumber(),
+			User:          orders.Orders[0].User,
+			FileURL:       nil,
+			IsConfirmed:   false,
+			Amount:        orders.Total,
+		}
+
+		payment, err = paymentRepo.Add(ctx, payment)
+		if err != nil {
+			return domain.Orders{}, apperror.Wrap(err)
+		}
+
+		for i := range orders.Orders {
+			order := &orders.Orders[i]
+
+			order.Payment.ID = payment.ID
+			order.Payment.InvoiceNumber = payment.InvoiceNumber
+
+			newOrder, err := orderRepo.Add(ctx, *order)
+			if err != nil {
+				return domain.Orders{}, apperror.Wrap(err)
+			}
+
+			order.ID = newOrder.ID
+
+			for j := range order.Items {
+				item := &order.Items[j]
+
+				item.OrderID = order.ID
+
+				newItem, err := orderRepo.AddItem(ctx, *item)
+				if err != nil {
+					return domain.Orders{}, apperror.Wrap(err)
+				}
+
+				item.ID = newItem.ID
+			}
+		}
+
+		return orders, err
 	}
 }
 
@@ -87,7 +240,33 @@ func (s *orderService) SendOrderClosure(
 	id int64,
 ) domain.AtomicFunc[any] {
 	return func(dr domain.DataRepository) (any, error) {
-		panic("not implemented") // TODO: Implement
+		orderRepo := dr.OrderRepository()
+
+		_, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		order, err := orderRepo.GetByIDAndLock(ctx, id)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+		if order.Status != domain.OrderStatusProcessing {
+			return nil, apperror.NewAppError(
+				apperror.CodeBadRequest,
+				"order status should be processing",
+				nil,
+			)
+		}
+
+		// TODO: update stock
+
+		err = orderRepo.UpdateStatusByID(ctx, id, domain.OrderStatusSent)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		return nil, nil
 	}
 }
 
@@ -108,7 +287,40 @@ func (s *orderService) FinishOrderClosure(
 	id int64,
 ) domain.AtomicFunc[any] {
 	return func(dr domain.DataRepository) (any, error) {
-		panic("not implemented") // TODO: Implement
+		orderRepo := dr.OrderRepository()
+		userRepo := dr.UserRepository()
+
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		user, err := userRepo.GetByAccountID(ctx, accountID)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		order, err := orderRepo.GetByIDAndLock(ctx, id)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+		if order.User.ID != user.ID {
+			return nil, apperror.NewForbidden(nil)
+		}
+		if order.Status != domain.OrderStatusSent {
+			return nil, apperror.NewAppError(
+				apperror.CodeBadRequest,
+				"order status should be sent",
+				nil,
+			)
+		}
+
+		err = orderRepo.UpdateStatusByID(ctx, id, domain.OrderStatusFinished)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		return nil, nil
 	}
 }
 
@@ -129,7 +341,52 @@ func (s *orderService) CancelOrderClosure(
 	id int64,
 ) domain.AtomicFunc[any] {
 	return func(dr domain.DataRepository) (any, error) {
-		panic("not implemented") // TODO: Implement
+		orderRepo := dr.OrderRepository()
+		userRepo := dr.UserRepository()
+		accountRepo := dr.AccountRepository()
+
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		account, err := accountRepo.GetByID(ctx, accountID)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		order, err := orderRepo.GetByIDAndLock(ctx, id)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		if account.AccountType == domain.AccountRoleUser {
+			user, err := userRepo.GetByAccountID(ctx, accountID)
+			if err != nil {
+				return nil, apperror.Wrap(err)
+			}
+
+			if order.User.ID != user.ID {
+				return nil, apperror.NewForbidden(nil)
+			}
+		}
+
+		if order.Status != domain.OrderStatusWaitingConfirmation &&
+			order.Status != domain.OrderStatusWaitingPayment &&
+			order.Status != domain.OrderStatusProcessing {
+			return nil, apperror.NewAppError(
+				apperror.CodeBadRequest,
+				"order cannot be cancelled",
+				nil,
+			)
+		}
+
+		err = orderRepo.UpdateStatusByID(ctx, id, domain.OrderStatusCancelled)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		return nil, nil
 	}
 }
 
