@@ -64,8 +64,6 @@ func (h *ChatHandler) Chat(ctx *gin.Context) {
             ctx.Abort()
             return
         }
-		
-		
 		req.File= fileHeader
 
 		err = h.chatService.PostFile(&req,roomId,ctx)

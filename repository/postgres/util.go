@@ -237,3 +237,27 @@ func scanProductDetails(r RowScanner, d *domain.ProductDetails) error {
 
 	return nil
 }
+
+
+var (
+	chatsColumns        = " id, chat_room_id, type, message, file, user_id, user_name  "
+	roomsColumns        = " user_id, doctor_id, end_at  "
+)
+
+func scanChats(r RowScanner, c *domain.Chat) error {
+	if err := r.Scan(
+		&c.ID, &c.RoomId,  &c.Type, &c.Message, &c.File, &c.UserId, &c.UserName,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func scanRooms(r RowScanner, c *domain.Room) error {
+	if err := r.Scan(
+		&c.ID, &c.UserId,  &c.DoctorId, &c.EndAt,
+	); err != nil {
+		return err
+	}
+	return nil
+}
