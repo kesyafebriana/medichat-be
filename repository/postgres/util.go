@@ -295,7 +295,7 @@ var (
 	selectOrderJoined = `
 		SELECT
 			o.id, 
-			u.id, a.name
+			u.id, a.name,
 			ph.id, ph.slug, ph.name,
 			py.id, py.invoice_number,
 			sm.id, sm.name,

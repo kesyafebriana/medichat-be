@@ -28,7 +28,7 @@ func (r *orderRepository) buildListQuery(sel string, dets domain.OrderListDetail
 	}
 
 	sb.WriteString(`
-		WHERE deleted_at IS NULL
+		WHERE o.deleted_at IS NULL
 	`)
 
 	if dets.UserID != nil {
@@ -37,11 +37,11 @@ func (r *orderRepository) buildListQuery(sel string, dets domain.OrderListDetail
 		`)
 		args["userID"] = *dets.UserID
 	}
-	if dets.PharmacyID != nil {
+	if dets.PharmacySlug != nil {
 		sb.WriteString(`
-			AND ph.id = @pharmacyID
+			AND ph.slug = @pharmacySlug
 		`)
-		args["pharmacyID"] = *dets.PharmacyID
+		args["pharmacySlug"] = *dets.PharmacySlug
 	}
 	if dets.PharmacyManagerID != nil {
 		sb.WriteString(`
@@ -80,7 +80,7 @@ func (r *orderRepository) GetPageInfo(ctx context.Context, dets domain.OrderList
 }
 
 func (r *orderRepository) List(ctx context.Context, dets domain.OrderListDetails) ([]domain.Order, error) {
-	sb, args := r.buildListQuery(countOrderJoined, dets)
+	sb, args := r.buildListQuery(selectOrderJoined, dets)
 	offset := (dets.Page - 1) * dets.Limit
 
 	sb.WriteString(`

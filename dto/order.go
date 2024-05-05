@@ -119,8 +119,8 @@ func NewOrdersResponse(o domain.Orders) OrdersResponse {
 }
 
 type OrderListQuery struct {
-	PharmacySlug *string `json:"pharmacy_slug"`
-	Status       *string `json:"status"`
+	PharmacySlug *string `form:"pharmacy_slug"`
+	Status       *string `form:"status"`
 
 	Page  *int `form:"page" binding:"omitempty,min=1"`
 	Limit *int `form:"limit" binding:"omitempty,min=1"`
