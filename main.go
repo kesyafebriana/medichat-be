@@ -187,6 +187,11 @@ func main() {
 		DataRepository: dataRepository,
 	})
 
+	productService := service.NewProductService(service.ProductServiceOpts{
+		DataRepository: dataRepository,
+        Cloud:  cld,
+	})
+
 	pharmacyService := service.NewPharmacyService(service.PharmacyServiceOpts{
 		DataRepository: dataRepository,
 	})
@@ -225,6 +230,10 @@ func main() {
 		SpecializationSrv: specializationService,
 	})
 
+	productHandler := handler.NewProductHandler(handler.ProductHandlerOpts{
+		ProductSrv: productService,
+	})
+
 	pharmacyHandler := handler.NewPharmacyHandler(handler.PharmacyHandlerOpts{
 		PharmacySrv: pharmacyService,
 	})
@@ -254,6 +263,7 @@ func main() {
 		DoctorHandler:          doctorHandler,
 		SpecializationHandler:  specializationHandler,
 		CategoryHandler:        categoryHandler,
+		ProductHandler: 		productHandler,
 		PharmacyHandler:        pharmacyHandler,
 		PharmacyManagerHandler: pharmacyManagerHandler,
 

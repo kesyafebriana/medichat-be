@@ -20,7 +20,7 @@ func (r *categoryRepository) GetCategoriesWithParentName(ctx context.Context, qu
 
 	sb.WriteString(`
 		SELECT ` + categoryWithParentNameColumns + `
-		FROM categories c LEFT JOIN categories c2 
+		FROM categories c LEFT JOIN categories c2
 			ON c.parent_id = c2.id
 		WHERE c.deleted_at IS NULL
 	`)
