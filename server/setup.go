@@ -41,6 +41,10 @@ type SetupServerOpts struct {
 
 	UserOrAdminAuthenticator gin.HandlerFunc
 
+	UserOrManagerAuthenticator gin.HandlerFunc
+
+	UserOrManagerOrAdminAuthenticator gin.HandlerFunc
+
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
 	ErrorHandler gin.HandlerFunc
@@ -363,31 +367,38 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	orderGroup := apiV1Group.Group("/orders")
 	orderGroup.GET(
 		".",
+		opts.UserOrManagerOrAdminAuthenticator,
 		opts.OrderHandler.ListOrders,
 	)
 	orderGroup.GET(
 		"/:id",
-		opts.OrderHandler.ListOrders,
+		opts.UserOrManagerOrAdminAuthenticator,
+		opts.OrderHandler.GetOrderByID,
 	)
 	orderGroup.POST(
 		"/cart-info",
-		opts.OrderHandler.ListOrders,
+		opts.UserAuthenticator,
+		opts.OrderHandler.GetCartInfo,
 	)
 	orderGroup.POST(
 		".",
-		opts.OrderHandler.ListOrders,
+		opts.UserAuthenticator,
+		opts.OrderHandler.AddOrders,
 	)
 	orderGroup.POST(
 		"/:id/send",
-		opts.OrderHandler.ListOrders,
+		opts.PharmacyManagerAuthenticator,
+		opts.OrderHandler.SendOrder,
 	)
 	orderGroup.POST(
 		"/:id/finish",
-		opts.OrderHandler.ListOrders,
+		opts.UserAuthenticator,
+		opts.OrderHandler.FinishOrder,
 	)
 	orderGroup.POST(
 		"/:id/cancel",
-		opts.OrderHandler.ListOrders,
+		opts.UserOrManagerOrAdminAuthenticator,
+		opts.OrderHandler.CancelOrder,
 	)
 
 	return router
