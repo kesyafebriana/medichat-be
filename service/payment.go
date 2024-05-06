@@ -32,6 +32,27 @@ func (s *paymentService) List(
 	dets domain.PaymentListDetails,
 ) ([]domain.Payment, domain.PageInfo, error) {
 	paymentRepo := s.dataRepository.PaymentRepository()
+	accountRepo := s.dataRepository.AccountRepository()
+	userRepo := s.dataRepository.UserRepository()
+
+	accountID, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	account, err := accountRepo.GetByID(ctx, accountID)
+	if err != nil {
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	if account.Role == domain.AccountRoleUser {
+		user, err := userRepo.GetByAccountID(ctx, accountID)
+		if err != nil {
+			return nil, domain.PageInfo{}, apperror.Wrap(err)
+		}
+
+		dets.UserID = &user.ID
+	}
 
 	page, err := paymentRepo.GetPageInfo(ctx, dets)
 	if err != nil {
@@ -65,10 +86,33 @@ func (s *paymentService) GetByInvoiceNumber(
 	num string,
 ) (domain.Payment, error) {
 	paymentRepo := s.dataRepository.PaymentRepository()
+	accountRepo := s.dataRepository.AccountRepository()
+	userRepo := s.dataRepository.UserRepository()
+
+	accountID, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return domain.Payment{}, apperror.Wrap(err)
+	}
+
+	account, err := accountRepo.GetByID(ctx, accountID)
+	if err != nil {
+		return domain.Payment{}, apperror.Wrap(err)
+	}
 
 	payment, err := paymentRepo.GetByInvoiceNumber(ctx, num)
 	if err != nil {
 		return domain.Payment{}, apperror.Wrap(err)
+	}
+
+	if account.Role == domain.AccountRoleUser {
+		user, err := userRepo.GetByAccountID(ctx, accountID)
+		if err != nil {
+			return domain.Payment{}, apperror.Wrap(err)
+		}
+
+		if payment.User.ID != user.ID {
+			return domain.Payment{}, apperror.NewForbidden(nil)
+		}
 	}
 
 	return payment, err
