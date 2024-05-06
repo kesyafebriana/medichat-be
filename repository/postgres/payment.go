@@ -111,16 +111,16 @@ func (r *paymentRepository) GetByInvoiceNumber(ctx context.Context, num string) 
 
 func (r *paymentRepository) Add(ctx context.Context, p domain.Payment) (domain.Payment, error) {
 	q := `
-		INSERT INTO payments(invoice_number, file_url, is_confirmed, amount)
+		INSERT INTO payments(file_url, is_confirmed, amount)
 		VALUES
-		($1, $2, $3, $4)
+		($2, $3, $4)
 		RETURNING ` + paymentColumns
 
 	nullURL := fromStringPtr(p.FileURL)
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanPayment,
-		p.InvoiceNumber, nullURL, p.IsConfirmed, p.Amount,
+		nullURL, p.IsConfirmed, p.Amount,
 	)
 }
 
