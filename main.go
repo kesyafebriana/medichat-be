@@ -85,6 +85,11 @@ func main() {
 		pharmacyManagerAccessProvider,
 	})
 
+	managerOrAdminAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+		adminAccessProvider,
+		pharmacyManagerAccessProvider,
+	})
+
 	refreshProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
 		conf.RefreshSecret,
@@ -261,6 +266,8 @@ func main() {
 	doctorAuthenticator := middleware.Authenticator(doctorAccessProvider)
 	pharmacyManagerAuthenticator := middleware.Authenticator(pharmacyManagerAccessProvider)
 
+	managerOrAdminAuthenticator := middleware.Authenticator(managerOrAdminAccessProvider)
+
 	router := server.SetupServer(server.SetupServerOpts{
 		AccountHandler:         accountHandler,
 		ChatHandler:            chatHandler,
@@ -287,6 +294,8 @@ func main() {
 		CorsHandler:                  corsHandler,
 		Logger:                       loggerMid,
 		ErrorHandler:                 errorHandler,
+
+		ManagerOrAdminAuthenticator: managerOrAdminAuthenticator,
 	})
 
 	srv := &http.Server{

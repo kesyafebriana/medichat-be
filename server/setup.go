@@ -35,6 +35,8 @@ type SetupServerOpts struct {
 	DoctorAuthenticator          gin.HandlerFunc
 	PharmacyManagerAuthenticator gin.HandlerFunc
 
+	ManagerOrAdminAuthenticator gin.HandlerFunc
+
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
 	ErrorHandler gin.HandlerFunc
@@ -281,44 +283,54 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	stockGroup := apiV1Group.Group("/stocks")
 	stockGroup.GET(
 		".",
+		opts.ManagerOrAdminAuthenticator,
 		opts.StockHandler.ListStocks,
 	)
 	stockGroup.GET(
 		"/:id",
+		opts.ManagerOrAdminAuthenticator,
 		opts.StockHandler.GetStockByID,
 	)
 	stockGroup.POST(
 		".",
+		opts.PharmacyManagerAuthenticator,
 		opts.StockHandler.AddStock,
 	)
 	stockGroup.PATCH(
 		".",
+		opts.PharmacyManagerAuthenticator,
 		opts.StockHandler.UpdateStock,
 	)
 	stockGroup.DELETE(
 		"/:id",
+		opts.PharmacyManagerAuthenticator,
 		opts.StockHandler.DeleteStock,
 	)
 
 	mutationGroup := stockGroup.Group("/mutations")
 	mutationGroup.GET(
 		".",
+		opts.ManagerOrAdminAuthenticator,
 		opts.StockHandler.ListMutations,
 	)
 	mutationGroup.GET(
 		"/:id",
+		opts.ManagerOrAdminAuthenticator,
 		opts.StockHandler.GetMutationByID,
 	)
 	mutationGroup.POST(
 		".",
+		opts.PharmacyManagerAuthenticator,
 		opts.StockHandler.RequestTransfer,
 	)
 	mutationGroup.POST(
 		"/:id/approve",
+		opts.PharmacyManagerAuthenticator,
 		opts.StockHandler.ApproveTransfer,
 	)
 	mutationGroup.POST(
 		"/:id/cancel",
+		opts.PharmacyManagerAuthenticator,
 		opts.StockHandler.CancelTransfer,
 	)
 
