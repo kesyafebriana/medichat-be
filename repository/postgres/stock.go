@@ -88,6 +88,12 @@ func (r *stockRepository) buildListQuery(sel string, det domain.StockListDetails
 		`)
 		args["productName"] = *det.ProductName
 	}
+	if det.ManagerID != nil {
+		sb.WriteString(`
+			AND ph.manager_id = @managerID
+		`)
+		args["managerID"] = *det.ManagerID
+	}
 
 	return &sb, args
 }
@@ -265,6 +271,12 @@ func (r *stockRepository) buildListMutationQuery(sel string, det domain.StockMut
 			AND sm.status = @status
 		`)
 		args["status"] = *det.Method
+	}
+	if det.ManagerID != nil {
+		sb.WriteString(`
+			AND (ph1.manager_id = @managerID OR ph2.manager_id = @managerID)
+		`)
+		args["managerID"] = *det.ManagerID
 	}
 
 	return &sb, args
