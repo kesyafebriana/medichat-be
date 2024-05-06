@@ -108,7 +108,7 @@ type StockMutationJoinedResponse struct {
 
 	Amount int `json:"amount"`
 
-	Timestamp time.Time `json:"timestamp"`
+	Timestamp time.Time `json:"created_at"`
 }
 
 func NewStockMutationJoinedResponse(s domain.StockMutationJoined) StockMutationJoinedResponse {
@@ -122,6 +122,7 @@ func NewStockMutationJoinedResponse(s domain.StockMutationJoined) StockMutationJ
 		}{
 			ID:           s.Source.ID,
 			PharmacyID:   s.Source.PharmacyID,
+			PharmacySlug: s.Source.PharmacySlug,
 			PharmacyName: s.Source.PharmacyName,
 		},
 		Target: struct {
@@ -132,6 +133,7 @@ func NewStockMutationJoinedResponse(s domain.StockMutationJoined) StockMutationJ
 		}{
 			ID:           s.Target.ID,
 			PharmacyID:   s.Target.PharmacyID,
+			PharmacySlug: s.Target.PharmacySlug,
 			PharmacyName: s.Target.PharmacyName,
 		},
 		Product: struct {
@@ -226,7 +228,7 @@ func (q StockMutationListQuery) ToDetails() domain.StockMutationListDetails {
 		Method:             q.Method,
 		Status:             q.Status,
 		SortBy:             "created_at",
-		SortAsc:            true,
+		SortAsc:            false,
 		Page:               1,
 		Limit:              10,
 	}
