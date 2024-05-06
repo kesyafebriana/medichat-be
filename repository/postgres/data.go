@@ -147,3 +147,9 @@ func (r *dataRepository) ShipmentMethodRepository() domain.ShipmentMethodReposit
 		querier: r.querier,
 	}
 }
+
+func (r *dataRepository) StockRepository() domain.StockRepository {
+	return &stockRepository{
+		querier: r.querier,
+	}
+}
