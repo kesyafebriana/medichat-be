@@ -347,7 +347,7 @@ func (r *stockRepository) AddMutation(ctx context.Context, s domain.StockMutatio
 
 func (r *stockRepository) UpdateMutation(ctx context.Context, s domain.StockMutation) (domain.StockMutation, error) {
 	q := `
-		UPDATE stocks
+		UPDATE stock_mutations
 		SET status = $2,
 			updated_at = now()
 		WHERE id = $1

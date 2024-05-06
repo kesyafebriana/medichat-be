@@ -347,7 +347,7 @@ func scanStock(r RowScanner, s *domain.Stock) error {
 
 func scanStockMutation(r RowScanner, sm *domain.StockMutation) error {
 	return r.Scan(
-		&sm.ID, &sm.SourceID, &sm.TargetID, &sm.Method, &sm.Status,
+		&sm.ID, &sm.SourceID, &sm.TargetID, &sm.Method, &sm.Status, &sm.Amount,
 	)
 }
 
