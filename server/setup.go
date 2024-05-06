@@ -34,6 +34,8 @@ type SetupServerOpts struct {
 	UserAuthenticator   gin.HandlerFunc
 	DoctorAuthenticator gin.HandlerFunc
 
+	UserOrAdminAuthenticator gin.HandlerFunc
+
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
 	ErrorHandler gin.HandlerFunc
@@ -253,18 +255,22 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	paymentGroup := apiV1Group.Group("/payments")
 	paymentGroup.GET(
 		".",
+		opts.UserOrAdminAuthenticator,
 		opts.PaymentHandler.ListPayments,
 	)
 	paymentGroup.GET(
 		"/:invoice_number",
+		opts.UserOrAdminAuthenticator,
 		opts.PaymentHandler.GetPaymentByInvoiceNumber,
 	)
 	paymentGroup.POST(
 		"/:invoice_number/upload",
+		opts.UserAuthenticator,
 		opts.PaymentHandler.UploadPayment,
 	)
 	paymentGroup.POST(
 		"/:invoice_number/confirm",
+		opts.AdminAuthenticator,
 		opts.PaymentHandler.ConfirmPayment,
 	)
 
