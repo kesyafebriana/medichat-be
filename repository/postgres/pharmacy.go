@@ -3,9 +3,11 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"log"
 	"medichat-be/domain"
 	"medichat-be/repository/postgis"
 	"strings"
+	"time"
 )
 
 type pharmacyRepository struct {
@@ -45,7 +47,20 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		args = append(args, *query.Longitude, *query.Latitude)
 	}
 
-	if query.Day != nil || query.StartTime != nil || query.EndTime != nil {
+	if query.IsOpen != nil && *query.IsOpen {
+		time := time.Now()
+
+		fmt.Fprintf(&sb, `
+		AND p.id IN (
+		SELECT o.pharmacy_id
+		FROM pharmacy_operations o
+		WHERE o.deleted_at IS NULL
+		AND o.day = '%s'
+		AND o.start_time <= '0001-01-01 %s:00:00 BC')
+		`, time.Format("Monday"), time.Format("15"))
+	}
+
+	if (query.Day != nil || query.StartTime != nil || query.EndTime != nil) && query.IsOpen == nil {
 		sb.WriteString(`
 			AND p.id IN (
 			SELECT o.pharmacy_id
@@ -81,6 +96,7 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
 
+	log.Print(sb.String())
 	return queryFull(
 		r.querier, ctx, sb.String(),
 		scanPharmacy,
@@ -121,7 +137,20 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 		args = append(args, *query.Longitude, *query.Latitude)
 	}
 
-	if query.Day != nil || query.StartTime != nil || query.EndTime != nil {
+	if query.IsOpen != nil && *query.IsOpen {
+		time := time.Now()
+
+		fmt.Fprintf(&sb, `
+		AND p.id IN (
+		SELECT o.pharmacy_id
+		FROM pharmacy_operations o
+		WHERE o.deleted_at IS NULL
+		AND o.day = '%s'
+		AND o.start_time <= '0001-01-01 %s:00:00 BC')
+		`, time.Format("Monday"), time.Format("15"))
+	}
+
+	if (query.Day != nil || query.StartTime != nil || query.EndTime != nil) && query.IsOpen == nil {
 		sb.WriteString(`
 			AND p.id IN (
 			SELECT o.pharmacy_id
@@ -157,8 +186,10 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 	row := r.querier.QueryRowContext(ctx, sb.String(), args...)
 	err := row.Scan(&totalData)
 
+	log.Print(totalData)
+
 	if err != nil {
-		return domain.PageInfo{}, nil
+		return domain.PageInfo{}, err
 	}
 
 	return domain.PageInfo{
