@@ -104,6 +104,7 @@ type PharmaciesQuery struct {
 	Longitude   *float64
 	Latitude    *float64
 	Name        *string
+	IsOpen      *bool
 	Page        int
 	Limit       int
 	SortBy      string

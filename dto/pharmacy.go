@@ -68,8 +68,8 @@ func NewPharmacyOperationResponse(pharmacyOperation domain.PharmacyOperations) P
 	return PharmacyOperationResponse{
 		ID:        pharmacyOperation.ID,
 		Day:       pharmacyOperation.Day,
-		StartTime: pharmacyOperation.StartTime.Format("03:04"),
-		EndTime:   pharmacyOperation.EndTime.Format("03:04"),
+		StartTime: pharmacyOperation.StartTime.Format("15:04"),
+		EndTime:   pharmacyOperation.EndTime.Format("15:04"),
 	}
 }
 
@@ -80,8 +80,8 @@ func NewPharmacyOperationsResponse(pharmacyOperations []domain.PharmacyOperation
 		res = append(res, PharmacyOperationResponse{
 			ID:        v.ID,
 			Day:       v.Day,
-			StartTime: v.StartTime.Format("03:04"),
-			EndTime:   v.EndTime.Format("03:04"),
+			StartTime: v.StartTime.Format("15:04"),
+			EndTime:   v.EndTime.Format("15:04"),
 		})
 	}
 
@@ -130,8 +130,8 @@ type PharmacyShipmentMethodCreateRequest struct {
 }
 
 func (p PharmacyOperationCreateRequest) ToEntity() domain.PharmacyOperationCreateDetails {
-	starTime, _ := time.Parse("03:04", p.StartTime)
-	endTime, _ := time.Parse("03:04", p.EndTime)
+	starTime, _ := time.Parse("15:04", p.StartTime)
+	endTime, _ := time.Parse("15:04", p.EndTime)
 
 	return domain.PharmacyOperationCreateDetails{
 		Day:       p.Day,
@@ -204,8 +204,8 @@ type PharmacyOperationUpdateRequest struct {
 }
 
 func PharmacyOperationRequestToDetails(p PharmacyOperationUpdateRequest, slug string) domain.PharmacyOperationsUpdateDetails {
-	starTime, _ := time.Parse("03:04", p.StartTime)
-	endTime, _ := time.Parse("03:04", p.EndTime)
+	starTime, _ := time.Parse("15:04", p.StartTime)
+	endTime, _ := time.Parse("15:04", p.EndTime)
 
 	return domain.PharmacyOperationsUpdateDetails{
 		Slug:      slug,
@@ -241,6 +241,7 @@ type PharmacyListQuery struct {
 	Sort      *string  `form:"sort"`
 	Limit     *int     `form:"limit"`
 	Page      *int     `form:"page"`
+	IsOpen    *bool    `form:"is_open"`
 }
 
 func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
@@ -254,6 +255,7 @@ func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
 		Page:      1,
 		SortBy:    *p.SortBy,
 		SortType:  *p.Sort,
+		IsOpen:    p.IsOpen,
 	}
 
 	if p.Limit != nil {
@@ -265,7 +267,7 @@ func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
 	}
 
 	if p.StartTime != nil {
-		_, err := time.Parse("03:04", *p.StartTime)
+		_, err := time.Parse("15:04", *p.StartTime)
 		if err != nil {
 			return domain.PharmaciesQuery{}, err
 		}
@@ -274,7 +276,7 @@ func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
 	}
 
 	if p.EndTime != nil {
-		_, err := time.Parse("03:04", *p.EndTime)
+		_, err := time.Parse("15:04", *p.EndTime)
 		if err != nil {
 			return domain.PharmaciesQuery{}, err
 		}
