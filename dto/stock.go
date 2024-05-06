@@ -151,10 +151,10 @@ func NewStockMutationJoinedResponse(s domain.StockMutationJoined) StockMutationJ
 }
 
 type StockTransferRequest struct {
-	SourcePharmacySlug string `json:"source_pharmacy_slug"`
-	TargetPharmacySlug string `json:"target_pharmacy_slug"`
-	ProductSlug        string `json:"product_slug"`
-	Amount             int    `json:"amount"`
+	SourcePharmacySlug string `json:"source_pharmacy_slug" binding:"required"`
+	TargetPharmacySlug string `json:"target_pharmacy_slug" binding:"required"`
+	ProductSlug        string `json:"product_slug" binding:"required"`
+	Amount             int    `json:"amount" binding:"min=1"`
 }
 
 func (r StockTransferRequest) ToRequest() domain.StockTransferRequest {
