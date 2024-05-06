@@ -11,6 +11,13 @@ const (
 	PharmacySortByManagerId = "manager"
 )
 
+type PharmacyShipmentMethods struct {
+	ID               int64
+	PharmacyID       int64
+	ShipmentMethodID int64
+	Name             *string
+}
+
 type PharmacyOperations struct {
 	ID         int64
 	PharmacyID int64
@@ -21,28 +28,30 @@ type PharmacyOperations struct {
 }
 
 type Pharmacy struct {
-	ID                 int64
-	ManagerID          int64
-	Slug               string
-	Name               string
-	Address            string
-	Coordinate         Coordinate
-	PharmacistName     string
-	PharmacistLicense  string
-	PharmacistPhone    string
-	PharmacyOperations []PharmacyOperations
+	ID                      int64
+	ManagerID               int64
+	Slug                    string
+	Name                    string
+	Address                 string
+	Coordinate              Coordinate
+	PharmacistName          string
+	PharmacistLicense       string
+	PharmacistPhone         string
+	PharmacyOperations      []PharmacyOperations
+	PharmacyShipmentMethods []PharmacyShipmentMethods
 }
 
 type PharmacyCreateDetails struct {
-	Name               string
-	ManagerID          int64
-	Slug               string
-	Address            string
-	Coordinate         Coordinate
-	PharmacistName     string
-	PharmacistLicense  string
-	PharmacistPhone    string
-	PharmacyOperations []PharmacyOperationCreateDetails
+	Name                    string
+	ManagerID               int64
+	Slug                    string
+	Address                 string
+	Coordinate              Coordinate
+	PharmacistName          string
+	PharmacistLicense       string
+	PharmacistPhone         string
+	PharmacyOperations      []PharmacyOperationCreateDetails
+	PharmacyShipmentMethods []PharmacyShipmentMethodsCreateDetails
 }
 
 type PharmacyOperationCreateDetails struct {
@@ -51,6 +60,11 @@ type PharmacyOperationCreateDetails struct {
 	Day        string
 	StartTime  time.Time
 	EndTime    time.Time
+}
+
+type PharmacyShipmentMethodsCreateDetails struct {
+	PharmacyID       int64
+	ShipmentMethodID int64
 }
 
 type PharmacyUpdateDetails struct {
@@ -72,6 +86,13 @@ type PharmacyOperationsUpdateDetails struct {
 	Day        string
 	StartTime  time.Time
 	EndTime    time.Time
+}
+
+type PharmacyShipmentMethodsUpdateDetails struct {
+	ID               int64
+	Slug             string
+	PharmacyID       int64
+	ShipmentMethodID int64
 }
 
 type PharmaciesQuery struct {
@@ -100,9 +121,16 @@ type PharmacyRepository interface {
 
 	GetPharmacyOperationsByPharmacyId(ctx context.Context, id int64) ([]PharmacyOperations, error)
 	GetPharmacyOperationsByPharmacyIdAndLock(ctx context.Context, id int64) ([]PharmacyOperations, error)
+
 	AddOperation(ctx context.Context, pharmacyOperation PharmacyOperationCreateDetails) (PharmacyOperations, error)
 	UpdateOperation(ctx context.Context, pharmacyOperation PharmacyOperationsUpdateDetails) (PharmacyOperations, error)
 	SoftDeleteOperationByID(ctx context.Context, id int64) error
+
+	GetShipmentMethodsByPharmacyId(ctx context.Context, id int64) ([]PharmacyShipmentMethods, error)
+	GetShipmentMethodsByPharmacyIdAndLock(ctx context.Context, id int64) ([]PharmacyShipmentMethods, error)
+
+	AddShipmentMethod(ctx context.Context, pharmacyCourier PharmacyShipmentMethodsCreateDetails) (PharmacyShipmentMethods, error)
+	SoftDeleteShipmentMethodByID(ctx context.Context, id int64) error
 }
 
 type PharmacyService interface {
@@ -113,6 +141,8 @@ type PharmacyService interface {
 	DeletePharmacyBySlug(ctx context.Context, slug string) error
 
 	GetOperationsBySlug(ctx context.Context, slug string) ([]PharmacyOperations, error)
-	AddOperation(ctx context.Context, pharmacyOperation PharmacyOperationCreateDetails) (PharmacyOperations, error)
 	UpdateOperations(ctx context.Context, pharmacyOperation []PharmacyOperationsUpdateDetails) ([]PharmacyOperations, error)
+
+	GetShipmentMethodBySlug(ctx context.Context, slug string) ([]PharmacyShipmentMethods, error)
+	UpdateShipmentMethod(ctx context.Context, shipmentMethods []PharmacyShipmentMethodsUpdateDetails) ([]PharmacyShipmentMethods, error)
 }

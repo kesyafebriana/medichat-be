@@ -133,9 +133,46 @@ func scanUserLocation(r RowScanner, ul *domain.UserLocation) error {
 }
 
 var (
-	pharmacyColumns          = " id, manager_id, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone, slug "
-	pharmacyJoinedColumns    = " p.id, p.manager_id, p.name, p.address, p.coordinate, p.pharmacist_name, p.pharmacist_license, p.pharmacist_phone, p.slug "
-	pharmacyOperationColumns = " id, pharmacy_id, day, start_time, end_time "
+	shipmentMethodColumns = " id, name "
+)
+
+func scanShipmentMethod(r RowScanner, s *domain.ShipmentMethod) error {
+	if err := r.Scan(&s.ID, &s.Name); err != nil {
+		return err
+	}
+	return nil
+}
+
+var (
+	pharmacyManagerColumns       = " id, account_id "
+	pharmacyManagerJoinedColumns = `
+		p.id,
+		p.account_id, a.email, a.email_verified, a.role, a.account_type,
+		a.name, a.photo_url, a.profile_set
+	`
+)
+
+func scanPharmacyManager(r RowScanner, p *domain.PharmacyManager) error {
+	if err := r.Scan(&p.ID, &p.Account.ID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func scanPharmacyManagerJoined(r RowScanner, p *domain.PharmacyManager) error {
+	if err := r.Scan(&p.ID, &p.Account.ID, &p.Account.Email, &p.Account.EmailVerified,
+		&p.Account.Role, &p.Account.AccountType, &p.Account.Name, &p.Account.PhotoURL,
+		&p.Account.ProfileSet); err != nil {
+		return err
+	}
+	return nil
+}
+
+var (
+	pharmacyColumns               = " id, manager_id, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone, slug "
+	pharmacyJoinedColumns         = " p.id, p.manager_id, p.name, p.address, p.coordinate, p.pharmacist_name, p.pharmacist_license, p.pharmacist_phone, p.slug "
+	pharmacyOperationColumns      = " id, pharmacy_id, day, start_time, end_time "
+	PharmacyShipmentMethodColumns = " id, pharmacy_id, shipment_method_id "
 )
 
 func scanPharmacy(r RowScanner, p *domain.Pharmacy) error {
@@ -153,6 +190,13 @@ func scanPharmacy(r RowScanner, p *domain.Pharmacy) error {
 
 func ScanPharmacyOperation(r RowScanner, p *domain.PharmacyOperations) error {
 	if err := r.Scan(&p.ID, &p.PharmacyID, &p.Day, &p.StartTime, &p.EndTime); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ScanPharmacyShipmentMethod(r RowScanner, s *domain.PharmacyShipmentMethods) error {
+	if err := r.Scan(&s.ID, &s.PharmacyID, &s.ShipmentMethodID); err != nil {
 		return err
 	}
 	return nil

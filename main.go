@@ -196,6 +196,11 @@ func main() {
 		DataRepository: dataRepository,
 	})
 
+	pharmacyManagerService := service.NewPharmacyManagerService(service.PharmacyManagerServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
@@ -233,6 +238,10 @@ func main() {
 		PharmacySrv: pharmacyService,
 	})
 
+	pharmacyManagerHandler := handler.NewPharmacyManagerHandler(handler.PharmacyManagerHandlerOpts{
+		PharmacyManagerSrv: pharmacyManagerService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
@@ -242,31 +251,33 @@ func main() {
 	adminAuthenticator := middleware.Authenticator(adminAccessProvider)
 	userAuthenticator := middleware.Authenticator(userAccessProvider)
 	doctorAuthenticator := middleware.Authenticator(doctorAccessProvider)
+	pharmacyManagerAuthenticator := middleware.Authenticator(pharmacyManagerAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
-		AccountHandler:        accountHandler,
-		ChatHandler:           chatHandler,
-		PingHandler:           pingHandler,
-		GoogleAuthHandler:     googleAuthHandler,
-		GoogleHandler:         googleHandler,
-		UserHandler:           userHandler,
-		DoctorHandler:         doctorHandler,
-		SpecializationHandler: specializationHandler,
-		CategoryHandler:       categoryHandler,
-
-		ProductHandler: productHandler,
-		PharmacyHandler:       pharmacyHandler,
+		AccountHandler:         accountHandler,
+		ChatHandler:            chatHandler,
+		PingHandler:            pingHandler,
+		GoogleAuthHandler:      googleAuthHandler,
+		GoogleHandler:          googleHandler,
+		UserHandler:            userHandler,
+		DoctorHandler:          doctorHandler,
+		SpecializationHandler:  specializationHandler,
+		CategoryHandler:        categoryHandler,
+		ProductHandler: 		productHandler,
+		PharmacyHandler:        pharmacyHandler,
+		PharmacyManagerHandler: pharmacyManagerHandler,
 
 		SessionKey: conf.SessionKey,
 
-		RequestID:           requestIDMid,
-		Authenticator:       authenticator,
-		AdminAuthenticator:  adminAuthenticator,
-		UserAuthenticator:   userAuthenticator,
-		DoctorAuthenticator: doctorAuthenticator,
-		CorsHandler:         corsHandler,
-		Logger:              loggerMid,
-		ErrorHandler:        errorHandler,
+		RequestID:                    requestIDMid,
+		Authenticator:                authenticator,
+		AdminAuthenticator:           adminAuthenticator,
+		UserAuthenticator:            userAuthenticator,
+		DoctorAuthenticator:          doctorAuthenticator,
+		PharmacyManagerAuthenticator: pharmacyManagerAuthenticator,
+		CorsHandler:                  corsHandler,
+		Logger:                       loggerMid,
+		ErrorHandler:                 errorHandler,
 	})
 
 	srv := &http.Server{
