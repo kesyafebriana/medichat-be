@@ -55,7 +55,7 @@ func (h *StockHandler) ListStocks(ctx *gin.Context) {
 func (h *StockHandler) AddStock(ctx *gin.Context) {
 	var req dto.StockCreateRequest
 
-	err := ctx.ShouldBindQuery(&req)
+	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.Error(apperror.NewBadRequest(err))
 		ctx.Abort()
