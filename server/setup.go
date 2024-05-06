@@ -21,7 +21,9 @@ type SetupServerOpts struct {
 	SpecializationHandler  *handler.SpecializationHandler
 	PharmacyHandler        *handler.PharmacyHandler
 	PharmacyManagerHandler *handler.PharmacyManagerHandler
-	ProductHandler    *handler.ProductHandler
+
+	ProductHandler *handler.ProductHandler
+	StockHandler   *handler.StockHandler
 
 	SessionKey []byte
 
@@ -32,6 +34,8 @@ type SetupServerOpts struct {
 	UserAuthenticator            gin.HandlerFunc
 	DoctorAuthenticator          gin.HandlerFunc
 	PharmacyManagerAuthenticator gin.HandlerFunc
+
+	ManagerOrAdminAuthenticator gin.HandlerFunc
 
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
@@ -275,6 +279,60 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	productGroup.POST("/", opts.AdminAuthenticator, opts.ProductHandler.CreateProduct)
 	productGroup.PATCH("/", opts.AdminAuthenticator, opts.ProductHandler.UpdateProduct)
 	productGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.ProductHandler.DeleteProduct)
+
+	stockGroup := apiV1Group.Group("/stocks")
+	stockGroup.GET(
+		".",
+		opts.ManagerOrAdminAuthenticator,
+		opts.StockHandler.ListStocks,
+	)
+	stockGroup.GET(
+		"/:id",
+		opts.ManagerOrAdminAuthenticator,
+		opts.StockHandler.GetStockByID,
+	)
+	stockGroup.POST(
+		".",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.AddStock,
+	)
+	stockGroup.PATCH(
+		".",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.UpdateStock,
+	)
+	stockGroup.DELETE(
+		"/:id",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.DeleteStock,
+	)
+
+	mutationGroup := stockGroup.Group("/mutations")
+	mutationGroup.GET(
+		".",
+		opts.ManagerOrAdminAuthenticator,
+		opts.StockHandler.ListMutations,
+	)
+	mutationGroup.GET(
+		"/:id",
+		opts.ManagerOrAdminAuthenticator,
+		opts.StockHandler.GetMutationByID,
+	)
+	mutationGroup.POST(
+		".",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.RequestTransfer,
+	)
+	mutationGroup.POST(
+		"/:id/approve",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.ApproveTransfer,
+	)
+	mutationGroup.POST(
+		"/:id/cancel",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.CancelTransfer,
+	)
 
 	return router
 }

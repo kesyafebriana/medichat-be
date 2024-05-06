@@ -71,8 +71,6 @@ func (r *dataRepository) ProductDetailsRepository() domain.ProductDetailsReposit
 	}
 }
 
-
-
 func (r *dataRepository) AccountRepository() domain.AccountRepository {
 	return &accountRepository{
 		querier: r.querier,
@@ -139,6 +137,12 @@ func (r *dataRepository) PharmacyRepository() domain.PharmacyRepository {
 
 func (r *dataRepository) ShipmentMethodRepository() domain.ShipmentMethodRepository {
 	return &shipmentMethodRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) StockRepository() domain.StockRepository {
+	return &stockRepository{
 		querier: r.querier,
 	}
 }
