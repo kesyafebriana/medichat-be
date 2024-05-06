@@ -16,7 +16,7 @@ import (
 type ChatService interface {
 	PostMessage(req *dto.ChatMessage,roomId string,ctx *gin.Context) (error)
 	PostFile(req *dto.ChatMessage,roomId string,ctx *gin.Context) (error)
-	CreateRoom(req *dto.ChatRoom,ctx *gin.Context) (error)
+	CreateRoom(doctorId int,ctx *gin.Context) (error)
 	CloseRoom(roomId string,ctx *gin.Context) (error)
 }
 
@@ -39,24 +39,69 @@ func NewChatService(opts ChatServiceOpts) *chatService {
 	}
 }
 
-func (u *chatService) CreateRoom(req *dto.ChatRoom,ctx *gin.Context) (error) {
+func (u *chatService) CreateRoom(doctorId int,ctx *gin.Context) (error) {
+
+	var req dto.ChatRoom
+
+	req.DoctorId = doctorId
 
 	chatRepository := u.dataRepository.ChatRepository()
+	userRepository :=  u.dataRepository.UserRepository()
+	doctorRepository := u.dataRepository.DoctorRepository()
 
 
-		room, err := chatRepository.AddRoom(ctx,
-			req.UserId,
-			req.DoctorId,
-			req.End,
-		)
-		if err != nil{
-			return err
-		}
+	userId, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+        return err
+	}
+	user,err:= userRepository.GetByAccountID(ctx,userId)
+
+	if err!= nil {
+        return err
+    }
+
+	req.UserId = int(user.ID)
+	req.UserName = user.Account.Name
+
+	doctor,err := doctorRepository.GetByID(ctx,int64(req.DoctorId))
+	if err != nil {
+		return err
+	}
+	req.DoctorName = doctor.Account.Name
+
+
+	date:= time.Now()
+	req.Start = date
+
+	extra , _ := time.ParseDuration(constants.ChatDuration)
+
+	req.End = date.Add(extra)
+
+	room, err := chatRepository.AddRoom(ctx,
+		req.UserId,
+		req.DoctorId,
+		req.End,
+	)
+	if err != nil{
+		return err
+	}
 
 	colRef := u.client.Collection("rooms");
 
 	roomId := strconv.Itoa(int(room.ID))
-	_,err = colRef.Doc(roomId).Set(ctx,req)
+
+	tar := map[string]interface{}{
+		"doctorId":req.DoctorId,
+		"doctorName":req.DoctorName,
+		"end": req.End,
+		"start": req.Start,
+		"userId":req.UserId,
+		"userName":req.UserName,
+		"open" : true,
+		"isTyping":req.IsTyping,
+	}
+
+	_,err = colRef.Doc(roomId).Set(ctx,tar)
 
 	if err!= nil {
         return err
