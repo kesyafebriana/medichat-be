@@ -21,6 +21,7 @@ type SetupServerOpts struct {
 	SpecializationHandler  *handler.SpecializationHandler
 	PharmacyHandler        *handler.PharmacyHandler
 	PharmacyManagerHandler *handler.PharmacyManagerHandler
+	ProductHandler    *handler.ProductHandler
 
 	SessionKey []byte
 
@@ -266,6 +267,14 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	categoryGroup.POST("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelTwo)
 	categoryGroup.PATCH("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.UpdateCategory)
 	categoryGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.DeleteCategory)
+
+	productGroup := apiV1Group.Group("/product")
+	productGroup.GET("/", opts.Authenticator, opts.ProductHandler.GetProductsFromArea)
+	productGroup.GET("/list", opts.Authenticator, opts.ProductHandler.GetProducts)
+	productGroup.GET("/:slug", opts.Authenticator, opts.ProductHandler.GetProductBySlug)
+	productGroup.POST("/", opts.AdminAuthenticator, opts.ProductHandler.CreateProduct)
+	productGroup.PATCH("/", opts.AdminAuthenticator, opts.ProductHandler.UpdateProduct)
+	productGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.ProductHandler.DeleteProduct)
 
 	return router
 }

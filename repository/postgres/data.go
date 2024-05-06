@@ -59,6 +59,20 @@ func (r *dataRepository) Sleep(ctx context.Context, duration time.Duration) erro
 	)
 }
 
+func (r *dataRepository) ProductRepository() domain.ProductRepository {
+	return &productRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) ProductDetailsRepository() domain.ProductDetailsRepository {
+	return &productDetailRepository{
+		querier: r.querier,
+	}
+}
+
+
+
 func (r *dataRepository) AccountRepository() domain.AccountRepository {
 	return &accountRepository{
 		querier: r.querier,
