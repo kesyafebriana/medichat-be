@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"medichat-be/apperror"
 	"medichat-be/domain"
 	"medichat-be/util"
@@ -63,6 +64,7 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 	productRepo := dr.ProductRepository()
 	pharmacyRepo := dr.PharmacyRepository()
 	userRepo := dr.UserRepository()
+	stockRepo := dr.StockRepository()
 
 	accountID, err := util.GetAccountIDFromContext(ctx)
 	if err != nil {
@@ -124,8 +126,14 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 				return domain.Orders{}, apperror.Wrap(err)
 			}
 
-			// TODO: get stock in pharmacy
-			price := 0
+			stock, err := stockRepo.GetByPharmacyAndProduct(ctx, pharmacy.ID, product.ID)
+			if err != nil {
+				return domain.Orders{}, apperror.Wrap(err)
+			}
+			if stock.Stock < it.Amount {
+				return domain.Orders{}, apperror.NewStockNotEnough(nil)
+			}
+			price := stock.Price
 
 			order.Items = append(order.Items, domain.OrderItem{
 				ID:      itemID,
@@ -259,7 +267,14 @@ func (s *orderService) SendOrderClosure(
 			)
 		}
 
-		// TODO: update stock
+		items, err := orderRepo.ListItemsByOrderID(ctx, id)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		for _, item := range items {
+			s.updateStockForOrderItem(ctx, dr, order.Pharmacy.ID, item)
+		}
 
 		err = orderRepo.UpdateStatusByID(ctx, id, domain.OrderStatusSent)
 		if err != nil {
@@ -268,6 +283,33 @@ func (s *orderService) SendOrderClosure(
 
 		return nil, nil
 	}
+}
+
+func (s *orderService) updateStockForOrderItem(ctx context.Context, dr domain.DataRepository, pharmacyID int64, item domain.OrderItem) error {
+	stockRepo := dr.StockRepository()
+
+	stock, err := stockRepo.GetByPharmacyAndProduct(ctx, pharmacyID, item.Product.ID)
+	if err != nil {
+		return err
+	}
+
+	stock, err = stockRepo.GetByIDAndLock(ctx, stock.ID)
+	if err != nil {
+		return err
+	}
+
+	if stock.Stock < item.Amount {
+		// TODO: request transfer from another pharmacy
+		return fmt.Errorf("not enough stock")
+	}
+
+	stock.Stock -= item.Amount
+	stock, err = stockRepo.Update(ctx, stock)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *orderService) SendOrder(
