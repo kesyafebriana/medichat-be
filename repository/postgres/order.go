@@ -84,7 +84,7 @@ func (r *orderRepository) List(ctx context.Context, dets domain.OrderListDetails
 	offset := (dets.Page - 1) * dets.Limit
 
 	sb.WriteString(`
-		ORDER BY ordered_at DESC
+		ORDER BY o.ordered_at DESC
 	`)
 
 	fmt.Fprintf(
@@ -103,8 +103,8 @@ func (r *orderRepository) List(ctx context.Context, dets domain.OrderListDetails
 
 func (r *orderRepository) GetByID(ctx context.Context, id int64) (domain.Order, error) {
 	q := selectOrderJoined + `
-		WHERE deleted_at IS NULL
-			AND id = $1
+		WHERE o.deleted_at IS NULL
+			AND o.id = $1
 	`
 
 	return queryOneFull(
@@ -116,8 +116,8 @@ func (r *orderRepository) GetByID(ctx context.Context, id int64) (domain.Order, 
 
 func (r *orderRepository) GetByIDAndLock(ctx context.Context, id int64) (domain.Order, error) {
 	q := selectOrderJoined + `
-		WHERE deleted_at IS NULL
-			AND id = $1
+		WHERE o.deleted_at IS NULL
+			AND o.id = $1
 		FOR UPDATE
 	`
 
