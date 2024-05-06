@@ -63,6 +63,8 @@ func (r *paymentRepository) List(ctx context.Context, dets domain.PaymentListDet
 	sb, args := r.buildListQuery(selectPaymentJoined, dets)
 	offset := (dets.Page - 1) * dets.Limit
 
+	sb.WriteString(` ORDER BY p.created_at DESC, p.id ASC`)
+
 	fmt.Fprintf(
 		sb,
 		` OFFSET %d LIMIT %d `,
@@ -72,7 +74,7 @@ func (r *paymentRepository) List(ctx context.Context, dets domain.PaymentListDet
 
 	return queryFull(
 		r.querier, ctx, sb.String(),
-		scanPayment,
+		scanPaymentJoined,
 		args,
 	)
 }
@@ -134,7 +136,7 @@ func (r *paymentRepository) Update(ctx context.Context, p domain.Payment) (domai
 	nullURL := fromStringPtr(p.FileURL)
 	err := execOne(
 		r.querier, ctx, q,
-		p.Amount, nullURL,
+		p.ID, nullURL, p.IsConfirmed,
 	)
 	if err != nil {
 		return domain.Payment{}, apperror.Wrap(err)
