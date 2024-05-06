@@ -378,3 +378,25 @@ func (r *stockRepository) SoftDeleteMutationByID(ctx context.Context, id int64) 
 		id,
 	)
 }
+
+func (r *stockRepository) GetNearestStockWithProduct(
+	ctx context.Context,
+	targetPharmacyID int64,
+	productID int64,
+	amount int,
+) (domain.Stock, error) {
+	q := `
+		SELECT st.id, st.product_id, st.pharmacy_id, st.stock, st.price
+		FROM stocks st
+		WHERE st.deleted_at = NULL
+			AND st.pharmacy_id != $1
+			AND st.product_id = $2
+			AND st.stock >= $3
+	`
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanStock,
+		targetPharmacyID, productID, amount,
+	)
+}

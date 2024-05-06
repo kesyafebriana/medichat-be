@@ -29,6 +29,10 @@ func boolScanDest(b *bool) []any {
 	return []any{b}
 }
 
+func float64ScanDest(f *float64) []any {
+	return []any{f}
+}
+
 func stringScanDest(s *string) []any {
 	return []any{s}
 }
