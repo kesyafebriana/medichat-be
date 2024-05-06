@@ -120,6 +120,8 @@ type StockListDetails struct {
 	ProductName  *string
 	PharmacySlug *string
 
+	ManagerID *int64
+
 	SortBy  string
 	SortAsc bool
 
@@ -133,6 +135,8 @@ type StockMutationListDetails struct {
 
 	SourcePharmacySlug *string
 	TargetPharmacySlug *string
+
+	ManagerID *int64
 
 	Method *string
 	Status *string
