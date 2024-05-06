@@ -114,6 +114,7 @@ type PharmacyRepository interface {
 	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, error)
 	GetBySlug(ctx context.Context, slug string) (Pharmacy, error)
 	GetPageInfo(ctx context.Context, query PharmaciesQuery) (PageInfo, error)
+	GetByID(ctx context.Context, id int64) (Pharmacy, error)
 
 	Add(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
 	Update(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)

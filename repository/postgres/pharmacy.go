@@ -179,6 +179,18 @@ func (r *pharmacyRepository) GetBySlug(ctx context.Context, slug string) (domain
 	)
 }
 
+func (r *pharmacyRepository) GetByID(ctx context.Context, id int64) (domain.Pharmacy, error) {
+	q := `
+		SELECT ` + pharmacyColumns + `FROM pharmacies
+		WHERE id = $1 AND deleted_at IS NULL
+	`
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanPharmacy, id,
+	)
+}
+
 func (r *pharmacyRepository) Add(ctx context.Context, pharmacy domain.PharmacyCreateDetails) (domain.Pharmacy, error) {
 	q := `
 		INSERT INTO pharmacies(name, manager_id, address, coordinate, 
