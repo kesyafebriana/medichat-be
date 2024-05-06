@@ -2,7 +2,6 @@ package handler
 
 import (
 	"medichat-be/apperror"
-	"medichat-be/constants"
 	"medichat-be/dto"
 	"medichat-be/service"
 	"net/http"
@@ -64,8 +63,6 @@ func (h *ChatHandler) Chat(ctx *gin.Context) {
             ctx.Abort()
             return
         }
-		
-		
 		req.File= fileHeader
 
 		err = h.chatService.PostFile(&req,roomId,ctx)
@@ -87,39 +84,15 @@ func (h *ChatHandler) Chat(ctx *gin.Context) {
 }
 
 func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
-	var req dto.ChatRoom
 
-	req.UserName = ctx.PostForm("userName")
-	userId,err := strconv.Atoi(ctx.PostForm("userId"))
-	if err != nil {
-		ctx.Error(apperror.NewBadRequest(err))
-        ctx.Abort()
-        return
-	}
-	req.UserId = userId
-
-	req.DoctorName = ctx.PostForm("doctorName")
 	doctorId,err := strconv.Atoi(ctx.PostForm("doctorId"))
 	if err != nil{
 		ctx.Error(apperror.NewBadRequest(err))
         ctx.Abort()
         return
 	}
-	req.DoctorId = doctorId
-
-	date,err := time.Parse("2006-01-02T15:04:05Z07:00",ctx.PostForm("date"))
-	if err != nil {
-		ctx.Error(err)
-        ctx.Abort()
-        return
-	}
-	req.Start = date
-
-	extra , _ := time.ParseDuration(constants.ChatDuration)
-
-	req.End = date.Add(extra)
-
-	err = h.chatService.CreateRoom(&req,ctx)
+	
+	err = h.chatService.CreateRoom(doctorId,ctx)
 	if err!= nil {
 		ctx.Error(apperror.NewBadRequest(err))
 		ctx.Abort()

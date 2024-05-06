@@ -107,9 +107,7 @@ func main() {
 
 	cld, _ := util.NewCloudinarylProvider()
 
-	chatService := service.NewChatServiceImpl(client, cld)
 
-	chatHandler := handler.NewChatHandler(chatService)
 
 	passwordHasher := cryptoutil.NewPasswordHasherBcrypt(constants.HashCost)
 
@@ -143,6 +141,12 @@ func main() {
 	})
 
 	dataRepository := postgres.NewDataRepository(db)
+
+	chatService := service.NewChatService(service.ChatServiceOpts{
+		DataRepository: dataRepository,
+		Client: client,
+		Cloud: cld,
+	})
 
 	accountService := service.NewAccountService(service.AccountServiceOpts{
 		DataRepository:                dataRepository,
@@ -237,6 +241,7 @@ func main() {
 	pharmacyHandler := handler.NewPharmacyHandler(handler.PharmacyHandlerOpts{
 		PharmacySrv: pharmacyService,
 	})
+	chatHandler := handler.NewChatHandler(chatService)
 
 	pharmacyManagerHandler := handler.NewPharmacyManagerHandler(handler.PharmacyManagerHandlerOpts{
 		PharmacyManagerSrv: pharmacyManagerService,

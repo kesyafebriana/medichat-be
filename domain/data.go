@@ -14,6 +14,7 @@ type DataRepository interface {
 	Sleep(ctx context.Context, duration time.Duration) error
 
 	AccountRepository() AccountRepository
+	ChatRepository() ChatRepository
 	ProductRepository() ProductRepository
 	ProductDetailsRepository() ProductDetailsRepository
 	RefreshTokenRepository() RefreshTokenRepository
