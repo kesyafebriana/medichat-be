@@ -4,6 +4,7 @@ import (
 	"context"
 	"medichat-be/apperror"
 	"medichat-be/domain"
+	"medichat-be/util"
 )
 
 type pharmacyService struct {
@@ -109,8 +110,22 @@ func (s *pharmacyService) GetPharmacyBySlug(ctx context.Context, slug string) (d
 func (s *pharmacyService) CreatePharmacy(ctx context.Context, pharmacy domain.PharmacyCreateDetails) (domain.Pharmacy, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 	shipmentRepo := s.dataRepository.ShipmentMethodRepository()
+	pharmacyManagerRepo := s.dataRepository.PharmacyManagerRepository()
+
 	var pharmacyOperations []domain.PharmacyOperations
 	var PharmacyShipmentMethods []domain.PharmacyShipmentMethods
+
+	accountID, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return domain.Pharmacy{}, apperror.Wrap(err)
+	}
+
+	manager, err := pharmacyManagerRepo.GetByAccountID(ctx, accountID)
+	if err != nil {
+		return domain.Pharmacy{}, apperror.Wrap(err)
+	}
+
+	pharmacy.ManagerID = manager.ID
 
 	p, err := pharmacyRepo.Add(ctx, pharmacy)
 	if err != nil {
@@ -154,6 +169,21 @@ func (s *pharmacyService) CreatePharmacy(ctx context.Context, pharmacy domain.Ph
 func (s *pharmacyService) UpdatePharmacy(ctx context.Context, pharmacy domain.PharmacyUpdateDetails) (domain.Pharmacy, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 	shipmentRepo := s.dataRepository.ShipmentMethodRepository()
+	pharmacyManagerRepo := s.dataRepository.PharmacyManagerRepository()
+
+	accountID, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return domain.Pharmacy{}, apperror.Wrap(err)
+	}
+
+	manager, err := pharmacyManagerRepo.GetByAccountID(ctx, accountID)
+	if err != nil {
+		return domain.Pharmacy{}, apperror.Wrap(err)
+	}
+
+	if pharmacy.ManagerID != manager.ID {
+		return domain.Pharmacy{}, apperror.NewForbidden(nil)
+	}
 
 	p, err := pharmacyRepo.Update(ctx, pharmacy)
 	if err != nil {
@@ -187,10 +217,25 @@ func (s *pharmacyService) UpdatePharmacy(ctx context.Context, pharmacy domain.Ph
 
 func (s *pharmacyService) DeletePharmacyBySlug(ctx context.Context, slug string) error {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
+	pharmacyManagerRepo := s.dataRepository.PharmacyManagerRepository()
 
-	_, err := pharmacyRepo.GetBySlug(ctx, slug)
+	accountID, err := util.GetAccountIDFromContext(ctx)
 	if err != nil {
 		return apperror.Wrap(err)
+	}
+
+	manager, err := pharmacyManagerRepo.GetByAccountID(ctx, accountID)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	pharmacy, err := pharmacyRepo.GetBySlug(ctx, slug)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	if pharmacy.ManagerID != manager.ID {
+		return apperror.NewForbidden(nil)
 	}
 
 	err = pharmacyRepo.SoftDeleteBySlug(ctx, slug)
@@ -219,11 +264,26 @@ func (s *pharmacyService) GetOperationsBySlug(ctx context.Context, slug string) 
 
 func (s *pharmacyService) UpdateOperations(ctx context.Context, pharmacyOperations []domain.PharmacyOperationsUpdateDetails) ([]domain.PharmacyOperations, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
+	pharmacyManagerRepo := s.dataRepository.PharmacyManagerRepository()
 	var res []domain.PharmacyOperations
+
+	accountID, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return []domain.PharmacyOperations{}, apperror.Wrap(err)
+	}
+
+	manager, err := pharmacyManagerRepo.GetByAccountID(ctx, accountID)
+	if err != nil {
+		return []domain.PharmacyOperations{}, apperror.Wrap(err)
+	}
 
 	p, err := pharmacyRepo.GetBySlug(ctx, pharmacyOperations[0].Slug)
 	if err != nil {
 		return []domain.PharmacyOperations{}, apperror.Wrap(err)
+	}
+
+	if p.ManagerID != manager.ID {
+		return []domain.PharmacyOperations{}, apperror.NewForbidden(nil)
 	}
 
 	o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyIdAndLock(ctx, p.ID)
@@ -314,11 +374,26 @@ func (s *pharmacyService) GetShipmentMethodBySlug(ctx context.Context, slug stri
 func (s *pharmacyService) UpdateShipmentMethod(ctx context.Context, shipmentMethods []domain.PharmacyShipmentMethodsUpdateDetails) ([]domain.PharmacyShipmentMethods, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 	shipmentRepo := s.dataRepository.ShipmentMethodRepository()
+	pharmacyManagerRepo := s.dataRepository.PharmacyManagerRepository()
 	var res []domain.PharmacyShipmentMethods
+
+	accountID, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return []domain.PharmacyShipmentMethods{}, apperror.Wrap(err)
+	}
+
+	manager, err := pharmacyManagerRepo.GetByAccountID(ctx, accountID)
+	if err != nil {
+		return []domain.PharmacyShipmentMethods{}, apperror.Wrap(err)
+	}
 
 	p, err := pharmacyRepo.GetBySlug(ctx, shipmentMethods[0].Slug)
 	if err != nil {
 		return []domain.PharmacyShipmentMethods{}, apperror.Wrap(err)
+	}
+
+	if p.ManagerID != manager.ID {
+		return []domain.PharmacyShipmentMethods{}, apperror.NewForbidden(nil)
 	}
 
 	sh, err := pharmacyRepo.GetShipmentMethodsByPharmacyIdAndLock(ctx, p.ID)
