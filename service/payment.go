@@ -196,7 +196,7 @@ func (s *paymentService) ConfirmPaymentClosure(
 ) domain.AtomicFunc[any] {
 	return func(dr domain.DataRepository) (any, error) {
 		paymentRepo := dr.PaymentRepository()
-		accuntRepo := dr.AccountRepository()
+		accountRepo := dr.AccountRepository()
 		orderRepo := dr.OrderRepository()
 
 		accountID, err := util.GetAccountIDFromContext(ctx)
@@ -204,7 +204,7 @@ func (s *paymentService) ConfirmPaymentClosure(
 			return nil, apperror.Wrap(err)
 		}
 
-		account, err := accuntRepo.GetByID(ctx, accountID)
+		account, err := accountRepo.GetByID(ctx, accountID)
 		if err != nil {
 			return nil, apperror.Wrap(err)
 		}

@@ -130,7 +130,7 @@ func (r *orderRepository) GetByIDAndLock(ctx context.Context, id int64) (domain.
 
 func (r *orderRepository) Add(ctx context.Context, o domain.Order) (domain.Order, error) {
 	q := `
-		INSERT orders(
+		INSERT INTO orders(
 			user_id, pharmacy_id, payment_id, shipment_method_id,
 			address, coordinate,
 			n_items, subtotal, shipment_fee, total,
@@ -185,7 +185,7 @@ func (r *orderRepository) UpdateStatusByPaymentID(ctx context.Context, id int64,
 
 func (r *orderRepository) ListItemsByOrderID(ctx context.Context, id int64) ([]domain.OrderItem, error) {
 	q := selectOrderItemJoined + `
-		WHERE AND oi.id = $1
+		WHERE oi.order_id = $1
 			AND oi.deleted_at IS NULL
 	`
 

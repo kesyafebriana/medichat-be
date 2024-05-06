@@ -262,14 +262,14 @@ func scanSpecialization(r RowScanner, s *domain.Specialization) error {
 }
 
 var (
-	productColumns        = " id, name, product_detail_id, category_id, picture, is_active  "
+	productColumns        = " id, name, product_detail_id, category_id, picture, is_active, slug "
 	productDetailsColumns = " id, generic_name, content, manufacturer, description, product_classification, product_form, unit_in_pack, selling_unit, weight, height, length, width  "
 )
 
 func scanProduct(r RowScanner, c *domain.Product) error {
 	var nullPhotoUrl sql.NullString
 	if err := r.Scan(
-		&c.ID, &c.Name, &c.ProductDetailId, &c.ProductCategoryId, &nullPhotoUrl, &c.IsActive,
+		&c.ID, &c.Name, &c.ProductDetailId, &c.ProductCategoryId, &nullPhotoUrl, &c.IsActive, &c.Slug,
 	); err != nil {
 		return err
 	}
