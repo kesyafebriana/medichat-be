@@ -134,9 +134,46 @@ func scanUserLocation(r RowScanner, ul *domain.UserLocation) error {
 }
 
 var (
-	pharmacyColumns          = " id, manager_id, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone, slug "
-	pharmacyJoinedColumns    = " p.id, p.manager_id, p.name, p.address, p.coordinate, p.pharmacist_name, p.pharmacist_license, p.pharmacist_phone, p.slug "
-	pharmacyOperationColumns = " id, pharmacy_id, day, start_time, end_time "
+	shipmentMethodColumns = " id, name "
+)
+
+func scanShipmentMethod(r RowScanner, s *domain.ShipmentMethod) error {
+	if err := r.Scan(&s.ID, &s.Name); err != nil {
+		return err
+	}
+	return nil
+}
+
+var (
+	pharmacyManagerColumns       = " id, account_id "
+	pharmacyManagerJoinedColumns = `
+		p.id,
+		p.account_id, a.email, a.email_verified, a.role, a.account_type,
+		a.name, a.photo_url, a.profile_set
+	`
+)
+
+func scanPharmacyManager(r RowScanner, p *domain.PharmacyManager) error {
+	if err := r.Scan(&p.ID, &p.Account.ID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func scanPharmacyManagerJoined(r RowScanner, p *domain.PharmacyManager) error {
+	if err := r.Scan(&p.ID, &p.Account.ID, &p.Account.Email, &p.Account.EmailVerified,
+		&p.Account.Role, &p.Account.AccountType, &p.Account.Name, &p.Account.PhotoURL,
+		&p.Account.ProfileSet); err != nil {
+		return err
+	}
+	return nil
+}
+
+var (
+	pharmacyColumns               = " id, manager_id, name, address, coordinate, pharmacist_name, pharmacist_license, pharmacist_phone, slug "
+	pharmacyJoinedColumns         = " p.id, p.manager_id, p.name, p.address, p.coordinate, p.pharmacist_name, p.pharmacist_license, p.pharmacist_phone, p.slug "
+	pharmacyOperationColumns      = " id, pharmacy_id, day, start_time, end_time "
+	PharmacyShipmentMethodColumns = " id, pharmacy_id, shipment_method_id "
 )
 
 func scanPharmacy(r RowScanner, p *domain.Pharmacy) error {
@@ -154,6 +191,13 @@ func scanPharmacy(r RowScanner, p *domain.Pharmacy) error {
 
 func ScanPharmacyOperation(r RowScanner, p *domain.PharmacyOperations) error {
 	if err := r.Scan(&p.ID, &p.PharmacyID, &p.Day, &p.StartTime, &p.EndTime); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ScanPharmacyShipmentMethod(r RowScanner, s *domain.PharmacyShipmentMethods) error {
+	if err := r.Scan(&s.ID, &s.PharmacyID, &s.ShipmentMethodID); err != nil {
 		return err
 	}
 	return nil
@@ -237,6 +281,89 @@ func scanProductDetails(r RowScanner, d *domain.ProductDetails) error {
 	}
 
 	return nil
+}
+
+var (
+	stockColumns = `
+		id, product_id, pharmacy_id, stock, price
+	`
+	stockMutationColumns = `
+		id, source_id, target_id, method, status, amount
+	`
+
+	selectStockJoined = `
+		SELECT
+			st.id,
+			pd.id, pd.slug, pd.name,
+			ph.id, ph.slug, ph.name,
+			st.stock, st.price
+		FROM stocks st
+			JOIN pharmacies ph ON st.pharmacy_id = ph.id
+			JOIN products pd ON st.product_id = pd.id
+	`
+
+	countStockJoined = `
+		SELECT COUNT(st.id)
+		FROM stocks st
+			JOIN pharmacies ph ON st.pharmacy_id = ph.id
+			JOIN products pd ON st.product_id = pd.id
+	`
+
+	selectStockMutationJoined = `
+		SELECT 
+			sm.id, 
+			st1.id, ph1.id, ph1.slug, ph1.name,
+			st2.id, ph2.id, ph2.slug, ph2.name,
+			pd.id, pd.slug, pd.name,
+			sm.method, sm.status, sm.amount, sm.created_at
+		FROM stock_mutations sm
+			JOIN stocks st1 ON sm.source_id = st1.id
+			JOIN stocks st2 ON sm.target_id = st2.id
+			JOIN pharmacies ph1 ON st1.pharmacy_id = ph1.id
+			JOIN pharmacies ph2 ON st2.pharmacy_id = ph2.id
+			JOIN products pd ON st1.product_id = pd.id
+	`
+
+	countStockMutationJoined = `
+		SELECT COUNT(sm.id)
+		FROM stock_mutations sm
+			JOIN stocks st1 ON sm.source_id = st1.id
+			JOIN stocks st2 ON sm.target_id = st2.id
+			JOIN pharmacies ph1 ON st1.pharmacy_id = ph1.id
+			JOIN pharmacies ph2 ON st2.pharmacy_id = ph2.id
+			JOIN products pd ON st1.product_id = pd.id
+	`
+)
+
+func scanStock(r RowScanner, s *domain.Stock) error {
+	return r.Scan(
+		&s.ID, &s.ProductID, &s.PharmacyID, &s.Stock, &s.Price,
+	)
+}
+
+func scanStockMutation(r RowScanner, sm *domain.StockMutation) error {
+	return r.Scan(
+		&sm.ID, &sm.SourceID, &sm.TargetID, &sm.Method, &sm.Status,
+	)
+}
+
+func scanStockJoined(r RowScanner, s *domain.StockJoined) error {
+	return r.Scan(
+		&s.ID,
+		&s.Product.ID, &s.Product.Slug, &s.Product.Name,
+		&s.Pharmacy.ID, &s.Pharmacy.Slug, &s.Pharmacy.Name,
+		&s.Stock, &s.Price,
+	)
+}
+
+func scanStockMutationJoined(r RowScanner, sm *domain.StockMutationJoined) error {
+	return r.Scan(
+		&sm.ID,
+		&sm.Source.ID, &sm.Source.PharmacyID, &sm.Source.PharmacySlug, &sm.Source.PharmacyName,
+		&sm.Target.ID, &sm.Target.PharmacyID, &sm.Target.PharmacySlug, &sm.Target.PharmacyName,
+		&sm.Product.ID, &sm.Product.Slug, &sm.Product.Name,
+		&sm.Method, &sm.Status, &sm.Amount, &sm.Timestamp,
+	)
 }
 
 var (

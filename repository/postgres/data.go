@@ -118,7 +118,9 @@ func (r *dataRepository) DoctorRepository() domain.DoctorRepository {
 }
 
 func (r *dataRepository) PharmacyManagerRepository() domain.PharmacyManagerRepository {
-	return nil
+	return &pharmacyManagerRepository{
+		querier: r.querier,
+	}
 }
 
 func (r *dataRepository) SpecializationRepository() domain.SpecializationRepository {
@@ -129,6 +131,18 @@ func (r *dataRepository) SpecializationRepository() domain.SpecializationReposit
 
 func (r *dataRepository) PharmacyRepository() domain.PharmacyRepository {
 	return &pharmacyRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) ShipmentMethodRepository() domain.ShipmentMethodRepository {
+	return &shipmentMethodRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) StockRepository() domain.StockRepository {
+	return &stockRepository{
 		querier: r.querier,
 	}
 }

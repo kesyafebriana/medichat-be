@@ -85,6 +85,11 @@ func main() {
 		pharmacyManagerAccessProvider,
 	})
 
+	managerOrAdminAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+		adminAccessProvider,
+		pharmacyManagerAccessProvider,
+	})
+
 	userOrAdminAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
 		adminAccessProvider,
 		userAccessProvider,
@@ -201,6 +206,15 @@ func main() {
 		DataRepository: dataRepository,
 	})
 
+	pharmacyManagerService := service.NewPharmacyManagerService(service.PharmacyManagerServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
+	stockService := service.NewStockService(service.StockServiceOpts{
+		DataRepository: dataRepository,
+	})
+
 	paymentService := service.NewPaymentService(service.PaymentServiceOpts{
 		DataRepository: dataRepository,
 		CloudProvider:  cld,
@@ -248,6 +262,14 @@ func main() {
 		PharmacySrv: pharmacyService,
 	})
 
+	pharmacyManagerHandler := handler.NewPharmacyManagerHandler(handler.PharmacyManagerHandlerOpts{
+		PharmacyManagerSrv: pharmacyManagerService,
+	})
+
+	stockHandler := handler.NewStockHandler(handler.StockHandlerOpts{
+		StockSrv: stockService,
+	})
+
 	paymentHandler := handler.NewPaymentHandler(handler.PaymentHandlerOpts{
 		PaymentSrv: paymentService,
 	})
@@ -265,35 +287,42 @@ func main() {
 	adminAuthenticator := middleware.Authenticator(adminAccessProvider)
 	userAuthenticator := middleware.Authenticator(userAccessProvider)
 	doctorAuthenticator := middleware.Authenticator(doctorAccessProvider)
+	pharmacyManagerAuthenticator := middleware.Authenticator(pharmacyManagerAccessProvider)
+
+	managerOrAdminAuthenticator := middleware.Authenticator(managerOrAdminAccessProvider)
 
 	UserOrAdminAuthenticator := middleware.Authenticator(userOrAdminAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
-		AccountHandler:        accountHandler,
-		ChatHandler:           chatHandler,
-		PingHandler:           pingHandler,
-		GoogleAuthHandler:     googleAuthHandler,
-		GoogleHandler:         googleHandler,
-		UserHandler:           userHandler,
-		DoctorHandler:         doctorHandler,
-		SpecializationHandler: specializationHandler,
-		CategoryHandler:       categoryHandler,
-
-		ProductHandler:  productHandler,
-		PharmacyHandler: pharmacyHandler,
-		PaymentHandler:  paymentHandler,
-		OrderHandler:    orderHandler,
+		AccountHandler:         accountHandler,
+		ChatHandler:            chatHandler,
+		PingHandler:            pingHandler,
+		GoogleAuthHandler:      googleAuthHandler,
+		GoogleHandler:          googleHandler,
+		UserHandler:            userHandler,
+		DoctorHandler:          doctorHandler,
+		SpecializationHandler:  specializationHandler,
+		CategoryHandler:        categoryHandler,
+		ProductHandler:         productHandler,
+		PharmacyHandler:        pharmacyHandler,
+		PharmacyManagerHandler: pharmacyManagerHandler,
+		StockHandler:           stockHandler,
+		PaymentHandler:         paymentHandler,
+		OrderHandler:           orderHandler,
 
 		SessionKey: conf.SessionKey,
 
-		RequestID:           requestIDMid,
-		Authenticator:       authenticator,
-		AdminAuthenticator:  adminAuthenticator,
-		UserAuthenticator:   userAuthenticator,
-		DoctorAuthenticator: doctorAuthenticator,
-		CorsHandler:         corsHandler,
-		Logger:              loggerMid,
-		ErrorHandler:        errorHandler,
+		RequestID:                    requestIDMid,
+		Authenticator:                authenticator,
+		AdminAuthenticator:           adminAuthenticator,
+		UserAuthenticator:            userAuthenticator,
+		DoctorAuthenticator:          doctorAuthenticator,
+		PharmacyManagerAuthenticator: pharmacyManagerAuthenticator,
+		CorsHandler:                  corsHandler,
+		Logger:                       loggerMid,
+		ErrorHandler:                 errorHandler,
+
+		ManagerOrAdminAuthenticator: managerOrAdminAuthenticator,
 
 		UserOrAdminAuthenticator: UserOrAdminAuthenticator,
 	})

@@ -28,6 +28,9 @@ type DataRepository interface {
 
 	SpecializationRepository() SpecializationRepository
 	PharmacyRepository() PharmacyRepository
+	ShipmentMethodRepository() ShipmentMethodRepository
+
+	StockRepository() StockRepository
 
 	PaymentRepository() PaymentRepository
 	OrderRepository() OrderRepository
