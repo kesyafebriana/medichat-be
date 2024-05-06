@@ -257,14 +257,14 @@ func scanSpecialization(r RowScanner, s *domain.Specialization) error {
 }
 
 var (
-	productColumns        = " id, name, product_detail_id, category_id, picture, is_active  "
+	productColumns        = " id, name, slug, product_detail_id, category_id, picture, is_active  "
 	productDetailsColumns = " id, generic_name, content, manufacturer, description, product_classification, product_form, unit_in_pack, selling_unit, weight, height, length, width  "
 )
 
 func scanProduct(r RowScanner, c *domain.Product) error {
 	var nullPhotoUrl sql.NullString
 	if err := r.Scan(
-		&c.ID, &c.Name, &c.ProductDetailId, &c.ProductCategoryId, &nullPhotoUrl, &c.IsActive,
+		&c.ID, &c.Name, &c.Slug, &c.ProductDetailId, &c.ProductCategoryId, &nullPhotoUrl, &c.IsActive,
 	); err != nil {
 		return err
 	}
@@ -282,15 +282,14 @@ func scanProductDetails(r RowScanner, d *domain.ProductDetails) error {
 	return nil
 }
 
-
 var (
-	chatsColumns        = " id, chat_room_id, type, message, file, user_id, user_name  "
-	roomsColumns        = " user_id, doctor_id, end_at  "
+	chatsColumns = " id, chat_room_id, type, message, file, user_id, user_name  "
+	roomsColumns = " user_id, doctor_id, end_at  "
 )
 
 func scanChats(r RowScanner, c *domain.Chat) error {
 	if err := r.Scan(
-		&c.ID, &c.RoomId,  &c.Type, &c.Message, &c.File, &c.UserId, &c.UserName,
+		&c.ID, &c.RoomId, &c.Type, &c.Message, &c.File, &c.UserId, &c.UserName,
 	); err != nil {
 		return err
 	}
@@ -299,7 +298,7 @@ func scanChats(r RowScanner, c *domain.Chat) error {
 
 func scanRooms(r RowScanner, c *domain.Room) error {
 	if err := r.Scan(
-		&c.ID, &c.UserId,  &c.DoctorId, &c.EndAt,
+		&c.ID, &c.UserId, &c.DoctorId, &c.EndAt,
 	); err != nil {
 		return err
 	}
