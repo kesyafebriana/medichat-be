@@ -39,7 +39,7 @@ func (s *stockService) GetByID(
 	}
 
 	if manager, ok := prof.(domain.PharmacyManager); ok {
-		pharmacy, err := pharmacyRepo.GetByID(ctx, id)
+		pharmacy, err := pharmacyRepo.GetByID(ctx, stock.PharmacyID)
 		if err != nil {
 			return domain.Stock{}, apperror.Wrap(err)
 		}
@@ -147,13 +147,14 @@ func (s *stockService) UpdateClosure(
 	return func(dr domain.DataRepository) (domain.Stock, error) {
 		stockRepo := dr.StockRepository()
 		managerRepo := dr.PharmacyManagerRepository()
+		pharmacyRepo := dr.PharmacyRepository()
 
 		accountID, err := util.GetAccountIDFromContext(ctx)
 		if err != nil {
 			return domain.Stock{}, apperror.Wrap(err)
 		}
 
-		_, err = managerRepo.GetByAccountID(ctx, accountID)
+		manager, err := managerRepo.GetByAccountID(ctx, accountID)
 		if err != nil {
 			return domain.Stock{}, apperror.Wrap(err)
 		}
@@ -161,6 +162,15 @@ func (s *stockService) UpdateClosure(
 		stock, err := stockRepo.GetByIDAndLock(ctx, det.ID)
 		if err != nil {
 			return domain.Stock{}, apperror.Wrap(err)
+		}
+
+		pharmacy, err := pharmacyRepo.GetByID(ctx, stock.PharmacyID)
+		if err != nil {
+			return domain.Stock{}, apperror.Wrap(err)
+		}
+
+		if pharmacy.ManagerID != manager.ID {
+			return domain.Stock{}, apperror.NewForbidden(nil)
 		}
 
 		if det.Stock != nil {
@@ -197,20 +207,30 @@ func (s *stockService) DeleteClosure(
 	return func(dr domain.DataRepository) (any, error) {
 		stockRepo := dr.StockRepository()
 		managerRepo := dr.PharmacyManagerRepository()
+		pharmacyRepo := dr.PharmacyRepository()
 
 		accountID, err := util.GetAccountIDFromContext(ctx)
 		if err != nil {
 			return domain.Stock{}, apperror.Wrap(err)
 		}
 
-		_, err = managerRepo.GetByAccountID(ctx, accountID)
+		manager, err := managerRepo.GetByAccountID(ctx, accountID)
 		if err != nil {
 			return domain.Stock{}, apperror.Wrap(err)
 		}
 
-		_, err = stockRepo.GetByIDAndLock(ctx, id)
+		stock, err := stockRepo.GetByIDAndLock(ctx, id)
 		if err != nil {
 			return nil, apperror.Wrap(err)
+		}
+
+		pharmacy, err := pharmacyRepo.GetByID(ctx, stock.PharmacyID)
+		if err != nil {
+			return domain.Stock{}, apperror.Wrap(err)
+		}
+
+		if pharmacy.ManagerID != manager.ID {
+			return domain.Stock{}, apperror.NewForbidden(nil)
 		}
 
 		err = stockRepo.SoftDeleteByID(ctx, id)
@@ -493,7 +513,7 @@ func (s *stockService) CancelStockTransfer(
 	return domain.RunAtomic(
 		s.dataRepository,
 		ctx,
-		s.ApproveStockTransferClosure(ctx, id),
+		s.CancelStockTransferClosure(ctx, id),
 	)
 }
 
