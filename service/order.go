@@ -64,6 +64,7 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 	pharmacyRepo := dr.PharmacyRepository()
 	userRepo := dr.UserRepository()
 	stockRepo := dr.StockRepository()
+	shipmentRepo := dr.ShipmentMethodRepository()
 
 	accountID, err := util.GetAccountIDFromContext(ctx)
 	if err != nil {
@@ -89,6 +90,11 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 			return domain.Orders{}, apperror.Wrap(err)
 		}
 
+		shipment, err := shipmentRepo.GetShipmentMethodById(ctx, det.ShipmentMethodID)
+		if err != nil {
+			return domain.Orders{}, apperror.Wrap(err)
+		}
+
 		order := domain.Order{
 			ID: orderID,
 			User: struct {
@@ -107,16 +113,17 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 				Slug: pharmacy.Slug,
 				Name: pharmacy.Name,
 			},
-			Address:     det.Address,
-			Coordinate:  det.Coordinate,
-			NItems:      0,
-			Subtotal:    0,
-			ShipmentFee: 0,
-			Total:       0,
-			Status:      domain.OrderStatusWaitingPayment,
-			OrderedAt:   time.Now(),
-			FinishedAt:  nil,
-			Items:       []domain.OrderItem{},
+			ShipmentMethod: shipment,
+			Address:        det.Address,
+			Coordinate:     det.Coordinate,
+			NItems:         0,
+			Subtotal:       0,
+			ShipmentFee:    0,
+			Total:          0,
+			Status:         domain.OrderStatusWaitingPayment,
+			OrderedAt:      time.Now(),
+			FinishedAt:     nil,
+			Items:          []domain.OrderItem{},
 		}
 
 		for _, it := range det.Items {
@@ -193,6 +200,10 @@ func (s *orderService) AddOrdersClosure(
 		orderRepo := dr.OrderRepository()
 		paymentRepo := dr.PaymentRepository()
 
+		if len(dets) == 0 {
+			return domain.Orders{}, nil
+		}
+
 		orders, err := s.getOrders(dr, ctx, dets)
 		if err != nil {
 			return domain.Orders{}, apperror.Wrap(err)
@@ -259,8 +270,15 @@ func (s *orderService) SendOrderClosure(
 ) domain.AtomicFunc[any] {
 	return func(dr domain.DataRepository) (any, error) {
 		orderRepo := dr.OrderRepository()
+		managerRepo := dr.PharmacyManagerRepository()
+		pharmacyRepo := dr.PharmacyRepository()
 
-		_, err := util.GetAccountIDFromContext(ctx)
+		accountID, err := util.GetAccountIDFromContext(ctx)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		manager, err := managerRepo.GetByAccountID(ctx, accountID)
 		if err != nil {
 			return nil, apperror.Wrap(err)
 		}
@@ -277,13 +295,25 @@ func (s *orderService) SendOrderClosure(
 			)
 		}
 
+		pharmacy, err := pharmacyRepo.GetByID(ctx, order.Pharmacy.ID)
+		if err != nil {
+			return nil, apperror.Wrap(err)
+		}
+
+		if pharmacy.ManagerID != manager.ID {
+			return nil, apperror.NewForbidden(nil)
+		}
+
 		items, err := orderRepo.ListItemsByOrderID(ctx, id)
 		if err != nil {
 			return nil, apperror.Wrap(err)
 		}
 
 		for _, item := range items {
-			s.updateStockForOrderItem(ctx, dr, order.Pharmacy.ID, item)
+			err = s.updateStockForOrderItem(ctx, dr, order.Pharmacy.ID, item)
+			if err != nil {
+				return nil, apperror.Wrap(err)
+			}
 		}
 
 		err = orderRepo.UpdateStatusByID(ctx, id, domain.OrderStatusSent)
@@ -416,6 +446,8 @@ func (s *orderService) CancelOrderClosure(
 		orderRepo := dr.OrderRepository()
 		userRepo := dr.UserRepository()
 		accountRepo := dr.AccountRepository()
+		managerRepo := dr.PharmacyManagerRepository()
+		pharmacyRepo := dr.PharmacyRepository()
 
 		accountID, err := util.GetAccountIDFromContext(ctx)
 		if err != nil {
@@ -432,13 +464,29 @@ func (s *orderService) CancelOrderClosure(
 			return nil, apperror.Wrap(err)
 		}
 
-		if account.AccountType == domain.AccountRoleUser {
+		if account.Role == domain.AccountRoleUser {
 			user, err := userRepo.GetByAccountID(ctx, accountID)
 			if err != nil {
 				return nil, apperror.Wrap(err)
 			}
 
 			if order.User.ID != user.ID {
+				return nil, apperror.NewForbidden(nil)
+			}
+		}
+
+		if account.Role == domain.AccountRolePharmacyManager {
+			manager, err := managerRepo.GetByAccountID(ctx, accountID)
+			if err != nil {
+				return nil, apperror.Wrap(err)
+			}
+
+			pharmacy, err := pharmacyRepo.GetByID(ctx, order.Pharmacy.ID)
+			if err != nil {
+				return nil, apperror.Wrap(err)
+			}
+
+			if pharmacy.ManagerID != manager.ID {
 				return nil, apperror.NewForbidden(nil)
 			}
 		}
