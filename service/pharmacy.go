@@ -4,7 +4,6 @@ import (
 	"context"
 	"medichat-be/apperror"
 	"medichat-be/domain"
-	"medichat-be/util"
 )
 
 type pharmacyService struct {
@@ -112,7 +111,6 @@ func (s *pharmacyService) CreatePharmacy(ctx context.Context, pharmacy domain.Ph
 	shipmentRepo := s.dataRepository.ShipmentMethodRepository()
 	var pharmacyOperations []domain.PharmacyOperations
 	var PharmacyShipmentMethods []domain.PharmacyShipmentMethods
-	pharmacy.Slug = util.GenerateSlug(pharmacy.Name)
 
 	p, err := pharmacyRepo.Add(ctx, pharmacy)
 	if err != nil {
