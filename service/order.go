@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"medichat-be/apperror"
 	"medichat-be/domain"
 	"medichat-be/util"
@@ -156,8 +155,19 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 			itemID++
 		}
 
-		// TODO: calculate shipment fee
-		shipmentFee := 0
+		distance, err := dr.GetDistance(ctx, det.Coordinate, pharmacy.Coordinate)
+		if err != nil {
+			return domain.Orders{}, apperror.Wrap(err)
+		}
+		var shipmentFee int
+		switch det.ShipmentMethodID {
+		case domain.ShipmentOfficialInstantID:
+			shipmentFee = int(distance / 1000 * domain.ShipmentOfficialInstantFee)
+		case domain.ShipmentOfficialSameDayID:
+			shipmentFee = int(distance / 1000 * domain.ShipmentOfficialSameDayFee)
+		default:
+			shipmentFee = int(distance / 1000 * domain.ShipmentOfficialSameDayFee)
+		}
 
 		order.ShipmentFee = shipmentFee
 		order.Total = order.Subtotal + order.ShipmentFee
@@ -299,8 +309,28 @@ func (s *orderService) updateStockForOrderItem(ctx context.Context, dr domain.Da
 	}
 
 	if stock.Stock < item.Amount {
-		// TODO: request transfer from another pharmacy
-		return fmt.Errorf("not enough stock")
+		source, err := stockRepo.GetNearestStockWithProduct(ctx, stock.PharmacyID, stock.ProductID, item.Amount)
+		if err != nil {
+			return err
+		}
+
+		mutation := domain.StockMutation{
+			SourceID: source.ID,
+			TargetID: stock.ID,
+			Method:   domain.StockMutationAutomatic,
+			Status:   domain.StockMutationStatusApproved,
+			Amount:   item.Amount,
+		}
+
+		mutation, err = stockRepo.AddMutation(ctx, mutation)
+		if err != nil {
+			return err
+		}
+
+		source, stock, err = transferStock(dr, ctx, source.ID, stock.ID, item.Amount)
+		if err != nil {
+			return err
+		}
 	}
 
 	stock.Stock -= item.Amount
