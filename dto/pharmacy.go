@@ -25,6 +25,12 @@ type PharmaciesResponse struct {
 	PageInfo   PageInfoResponse
 }
 
+type PharmaciesStockResponse struct {
+	Pharmacies []PharmacyResponse
+	Stock      StockResponse
+	PageInfo   PageInfoResponse
+}
+
 type PharmacySlugParams struct {
 	Slug string `uri:"slug" binding:"required"`
 }
@@ -53,6 +59,19 @@ func NewPharmaciesResponse(pharmacy []domain.Pharmacy, pageInfo domain.PageInfo)
 	}
 
 	res.PageInfo = NewPageInfoResponse(pageInfo)
+
+	return res
+}
+
+func NewPharmaciesStockResponse(pharmacy []domain.Pharmacy, stock domain.Stock, pageInfo domain.PageInfo) PharmaciesStockResponse {
+	var res PharmaciesStockResponse
+
+	for _, v := range pharmacy {
+		res.Pharmacies = append(res.Pharmacies, NewPharmacyResponse(v))
+	}
+
+	res.PageInfo = NewPageInfoResponse(pageInfo)
+	res.Stock = NewStockResponse(stock)
 
 	return res
 }
@@ -230,32 +249,34 @@ func PharmacyShipmentMethodRequestToDetails(p PharmacyShipmentMethodUpdateReques
 }
 
 type PharmacyListQuery struct {
-	ManagerID *int64   `form:"manager_id"`
-	Name      *string  `form:"name"`
-	Day       *string  `form:"day"`
-	StartTime *string  `form:"start_time"`
-	EndTime   *string  `form:"end_time"`
-	Longitude *float64 `form:"long"`
-	Latitude  *float64 `form:"lat"`
-	SortBy    *string  `form:"sort_by"`
-	Sort      *string  `form:"sort"`
-	Limit     *int     `form:"limit"`
-	Page      *int     `form:"page"`
-	IsOpen    *bool    `form:"is_open"`
+	ManagerID   *int64   `form:"manager_id"`
+	Name        *string  `form:"name"`
+	Day         *string  `form:"day"`
+	StartTime   *string  `form:"start_time"`
+	EndTime     *string  `form:"end_time"`
+	Longitude   *float64 `form:"long"`
+	Latitude    *float64 `form:"lat"`
+	SortBy      *string  `form:"sort_by"`
+	Sort        *string  `form:"sort"`
+	Limit       *int     `form:"limit"`
+	Page        *int     `form:"page"`
+	IsOpen      *bool    `form:"is_open"`
+	ProductSlug *string  `form:"product_slug"`
 }
 
 func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
 	query := domain.PharmaciesQuery{
-		Name:      p.Name,
-		Day:       p.Day,
-		ManagerID: p.ManagerID,
-		Longitude: p.Longitude,
-		Latitude:  p.Latitude,
-		Limit:     10,
-		Page:      1,
-		SortBy:    *p.SortBy,
-		SortType:  *p.Sort,
-		IsOpen:    p.IsOpen,
+		Name:        p.Name,
+		Day:         p.Day,
+		ManagerID:   p.ManagerID,
+		Longitude:   p.Longitude,
+		Latitude:    p.Latitude,
+		Limit:       10,
+		Page:        1,
+		SortBy:      *p.SortBy,
+		SortType:    *p.Sort,
+		IsOpen:      p.IsOpen,
+		ProductSlug: p.ProductSlug,
 	}
 
 	if p.Limit != nil {

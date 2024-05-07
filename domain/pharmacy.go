@@ -101,6 +101,7 @@ type PharmaciesQuery struct {
 	StartTime   *string
 	EndTime     *string
 	ProductSlug *string
+	ProductId   *int64
 	Longitude   *float64
 	Latitude    *float64
 	Name        *string
@@ -138,6 +139,7 @@ type PharmacyRepository interface {
 type PharmacyService interface {
 	CreatePharmacy(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
 	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, PageInfo, error)
+	GetPharmaciesByProductSlug(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, Stock, PageInfo, error)
 	GetPharmacyBySlug(ctx context.Context, slug string) (Pharmacy, error)
 	UpdatePharmacy(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
 	DeletePharmacyBySlug(ctx context.Context, slug string) error

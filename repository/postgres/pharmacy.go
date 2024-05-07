@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"log"
 	"medichat-be/domain"
 	"medichat-be/repository/postgis"
 	"strings"
@@ -22,9 +21,16 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 
 	sb.WriteString(`
 		SELECT ` + pharmacyJoinedColumns + `
-		FROM pharmacies p
+		FROM pharmacies p JOIN stocks as s ON s.pharmacy_id = p.id
 		WHERE p.deleted_at IS NULL
 	`)
+
+	if query.ProductId != nil {
+		fmt.Fprintf(&sb, ` AND s.product_id = $%d 
+		`, idx)
+		idx++
+		args = append(args, *query.ProductId)
+	}
 
 	if query.Name != nil {
 		fmt.Fprintf(&sb, ` AND p.name ILIKE $%d 
@@ -41,7 +47,7 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 	}
 
 	if query.Longitude != nil && query.Latitude != nil {
-		fmt.Fprintf(&sb, ` AND ST_DWithin(p.coordinate, ST_MakePoint($%d, $%d)::geography, 2500)
+		fmt.Fprintf(&sb, ` AND ST_DWithin(p.coordinate, ST_MakePoint($%d, $%d)::geography, 25000)
 		`, idx, idx+1)
 		idx += 2
 		args = append(args, *query.Longitude, *query.Latitude)
@@ -56,8 +62,8 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		FROM pharmacy_operations o
 		WHERE o.deleted_at IS NULL
 		AND o.day = '%s'
-		AND o.start_time <= '0001-01-01 %s:00:00 BC')
-		`, time.Format("Monday"), time.Format("15"))
+		AND o.start_time <= '0001-01-01 %s:00')
+		`, time.Format("Monday"), time.Format("15:04"))
 	}
 
 	if (query.Day != nil || query.StartTime != nil || query.EndTime != nil) && query.IsOpen == nil {
@@ -76,12 +82,12 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		}
 
 		if query.StartTime != nil {
-			fmt.Fprintf(&sb, `AND o.start_time <= '0001-01-01 %s:00 BC'
+			fmt.Fprintf(&sb, `AND o.start_time <= '0001-01-01 %s:00'
 		`, *query.StartTime)
 		}
 
 		if query.EndTime != nil {
-			fmt.Fprintf(&sb, `AND o.end_time >= '0001-01-01 %s:00 BC'
+			fmt.Fprintf(&sb, `AND o.end_time >= '0001-01-01 %s:00'
 		`, *query.EndTime)
 		}
 
@@ -96,7 +102,6 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
 
-	log.Print(sb.String())
 	return queryFull(
 		r.querier, ctx, sb.String(),
 		scanPharmacy,
@@ -131,7 +136,7 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 	}
 
 	if query.Longitude != nil && query.Latitude != nil {
-		fmt.Fprintf(&sb, ` AND ST_DWithin(p.coordinate, ST_MakePoint($%d, $%d)::geography, 2500)
+		fmt.Fprintf(&sb, ` AND ST_DWithin(p.coordinate, ST_MakePoint($%d, $%d)::geography, 25000)
 		`, idx, idx+1)
 		idx += 2
 		args = append(args, *query.Longitude, *query.Latitude)
@@ -146,7 +151,7 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 		FROM pharmacy_operations o
 		WHERE o.deleted_at IS NULL
 		AND o.day = '%s'
-		AND o.start_time <= '0001-01-01 %s:00:00 BC')
+		AND o.start_time <= '0001-01-01 %s:00:00')
 		`, time.Format("Monday"), time.Format("15"))
 	}
 
@@ -166,12 +171,12 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 		}
 
 		if query.StartTime != nil {
-			fmt.Fprintf(&sb, `AND o.start_time <= '0001-01-01 %s:00 BC'
+			fmt.Fprintf(&sb, `AND o.start_time <= '0001-01-01 %s:00'
 		`, *query.StartTime)
 		}
 
 		if query.EndTime != nil {
-			fmt.Fprintf(&sb, `AND o.end_time >= '0001-01-01 %s:00 BC'
+			fmt.Fprintf(&sb, `AND o.end_time >= '0001-01-01 %s:00'
 		`, *query.EndTime)
 		}
 
@@ -185,8 +190,6 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 	var totalData int64
 	row := r.querier.QueryRowContext(ctx, sb.String(), args...)
 	err := row.Scan(&totalData)
-
-	log.Print(totalData)
 
 	if err != nil {
 		return domain.PageInfo{}, err
@@ -298,7 +301,7 @@ func (r *pharmacyRepository) UpdateOperation(ctx context.Context, pharmacyOperat
 		SET	day = $1,
 			start_time = $2,
 			end_time = $3,
-			pharmacy_id = $4
+			pharmacy_id = $4,
 			updated_at = now()
 		WHERE id = $5 RETURNING
 	` + pharmacyOperationColumns

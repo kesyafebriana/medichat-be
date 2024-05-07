@@ -57,6 +57,37 @@ func (h *PharmacyHandler) GetPharmacies(ctx *gin.Context) {
 	)
 }
 
+func (h *PharmacyHandler) GetPharmaciesByProductSlug(ctx *gin.Context) {
+	var q dto.PharmacyListQuery
+
+	err := ctx.ShouldBindQuery(&q)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	query, err := q.ToDetails()
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	p, s, pInfo, err := h.pharmacySrv.GetPharmaciesByProductSlug(ctx, query)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewPharmaciesStockResponse(p, s, pInfo)),
+	)
+}
+
 func (h *PharmacyHandler) GetPharmacyBySlug(ctx *gin.Context) {
 	var uri dto.PharmacySlugParams
 
