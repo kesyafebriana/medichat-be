@@ -140,6 +140,10 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		".",
 		opts.PharmacyHandler.GetPharmacies,
 	)
+	pharmacyGroup.GET(
+		"/product",
+		opts.PharmacyHandler.GetPharmaciesByProductSlug,
+	)
 	pharmacyGroup.POST(
 		".",
 		opts.PharmacyManagerAuthenticator,

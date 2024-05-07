@@ -41,6 +41,7 @@ func (h *PharmacyManagerHandler) CreateAccount(ctx *gin.Context) {
 	if err != nil {
 		ctx.Error(apperror.Wrap(err))
 		ctx.Abort()
+		return
 	}
 
 	ctx.JSON(
