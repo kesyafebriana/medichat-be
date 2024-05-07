@@ -15,6 +15,7 @@ type DataRepository interface {
 	GetDistance(ctx context.Context, a, b Coordinate) (float64, error)
 
 	AccountRepository() AccountRepository
+	ChatRepository() ChatRepository
 	ProductRepository() ProductRepository
 	ProductDetailsRepository() ProductDetailsRepository
 	RefreshTokenRepository() RefreshTokenRepository
