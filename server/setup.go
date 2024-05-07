@@ -68,7 +68,7 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 
 	chatGroup.POST("/send", opts.ChatHandler.Chat)
 	chatGroup.PATCH("/close", opts.ChatHandler.CloseRoom)
-	chatGroup.POST("/create",opts.Authenticator, opts.ChatHandler.CreateRoom)
+	chatGroup.POST("/create", opts.Authenticator, opts.ChatHandler.CreateRoom)
 
 	authGroup := apiV1Group.Group("/auth")
 	authGroup.POST(
@@ -129,11 +129,11 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 
 	pharmacyGroup := apiV1Group.Group("/pharmacies")
 	pharmacyGroup.GET(
-		"/",
+		".",
 		opts.PharmacyHandler.GetPharmacies,
 	)
 	pharmacyGroup.POST(
-		"/",
+		".",
 		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyHandler.CreatePharmacy,
 	)
@@ -264,20 +264,20 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	})
 
 	categoryGroup := apiV1Group.Group("/categories")
-	categoryGroup.GET("/", opts.Authenticator, opts.CategoryHandler.GetCategories)
+	categoryGroup.GET(".", opts.CategoryHandler.GetCategories)
+	categoryGroup.GET("/hierarchy", opts.CategoryHandler.GetCategoriesHierarchy)
 	categoryGroup.GET("/:slug", opts.Authenticator, opts.CategoryHandler.GetCategoryBySlug)
-	categoryGroup.GET("/hierarchy", opts.Authenticator, opts.CategoryHandler.GetCategoriesHierarchy)
-	categoryGroup.POST("/", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelOne)
+	categoryGroup.POST(".", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelOne)
 	categoryGroup.POST("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelTwo)
 	categoryGroup.PATCH("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.UpdateCategory)
 	categoryGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.DeleteCategory)
 
 	productGroup := apiV1Group.Group("/product")
-	productGroup.GET("/", opts.Authenticator, opts.ProductHandler.GetProductsFromArea)
-	productGroup.GET("/list", opts.Authenticator, opts.ProductHandler.GetProducts)
+	productGroup.GET(".", opts.Authenticator, opts.ProductHandler.GetProductsFromArea)
+	productGroup.GET("/list", opts.ProductHandler.GetProducts)
 	productGroup.GET("/:slug", opts.Authenticator, opts.ProductHandler.GetProductBySlug)
-	productGroup.POST("/", opts.AdminAuthenticator, opts.ProductHandler.CreateProduct)
-	productGroup.PATCH("/", opts.AdminAuthenticator, opts.ProductHandler.UpdateProduct)
+	productGroup.POST(".", opts.AdminAuthenticator, opts.ProductHandler.CreateProduct)
+	productGroup.PATCH(".", opts.AdminAuthenticator, opts.ProductHandler.UpdateProduct)
 	productGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.ProductHandler.DeleteProduct)
 
 	stockGroup := apiV1Group.Group("/stocks")
