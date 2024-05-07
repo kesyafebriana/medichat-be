@@ -33,7 +33,7 @@ func (h *PharmacyManagerHandler) GetAll(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, dto.NewPharmacyManagersAccountResponse(p))
+	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewPharmacyManagersAccountResponse(p)))
 }
 
 func (h *PharmacyManagerHandler) CreateAccount(ctx *gin.Context) {
