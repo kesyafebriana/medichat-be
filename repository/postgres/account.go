@@ -85,6 +85,22 @@ func (r *accountRepository) IsExistByEmail(
 	)
 }
 
+func (r *accountRepository) GetAllPharmacyManager(
+	ctx context.Context,
+) ([]domain.Account, error) {
+	q := `
+		SELECT ` + accountColumns + `
+		FROM accounts
+		WHERE role = 'pharmacy_manager'
+			AND deleted_at IS NULL
+	`
+
+	return queryFull(
+		r.querier, ctx, q,
+		scanAccountPharmacy,
+	)
+}
+
 func (r *accountRepository) GetByID(
 	ctx context.Context,
 	id int64,

@@ -25,6 +25,17 @@ func NewPharmacyManagerHandler(opts PharmacyManagerHandlerOpts) *PharmacyManager
 	}
 }
 
+func (h *PharmacyManagerHandler) GetAll(ctx *gin.Context) {
+	p, err := h.pharmacyManagerSrv.GetAll(ctx)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.NewPharmacyManagersAccountResponse(p))
+}
+
 func (h *PharmacyManagerHandler) CreateAccount(ctx *gin.Context) {
 	var req dto.AccountRegisterRequest
 
@@ -41,6 +52,7 @@ func (h *PharmacyManagerHandler) CreateAccount(ctx *gin.Context) {
 	if err != nil {
 		ctx.Error(apperror.Wrap(err))
 		ctx.Abort()
+		return
 	}
 
 	ctx.JSON(

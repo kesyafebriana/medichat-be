@@ -37,6 +37,13 @@ var (
 	accountWithCredentialsColumns = " id, email, email_verified, name, photo_url, role, account_type, profile_set, hashed_password "
 )
 
+func scanAccountPharmacy(r RowScanner, p *domain.Account) error {
+	if err := r.Scan(&p.ID, &p.Email, &p.EmailVerified, &p.Name, &p.PhotoURL, &p.Role, &p.AccountType, &p.ProfileSet); err != nil {
+		return err
+	}
+	return nil
+}
+
 func accountScanDests(u *domain.Account) []any {
 	return []any{
 		&u.ID, &u.Email, &u.EmailVerified, &u.Name, &u.PhotoURL, &u.Role, &u.AccountType, &u.ProfileSet,
@@ -257,14 +264,14 @@ func scanSpecialization(r RowScanner, s *domain.Specialization) error {
 }
 
 var (
-	productColumns               = " id, name, product_detail_id, category_id, picture, is_active  "
-	productDetailsColumns        = " id, generic_name, content, manufacturer, description, product_classification, product_form, unit_in_pack, selling_unit, weight, height, length, width  "
+	productColumns        = " id, name, product_detail_id, category_id, picture, is_active  "
+	productDetailsColumns = " id, generic_name, content, manufacturer, description, product_classification, product_form, unit_in_pack, selling_unit, weight, height, length, width  "
 )
 
 func scanProduct(r RowScanner, c *domain.Product) error {
 	var nullPhotoUrl sql.NullString
 	if err := r.Scan(
-		&c.ID, &c.Name, &c.ProductDetailId, &c.ProductCategoryId, &nullPhotoUrl,&c.IsActive,
+		&c.ID, &c.Name, &c.ProductDetailId, &c.ProductCategoryId, &nullPhotoUrl, &c.IsActive,
 	); err != nil {
 		return err
 	}
@@ -274,7 +281,7 @@ func scanProduct(r RowScanner, c *domain.Product) error {
 
 func scanProductDetails(r RowScanner, d *domain.ProductDetails) error {
 	if err := r.Scan(
-		&d.ID, &d.GenericName, &d.Content, &d.Manufacturer, &d.Description,&d.ProductClassification,&d.ProductForm,&d.UnitInPack,&d.SellingUnit,&d.Weight,&d.Height,&d.Length,&d.Width,
+		&d.ID, &d.GenericName, &d.Content, &d.Manufacturer, &d.Description, &d.ProductClassification, &d.ProductForm, &d.UnitInPack, &d.SellingUnit, &d.Weight, &d.Height, &d.Length, &d.Width,
 	); err != nil {
 		return err
 	}

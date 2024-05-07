@@ -28,6 +28,17 @@ func NewPharmacyManagerService(opts PharmacyManagerServiceOpts) *pharmacyManager
 	}
 }
 
+func (s *pharmacyManagerService) GetAll(ctx context.Context) ([]domain.Account, error) {
+	accountRepo := s.dataRepository.AccountRepository()
+
+	p, err := accountRepo.GetAllPharmacyManager(ctx)
+	if err != nil {
+		return []domain.Account{}, apperror.Wrap(err)
+	}
+
+	return p, nil
+}
+
 func (s *pharmacyManagerService) CreateClosure(
 	ctx context.Context,
 	creds domain.AccountRegisterCredentials,

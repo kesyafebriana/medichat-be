@@ -9,10 +9,31 @@ type PharmacyManagerResponse struct {
 	ID int64 `json:"id"`
 }
 
+type PharmacyManagerAccountResponse struct {
+	AccountID  int64  `json:"account_id"`
+	Email      string `json:"email"`
+	Name       string `json:"name"`
+	ProfileSet bool   `json:"profile_set"`
+}
+
 func NewPharmacyManagerResponse(p domain.PharmacyManager) PharmacyManagerResponse {
 	return PharmacyManagerResponse{
 		ID: p.ID,
 	}
+}
+func NewPharmacyManagersAccountResponse(p []domain.Account) []PharmacyManagerAccountResponse {
+	var res []PharmacyManagerAccountResponse
+
+	for _, v := range p {
+		res = append(res, PharmacyManagerAccountResponse{
+			AccountID:  v.ID,
+			Email:      v.Email,
+			Name:       v.Name,
+			ProfileSet: v.ProfileSet,
+		})
+	}
+
+	return res
 }
 
 type PharmacyManagerCreateRequest = MultipartForm[

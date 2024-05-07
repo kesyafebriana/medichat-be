@@ -57,6 +57,7 @@ type AccountRefreshTokensCredentials struct {
 }
 
 type AccountRepository interface {
+	GetAllPharmacyManager(ctx context.Context) ([]Account, error)
 	GetByEmail(ctx context.Context, email string) (Account, error)
 	GetByEmailAndLock(ctx context.Context, email string) (Account, error)
 	GetWithCredentialsByEmail(ctx context.Context, email string) (AccountWithCredentials, error)
