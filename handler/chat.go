@@ -91,7 +91,7 @@ func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
         ctx.Abort()
         return
 	}
-	
+
 	err = h.chatService.CreateRoom(doctorId,ctx)
 	if err!= nil {
 		ctx.Error(apperror.NewBadRequest(err))
@@ -108,6 +108,46 @@ func (h *ChatHandler) CloseRoom(ctx *gin.Context) {
 	roomId := ctx.Query("roomId")
 
 	err := h.chatService.CloseRoom(roomId,ctx)
+	if err!= nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "message sent"})
+
+}
+
+func (h*ChatHandler) CreatePrescription(ctx *gin.Context){
+	var req dto.PharmacyCreateRequest
+
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+	
+}
+
+func (h*ChatHandler) CreateNote(ctx *gin.Context){
+
+	id := ctx.PostForm("user_id")
+
+	userId , err := strconv.Atoi(id)
+	if err!= nil {
+        ctx.Error(apperror.NewBadRequest(err))
+        ctx.Abort()
+        return
+    }
+
+	message := ctx.PostForm("message")
+
+	roomId := ctx.PostForm("room_id")
+
+
+	err = h.chatService.CreateNote(int64(userId),roomId,message,ctx)
+	
 	if err!= nil {
 		ctx.Error(apperror.NewBadRequest(err))
 		ctx.Abort()

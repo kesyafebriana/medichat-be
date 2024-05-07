@@ -1,7 +1,10 @@
 package service
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"html/template"
 	"medichat-be/constants"
 	"medichat-be/domain"
 	"medichat-be/dto"
@@ -11,6 +14,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/gin-gonic/gin"
+	"github.com/pdfcrowd/pdfcrowd-go"
 )
 
 type ChatService interface {
@@ -18,12 +22,15 @@ type ChatService interface {
 	PostFile(req *dto.ChatMessage,roomId string,ctx *gin.Context) (error)
 	CreateRoom(doctorId int,ctx *gin.Context) (error)
 	CloseRoom(roomId string,ctx *gin.Context) (error)
+	CreateNote(userId int64, roomId,message string,ctx *gin.Context) (error)
+	Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin.Context) (error)
 }
 
 type chatService struct {
 	dataRepository domain.DataRepository
 	client  *firestore.Client
 	cloud util.CloudinaryProvider
+	doctorNoteTemplate *template.Template
 }
 
 type ChatServiceOpts struct {
@@ -32,12 +39,157 @@ type ChatServiceOpts struct {
 	Cloud util.CloudinaryProvider
 }
 func NewChatService(opts ChatServiceOpts) *chatService {
+
+
+	doctorNoteTemplate, err := template.ParseFiles("templates/doctor-notes.html")
+	if err != nil {
+		return nil
+	}
+
 	return &chatService{
 		dataRepository: opts.DataRepository,
+		doctorNoteTemplate: doctorNoteTemplate,
 		client: opts.Client,
 		cloud: opts.Cloud,
 	}
 }
+
+func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin.Context) (error) {
+
+	userRepository := u.dataRepository.UserRepository()
+	doctorRepository := u.dataRepository.DoctorRepository()
+
+	doctorId,err := util.GetAccountIDFromContext(ctx);
+	if err!= nil {
+        return err
+    }
+	doctor,err:= doctorRepository.GetByAccountID(ctx,doctorId)
+	if err!= nil {
+        return err
+    }
+	user,err := userRepository.GetByID(ctx,int64(req.UserId))
+	if err!= nil {
+        return err
+    }
+
+	now := time.Now()
+
+	prescription := map[string]interface{}{
+		"userId":req.UserId,
+		"drugs":req.Drugs,
+	}
+
+	json,err := json.Marshal(prescription)
+	if err!= nil {
+        return err
+    }
+
+	colRef := u.client.Collection("rooms");
+	content := map[string]interface{}{
+        "userId": doctor.Account.ID,
+        "userName": user.Account.Name,
+        "message": json,
+        "createdAt": now,
+        "type": "message/prescription",
+	}
+	_,_,err = colRef.Doc(roomId).Collection("chats").Add(ctx, content)
+	if err!= nil {
+        return err
+    }
+	return nil
+}
+
+func (u *chatService) CreateNote(userId int64, roomId,message string,ctx *gin.Context) (error){
+
+	doctorRepository := u.dataRepository.DoctorRepository()
+	userRepository := u.dataRepository.UserRepository()
+
+	user,err := userRepository.GetByID(ctx,userId)
+
+	if (err != nil){
+        return err
+    }
+
+	doctorId, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return err
+
+	}
+
+	doctor,err := doctorRepository.GetByAccountID(ctx,doctorId)
+	if (err != nil){
+		return err
+	}
+
+	nowString := time.Now().Format("02-01-2006 : 03:04:05")
+
+	name := user.Account.Name;
+	dob := user.DateOfBirth.Format("02-01-2006")
+
+	var body bytes.Buffer
+	u.doctorNoteTemplate.Execute(&body, struct {
+		Fullname   		string
+		DateOfBirth     string
+		Date 			string
+		DoctorName 		string
+		DoctorNumber 	string
+		DoctorMessage 	string
+	}{
+		Fullname:   name,
+		DateOfBirth: dob,
+		Date: nowString,
+		DoctorMessage: message,
+		DoctorName: doctor.Account.Name,
+		DoctorNumber: doctor.STR,
+	})
+
+	client := pdfcrowd.NewHtmlToPdfClient("demo", "ce544b6ea52a5621fb9d55f8b542d14d")
+
+	var pdf bytes.Buffer
+
+    err = client.ConvertStringToStream(body.String(),&pdf)
+	if err!= nil {
+        return err
+    }
+
+	fileName := "Doctor."+doctor.Account.Name+"Notes"+user.Account.Name+nowString
+
+	file := bytes.NewReader(pdf.Bytes())
+
+	opts := util.SendFileOpts{
+		Context: ctx,
+		Filename: fileName,
+		Roomid: roomId,
+		File: file,
+	}
+	response, err := u.cloud.SendFile(opts)
+
+	if err!= nil {
+        return err
+    }
+
+	colRef := u.client.Collection("rooms");
+
+	content := map[string]interface{}{
+		"userId": doctor.Account.ID,
+		"userName": doctor.Account.Name,
+		"message": fileName,
+		"url" : response.SecureURL,
+		"createdAt": time.Now(),
+		"type": "message/pdf",
+	}
+	_,_,err = colRef.Doc(roomId).Collection("chats").Add(ctx, content)
+	if err!= nil {
+		return err
+	}
+
+	if err!= nil {
+        return err
+    }
+
+	return nil
+}
+
 
 func (u *chatService) CreateRoom(doctorId int,ctx *gin.Context) (error) {
 

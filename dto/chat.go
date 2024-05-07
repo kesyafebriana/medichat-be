@@ -23,3 +23,13 @@ type ChatMessage struct{
 	UserName string `json:"userName"`
 	File *multipart.FileHeader `json:"file"`
 }
+
+type ChatPrescription struct{
+	UserId int `json:"userId"`
+	Drugs []*ChatPrescriptionDrugs `json:"drugs"`
+}
+
+type ChatPrescriptionDrugs struct {
+	ProductId       string `json:"product_id" binding:"required,no_leading_trailing_space"`
+	Count			string `json:"count" binding:"required,no_leading_trailing_space"`
+}
