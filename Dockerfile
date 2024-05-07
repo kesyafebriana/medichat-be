@@ -7,5 +7,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o medichat-be .
 
 FROM alpine:latest
 COPY --from=builder /app/medichat-be /medichat-be
+COPY ./templates /templates
 EXPOSE 8080
 CMD ["/medichat-be"]

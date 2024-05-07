@@ -167,6 +167,8 @@ type StockRepository interface {
 	AddMutation(ctx context.Context, s StockMutation) (StockMutation, error)
 	UpdateMutation(ctx context.Context, s StockMutation) (StockMutation, error)
 	SoftDeleteMutationByID(ctx context.Context, id int64) error
+
+	GetNearestStockWithProduct(ctx context.Context, targetPharmacyID int64, productID int64, amount int) (Stock, error)
 }
 
 type StockService interface {

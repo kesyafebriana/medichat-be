@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"medichat-be/apperror"
 	"medichat-be/domain"
+	"medichat-be/repository/postgis"
 	"time"
 )
 
@@ -56,6 +57,19 @@ func (r *dataRepository) Sleep(ctx context.Context, duration time.Duration) erro
 	return exec(
 		r.querier, ctx, q,
 		duration.Seconds(),
+	)
+}
+
+func (r *dataRepository) GetDistance(ctx context.Context, a, b domain.Coordinate) (float64, error) {
+	q := `
+		SELECT ST_Distance($1::geography, $2::geography)
+	`
+
+	return queryOne(
+		r.querier, ctx, q,
+		float64ScanDest,
+		postgis.NewPointFromCoordinate(a),
+		postgis.NewPointFromCoordinate(b),
 	)
 }
 
@@ -150,6 +164,18 @@ func (r *dataRepository) ShipmentMethodRepository() domain.ShipmentMethodReposit
 
 func (r *dataRepository) StockRepository() domain.StockRepository {
 	return &stockRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) PaymentRepository() domain.PaymentRepository {
+	return &paymentRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) OrderRepository() domain.OrderRepository {
+	return &orderRepository{
 		querier: r.querier,
 	}
 }

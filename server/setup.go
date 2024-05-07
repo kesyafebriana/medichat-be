@@ -24,6 +24,8 @@ type SetupServerOpts struct {
 
 	ProductHandler *handler.ProductHandler
 	StockHandler   *handler.StockHandler
+	PaymentHandler *handler.PaymentHandler
+	OrderHandler   *handler.OrderHandler
 
 	SessionKey []byte
 
@@ -36,6 +38,12 @@ type SetupServerOpts struct {
 	PharmacyManagerAuthenticator gin.HandlerFunc
 
 	ManagerOrAdminAuthenticator gin.HandlerFunc
+
+	UserOrAdminAuthenticator gin.HandlerFunc
+
+	UserOrManagerAuthenticator gin.HandlerFunc
+
+	UserOrManagerOrAdminAuthenticator gin.HandlerFunc
 
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
@@ -332,6 +340,65 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		"/:id/cancel",
 		opts.PharmacyManagerAuthenticator,
 		opts.StockHandler.CancelTransfer,
+	)
+
+	paymentGroup := apiV1Group.Group("/payments")
+	paymentGroup.GET(
+		".",
+		opts.UserOrAdminAuthenticator,
+		opts.PaymentHandler.ListPayments,
+	)
+	paymentGroup.GET(
+		"/:invoice_number",
+		opts.UserOrAdminAuthenticator,
+		opts.PaymentHandler.GetPaymentByInvoiceNumber,
+	)
+	paymentGroup.POST(
+		"/:invoice_number/upload",
+		opts.UserAuthenticator,
+		opts.PaymentHandler.UploadPayment,
+	)
+	paymentGroup.POST(
+		"/:invoice_number/confirm",
+		opts.AdminAuthenticator,
+		opts.PaymentHandler.ConfirmPayment,
+	)
+
+	orderGroup := apiV1Group.Group("/orders")
+	orderGroup.GET(
+		".",
+		opts.UserOrManagerOrAdminAuthenticator,
+		opts.OrderHandler.ListOrders,
+	)
+	orderGroup.GET(
+		"/:id",
+		opts.UserOrManagerOrAdminAuthenticator,
+		opts.OrderHandler.GetOrderByID,
+	)
+	orderGroup.POST(
+		"/cart-info",
+		opts.UserAuthenticator,
+		opts.OrderHandler.GetCartInfo,
+	)
+	orderGroup.POST(
+		".",
+		opts.UserAuthenticator,
+		opts.OrderHandler.AddOrders,
+	)
+	orderGroup.POST(
+		"/:id/send",
+		opts.PharmacyManagerAuthenticator,
+		opts.OrderHandler.SendOrder,
+	)
+	orderGroup.POST(
+		"/:id/finish",
+		opts.UserAuthenticator,
+		opts.OrderHandler.FinishOrder,
+	)
+	orderGroup.POST(
+		"/:id/cancel",
+		opts.UserOrManagerOrAdminAuthenticator,
+		opts.OrderHandler.CancelOrder,
 	)
 
 	return router

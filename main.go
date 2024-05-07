@@ -90,6 +90,22 @@ func main() {
 		pharmacyManagerAccessProvider,
 	})
 
+	userOrAdminAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+		adminAccessProvider,
+		userAccessProvider,
+	})
+
+	userOrManagerAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+		userAccessProvider,
+		pharmacyManagerAccessProvider,
+	})
+
+	userOrManagerOrAdminAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+		adminAccessProvider,
+		userAccessProvider,
+		pharmacyManagerAccessProvider,
+	})
+
 	refreshProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
 		conf.RefreshSecret,
@@ -214,6 +230,16 @@ func main() {
 		DataRepository: dataRepository,
 	})
 
+	paymentService := service.NewPaymentService(service.PaymentServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
+	orderService := service.NewOrderService(service.OrderServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
 		AccountSrv: accountService,
 		Domain:     conf.WebDomain,
@@ -260,6 +286,14 @@ func main() {
 		StockSrv: stockService,
 	})
 
+	paymentHandler := handler.NewPaymentHandler(handler.PaymentHandlerOpts{
+		PaymentSrv: paymentService,
+	})
+
+	orderHandler := handler.NewOrderHandler(handler.OrderHandlerOpts{
+		OrderSrv: orderService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
@@ -272,6 +306,11 @@ func main() {
 	pharmacyManagerAuthenticator := middleware.Authenticator(pharmacyManagerAccessProvider)
 
 	managerOrAdminAuthenticator := middleware.Authenticator(managerOrAdminAccessProvider)
+
+	UserOrAdminAuthenticator := middleware.Authenticator(userOrAdminAccessProvider)
+
+	userOrManagerAuthenticator := middleware.Authenticator(userOrManagerAccessProvider)
+	userOrManagerOrAdminAuthenticator := middleware.Authenticator(userOrManagerOrAdminAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
 		AccountHandler:         accountHandler,
@@ -287,6 +326,8 @@ func main() {
 		PharmacyHandler:        pharmacyHandler,
 		PharmacyManagerHandler: pharmacyManagerHandler,
 		StockHandler:           stockHandler,
+		PaymentHandler:         paymentHandler,
+		OrderHandler:           orderHandler,
 
 		SessionKey: conf.SessionKey,
 
@@ -301,6 +342,12 @@ func main() {
 		ErrorHandler:                 errorHandler,
 
 		ManagerOrAdminAuthenticator: managerOrAdminAuthenticator,
+
+		UserOrAdminAuthenticator: UserOrAdminAuthenticator,
+
+		UserOrManagerAuthenticator: userOrManagerAuthenticator,
+
+		UserOrManagerOrAdminAuthenticator: userOrManagerOrAdminAuthenticator,
 	})
 
 	srv := &http.Server{
