@@ -141,17 +141,24 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 			}
 			price := stock.Price
 
+			picture := ""
+			if product.Picture != nil {
+				picture = *product.Picture
+			}
+
 			order.Items = append(order.Items, domain.OrderItem{
 				ID:      itemID,
 				OrderID: order.ID,
 				Product: struct {
-					ID   int64
-					Slug string
-					Name string
+					ID       int64
+					Slug     string
+					Name     string
+					PhotoURL string
 				}{
-					ID:   product.ID,
-					Slug: product.Slug,
-					Name: product.Name,
+					ID:       product.ID,
+					Slug:     product.Slug,
+					Name:     product.Name,
+					PhotoURL: picture,
 				},
 				Price:  price,
 				Amount: it.Amount,

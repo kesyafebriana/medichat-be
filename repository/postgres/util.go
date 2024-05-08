@@ -480,7 +480,7 @@ var (
 	selectOrderItemJoined = `
 		SELECT
 			oi.id, oi.order_id,
-			pd.id, pd.slug, pd.name,
+			pd.id, pd.slug, pd.name, pd.picture,
 			oi.price, oi.amount
 		FROM order_items oi
 			JOIN products pd ON oi.product_id = pd.id
@@ -544,7 +544,7 @@ func scanOrderItemJoined(r RowScanner, oi *domain.OrderItem) error {
 	pd := &oi.Product
 	return r.Scan(
 		&oi.ID, &oi.OrderID,
-		&pd.ID, &pd.Slug, &pd.Name,
+		&pd.ID, &pd.Slug, &pd.Name, &pd.PhotoURL,
 		&oi.Price, &oi.Amount,
 	)
 }

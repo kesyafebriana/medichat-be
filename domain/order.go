@@ -55,9 +55,10 @@ type OrderItem struct {
 
 	OrderID int64
 	Product struct {
-		ID   int64
-		Slug string
-		Name string
+		ID       int64
+		Slug     string
+		Name     string
+		PhotoURL string
 	}
 
 	Price  int
