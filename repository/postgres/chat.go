@@ -40,7 +40,7 @@ func (r *chatRepository) AddChat(ctx context.Context, chat domain.Chat) (domain.
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanChats,
-		chat.ID, chat.RoomId, chat.Type, chat.Message, chat.File, chat.UserId, chat.UserName,
+		chat.RoomId, chat.Type, chat.Message, chat.File, chat.UserId, chat.UserName,
 	)
 }
 

@@ -6,7 +6,6 @@ import (
 )
 
 type Chat struct {
-	ID            	int64
 	RoomId 			int64
 	Message 		string
 	File 			string

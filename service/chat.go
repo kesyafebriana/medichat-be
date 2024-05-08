@@ -270,18 +270,26 @@ func (u *chatService) CloseRoom(roomId string,ctx *gin.Context) (error) {
 	colRef := u.client.Collection("rooms");
 
 	_,err := colRef.Doc(roomId).Update(ctx,[]firestore.Update{
-		{Path: "endAt", Value: time.Now()},
+		{Path: "end", Value: time.Now()},
 	})
 	if err!= nil {
         return err
     }
 
 	ss,err := colRef.Doc(roomId).Get(ctx)
+	if err !=nil{
+		return err
+	}
 	data := ss.Data()
+
+	room_id,err := strconv.Atoi(roomId)
+	if (err!=nil){
+		return err
+	}
+
 	for i := 0; i < len(data); i++ {
 		chat:= domain.Chat{
-			ID: data["id"].(int64),
-			RoomId: data["roomId"].(int64),
+			RoomId: int64(room_id),
             Message: data["message"].(string),
             File: data["file"].(string),
             Type: data["type"].(string),
