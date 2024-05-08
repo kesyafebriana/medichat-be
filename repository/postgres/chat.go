@@ -32,9 +32,8 @@ func (r *chatRepository) GetChats(ctx context.Context, roomId int64) ([]domain.C
 
 func (r *chatRepository) AddChat(ctx context.Context, chat domain.Chat) (domain.Chat, error) {
 	q := `
-		INSERT INTO chat_items(+ `+chatsColumns+`)
+		INSERT INTO chat_items(`+chatsColumns+`)
 		VALUES
-
 		($1, $2, $3, $4, $5, $6, $7)
 		`
 	return queryOneFull(
@@ -46,9 +45,9 @@ func (r *chatRepository) AddChat(ctx context.Context, chat domain.Chat) (domain.
 
 func (r *chatRepository) AddRoom(ctx context.Context, UserId int,DoctorId int,EndAt time.Time ) (domain.Room, error) {
 	q := `
-		INSERT INTO chat_rooms(+ `+roomsColumns+`)
+		INSERT INTO chat_rooms(`+roomsColumns+`)
 		VALUES
-		($1, $2, $3,)
+		($1, $2, $3)
 		RETURNING id, user_id, doctor_id, end_at
 		`
 	return queryOneFull(

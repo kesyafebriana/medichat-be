@@ -10,27 +10,40 @@ import (
 )
 
 type SetupServerOpts struct {
-	AccountHandler        *handler.AccountHandler
-	PingHandler           *handler.PingHandler
-	ChatHandler           *handler.ChatHandler
-	GoogleAuthHandler     *handler.OAuth2Handler
-	GoogleHandler         *handler.GoogleHandler
-	CategoryHandler       *handler.CategoryHandler
-	UserHandler           *handler.UserHandler
-	DoctorHandler         *handler.DoctorHandler
-	SpecializationHandler *handler.SpecializationHandler
-		PharmacyHandler       *handler.PharmacyHandler
+	AccountHandler         *handler.AccountHandler
+	PingHandler            *handler.PingHandler
+	ChatHandler            *handler.ChatHandler
+	GoogleAuthHandler      *handler.OAuth2Handler
+	GoogleHandler          *handler.GoogleHandler
+	CategoryHandler        *handler.CategoryHandler
+	UserHandler            *handler.UserHandler
+	DoctorHandler          *handler.DoctorHandler
+	SpecializationHandler  *handler.SpecializationHandler
+	PharmacyHandler        *handler.PharmacyHandler
+	PharmacyManagerHandler *handler.PharmacyManagerHandler
 
-	ProductHandler    *handler.ProductHandler
+	ProductHandler *handler.ProductHandler
+	StockHandler   *handler.StockHandler
+	PaymentHandler *handler.PaymentHandler
+	OrderHandler   *handler.OrderHandler
 
 	SessionKey []byte
 
 	RequestID gin.HandlerFunc
 
-	Authenticator       gin.HandlerFunc
-	AdminAuthenticator  gin.HandlerFunc
-	UserAuthenticator   gin.HandlerFunc
-	DoctorAuthenticator gin.HandlerFunc
+	Authenticator                gin.HandlerFunc
+	AdminAuthenticator           gin.HandlerFunc
+	UserAuthenticator            gin.HandlerFunc
+	DoctorAuthenticator          gin.HandlerFunc
+	PharmacyManagerAuthenticator gin.HandlerFunc
+
+	ManagerOrAdminAuthenticator gin.HandlerFunc
+
+	UserOrAdminAuthenticator gin.HandlerFunc
+
+	UserOrManagerAuthenticator gin.HandlerFunc
+
+	UserOrManagerOrAdminAuthenticator gin.HandlerFunc
 
 	CorsHandler  gin.HandlerFunc
 	Logger       gin.HandlerFunc
@@ -111,13 +124,32 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		opts.AccountHandler.GetProfile,
 	)
 
+	adminGroup := apiV1Group.Group("/admin")
+	adminGroup.POST(
+		"/pharmacy-managers",
+		opts.AdminAuthenticator,
+		opts.PharmacyManagerHandler.CreateAccount,
+	)
+
+	pharmacyManagerGroup := apiV1Group.Group("/managers")
+	pharmacyManagerGroup.POST(
+		".",
+		opts.PharmacyManagerAuthenticator,
+		opts.PharmacyManagerHandler.CreateProfile,
+	)
+
 	pharmacyGroup := apiV1Group.Group("/pharmacies")
 	pharmacyGroup.GET(
-		"/",
+		".",
 		opts.PharmacyHandler.GetPharmacies,
 	)
+	pharmacyGroup.GET(
+		"/product",
+		opts.PharmacyHandler.GetPharmaciesByProductSlug,
+	)
 	pharmacyGroup.POST(
-		"/",
+		".",
+		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyHandler.CreatePharmacy,
 	)
 	pharmacyGroup.GET(
@@ -126,10 +158,12 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	)
 	pharmacyGroup.PUT(
 		"/:slug",
+		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyHandler.UpdatePharmacy,
 	)
 	pharmacyGroup.DELETE(
 		"/:slug",
+		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyHandler.DeletePharmacy,
 	)
 	pharmacyGroup.GET(
@@ -138,7 +172,17 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	)
 	pharmacyGroup.PUT(
 		"/:slug/operations",
+		opts.PharmacyManagerAuthenticator,
 		opts.PharmacyHandler.UpdatePharmacyOperations,
+	)
+	pharmacyGroup.GET(
+		"/:slug/shipments",
+		opts.PharmacyHandler.GetShipmentMethodsBySlug,
+	)
+	pharmacyGroup.PUT(
+		"/:slug/shipments",
+		opts.PharmacyManagerAuthenticator,
+		opts.PharmacyHandler.UpdateShipmentMethodsBySlug,
 	)
 
 	googleGroup := apiV1Group.Group("/google")
@@ -235,21 +279,134 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	})
 
 	categoryGroup := apiV1Group.Group("/categories")
-	categoryGroup.GET("/", opts.Authenticator, opts.CategoryHandler.GetCategories)
+	categoryGroup.GET(".", opts.CategoryHandler.GetCategories)
+	categoryGroup.GET("/hierarchy", opts.CategoryHandler.GetCategoriesHierarchy)
 	categoryGroup.GET("/:slug", opts.Authenticator, opts.CategoryHandler.GetCategoryBySlug)
-	categoryGroup.GET("/hierarchy", opts.Authenticator, opts.CategoryHandler.GetCategoriesHierarchy)
-	categoryGroup.POST("/", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelOne)
+	categoryGroup.POST(".", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelOne)
 	categoryGroup.POST("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.CreateCategoryLevelTwo)
 	categoryGroup.PATCH("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.UpdateCategory)
 	categoryGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.CategoryHandler.DeleteCategory)
 
 	productGroup := apiV1Group.Group("/product")
-	productGroup.GET("/", opts.Authenticator, opts.ProductHandler.GetProductsFromArea)
-	productGroup.GET("/list", opts.Authenticator, opts.ProductHandler.GetProducts)
+	productGroup.GET(".", opts.Authenticator, opts.ProductHandler.GetProductsFromArea)
+	productGroup.GET("/list", opts.ProductHandler.GetProducts)
 	productGroup.GET("/:slug", opts.Authenticator, opts.ProductHandler.GetProductBySlug)
-	productGroup.POST("/", opts.AdminAuthenticator, opts.ProductHandler.CreateProduct)
-	productGroup.PATCH("/", opts.AdminAuthenticator, opts.ProductHandler.UpdateProduct)
+	productGroup.POST(".", opts.AdminAuthenticator, opts.ProductHandler.CreateProduct)
+	productGroup.PATCH(".", opts.AdminAuthenticator, opts.ProductHandler.UpdateProduct)
 	productGroup.DELETE("/:slug", opts.AdminAuthenticator, opts.ProductHandler.DeleteProduct)
+
+	stockGroup := apiV1Group.Group("/stocks")
+	stockGroup.GET(
+		".",
+		opts.ManagerOrAdminAuthenticator,
+		opts.StockHandler.ListStocks,
+	)
+	stockGroup.GET(
+		"/:id",
+		opts.ManagerOrAdminAuthenticator,
+		opts.StockHandler.GetStockByID,
+	)
+	stockGroup.POST(
+		".",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.AddStock,
+	)
+	stockGroup.PATCH(
+		".",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.UpdateStock,
+	)
+	stockGroup.DELETE(
+		"/:id",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.DeleteStock,
+	)
+
+	mutationGroup := stockGroup.Group("/mutations")
+	mutationGroup.GET(
+		".",
+		opts.ManagerOrAdminAuthenticator,
+		opts.StockHandler.ListMutations,
+	)
+	mutationGroup.GET(
+		"/:id",
+		opts.ManagerOrAdminAuthenticator,
+		opts.StockHandler.GetMutationByID,
+	)
+	mutationGroup.POST(
+		".",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.RequestTransfer,
+	)
+	mutationGroup.POST(
+		"/:id/approve",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.ApproveTransfer,
+	)
+	mutationGroup.POST(
+		"/:id/cancel",
+		opts.PharmacyManagerAuthenticator,
+		opts.StockHandler.CancelTransfer,
+	)
+
+	paymentGroup := apiV1Group.Group("/payments")
+	paymentGroup.GET(
+		".",
+		opts.UserOrAdminAuthenticator,
+		opts.PaymentHandler.ListPayments,
+	)
+	paymentGroup.GET(
+		"/:invoice_number",
+		opts.UserOrAdminAuthenticator,
+		opts.PaymentHandler.GetPaymentByInvoiceNumber,
+	)
+	paymentGroup.POST(
+		"/:invoice_number/upload",
+		opts.UserAuthenticator,
+		opts.PaymentHandler.UploadPayment,
+	)
+	paymentGroup.POST(
+		"/:invoice_number/confirm",
+		opts.AdminAuthenticator,
+		opts.PaymentHandler.ConfirmPayment,
+	)
+
+	orderGroup := apiV1Group.Group("/orders")
+	orderGroup.GET(
+		".",
+		opts.UserOrManagerOrAdminAuthenticator,
+		opts.OrderHandler.ListOrders,
+	)
+	orderGroup.GET(
+		"/:id",
+		opts.UserOrManagerOrAdminAuthenticator,
+		opts.OrderHandler.GetOrderByID,
+	)
+	orderGroup.POST(
+		"/cart-info",
+		opts.UserAuthenticator,
+		opts.OrderHandler.GetCartInfo,
+	)
+	orderGroup.POST(
+		".",
+		opts.UserAuthenticator,
+		opts.OrderHandler.AddOrders,
+	)
+	orderGroup.POST(
+		"/:id/send",
+		opts.PharmacyManagerAuthenticator,
+		opts.OrderHandler.SendOrder,
+	)
+	orderGroup.POST(
+		"/:id/finish",
+		opts.UserAuthenticator,
+		opts.OrderHandler.FinishOrder,
+	)
+	orderGroup.POST(
+		"/:id/cancel",
+		opts.UserOrManagerOrAdminAuthenticator,
+		opts.OrderHandler.CancelOrder,
+	)
 
 	return router
 }

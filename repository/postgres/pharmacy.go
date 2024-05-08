@@ -3,10 +3,10 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"log"
 	"medichat-be/domain"
 	"medichat-be/repository/postgis"
 	"strings"
+	"time"
 )
 
 type pharmacyRepository struct {
@@ -21,9 +21,16 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 
 	sb.WriteString(`
 		SELECT ` + pharmacyJoinedColumns + `
-		FROM pharmacies p
+		FROM pharmacies p JOIN stocks as s ON s.pharmacy_id = p.id
 		WHERE p.deleted_at IS NULL
 	`)
+
+	if query.ProductId != nil {
+		fmt.Fprintf(&sb, ` AND s.product_id = $%d 
+		`, idx)
+		idx++
+		args = append(args, *query.ProductId)
+	}
 
 	if query.Name != nil {
 		fmt.Fprintf(&sb, ` AND p.name ILIKE $%d 
@@ -40,13 +47,26 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 	}
 
 	if query.Longitude != nil && query.Latitude != nil {
-		fmt.Fprintf(&sb, ` AND ST_DWithin(p.coordinate, ST_MakePoint($%d, $%d)::geography, 2500)
+		fmt.Fprintf(&sb, ` AND ST_DWithin(p.coordinate, ST_MakePoint($%d, $%d)::geography, 25000)
 		`, idx, idx+1)
 		idx += 2
 		args = append(args, *query.Longitude, *query.Latitude)
 	}
 
-	if query.Day != nil || query.StartTime != nil || query.EndTime != nil {
+	if query.IsOpen != nil && *query.IsOpen {
+		time := time.Now()
+
+		fmt.Fprintf(&sb, `
+		AND p.id IN (
+		SELECT o.pharmacy_id
+		FROM pharmacy_operations o
+		WHERE o.deleted_at IS NULL
+		AND o.day = '%s'
+		AND o.start_time <= '0001-01-01 %s:00')
+		`, time.Format("Monday"), time.Format("15:04"))
+	}
+
+	if (query.Day != nil || query.StartTime != nil || query.EndTime != nil) && query.IsOpen == nil {
 		sb.WriteString(`
 			AND p.id IN (
 			SELECT o.pharmacy_id
@@ -62,12 +82,12 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		}
 
 		if query.StartTime != nil {
-			fmt.Fprintf(&sb, `AND o.start_time <= '0001-01-01 %s:00 BC'
+			fmt.Fprintf(&sb, `AND o.start_time <= '0001-01-01 %s:00'
 		`, *query.StartTime)
 		}
 
 		if query.EndTime != nil {
-			fmt.Fprintf(&sb, `AND o.end_time >= '0001-01-01 %s:00 BC'
+			fmt.Fprintf(&sb, `AND o.end_time >= '0001-01-01 %s:00'
 		`, *query.EndTime)
 		}
 
@@ -116,13 +136,26 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 	}
 
 	if query.Longitude != nil && query.Latitude != nil {
-		fmt.Fprintf(&sb, ` AND ST_DWithin(p.coordinate, ST_MakePoint($%d, $%d)::geography, 2500)
+		fmt.Fprintf(&sb, ` AND ST_DWithin(p.coordinate, ST_MakePoint($%d, $%d)::geography, 25000)
 		`, idx, idx+1)
 		idx += 2
 		args = append(args, *query.Longitude, *query.Latitude)
 	}
 
-	if query.Day != nil || query.StartTime != nil || query.EndTime != nil {
+	if query.IsOpen != nil && *query.IsOpen {
+		time := time.Now()
+
+		fmt.Fprintf(&sb, `
+		AND p.id IN (
+		SELECT o.pharmacy_id
+		FROM pharmacy_operations o
+		WHERE o.deleted_at IS NULL
+		AND o.day = '%s'
+		AND o.start_time <= '0001-01-01 %s:00:00')
+		`, time.Format("Monday"), time.Format("15"))
+	}
+
+	if (query.Day != nil || query.StartTime != nil || query.EndTime != nil) && query.IsOpen == nil {
 		sb.WriteString(`
 			AND p.id IN (
 			SELECT o.pharmacy_id
@@ -138,12 +171,12 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 		}
 
 		if query.StartTime != nil {
-			fmt.Fprintf(&sb, `AND o.start_time <= '0001-01-01 %s:00 BC'
+			fmt.Fprintf(&sb, `AND o.start_time <= '0001-01-01 %s:00'
 		`, *query.StartTime)
 		}
 
 		if query.EndTime != nil {
-			fmt.Fprintf(&sb, `AND o.end_time >= '0001-01-01 %s:00 BC'
+			fmt.Fprintf(&sb, `AND o.end_time >= '0001-01-01 %s:00'
 		`, *query.EndTime)
 		}
 
@@ -154,13 +187,12 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
 
-	log.Print(sb.String())
 	var totalData int64
 	row := r.querier.QueryRowContext(ctx, sb.String(), args...)
 	err := row.Scan(&totalData)
 
 	if err != nil {
-		return domain.PageInfo{}, nil
+		return domain.PageInfo{}, err
 	}
 
 	return domain.PageInfo{
@@ -178,6 +210,18 @@ func (r *pharmacyRepository) GetBySlug(ctx context.Context, slug string) (domain
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanPharmacy, slug,
+	)
+}
+
+func (r *pharmacyRepository) GetByID(ctx context.Context, id int64) (domain.Pharmacy, error) {
+	q := `
+		SELECT ` + pharmacyColumns + `FROM pharmacies
+		WHERE id = $1 AND deleted_at IS NULL
+	`
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		scanPharmacy, id,
 	)
 }
 
@@ -209,6 +253,7 @@ func (r *pharmacyRepository) Update(ctx context.Context, pharmacy domain.Pharmac
 			pharmacist_name = $4,
 			pharmacist_license = $5,
 			pharmacist_phone = $6
+			updated_at = now()
 		WHERE slug = $7 RETURNING
 	` + pharmacyColumns
 
@@ -256,7 +301,8 @@ func (r *pharmacyRepository) UpdateOperation(ctx context.Context, pharmacyOperat
 		SET	day = $1,
 			start_time = $2,
 			end_time = $3,
-			pharmacy_id = $4
+			pharmacy_id = $4,
+			updated_at = now()
 		WHERE id = $5 RETURNING
 	` + pharmacyOperationColumns
 
@@ -306,5 +352,63 @@ func (r *pharmacyRepository) GetPharmacyOperationsByPharmacyIdAndLock(ctx contex
 	return queryFull(
 		r.querier, ctx, q,
 		ScanPharmacyOperation, id,
+	)
+}
+
+func (r *pharmacyRepository) GetShipmentMethodsByPharmacyId(ctx context.Context, id int64) ([]domain.PharmacyShipmentMethods, error) {
+	q := `
+		SELECT ` + PharmacyShipmentMethodColumns + `
+		FROM pharmacy_shipment_methods
+		WHERE deleted_at IS NULL AND pharmacy_id = $1
+	`
+
+	return queryFull(
+		r.querier, ctx, q,
+		ScanPharmacyShipmentMethod,
+		id,
+	)
+}
+
+func (r *pharmacyRepository) GetShipmentMethodsByPharmacyIdAndLock(ctx context.Context, id int64) ([]domain.PharmacyShipmentMethods, error) {
+	q := `
+		SELECT ` + PharmacyShipmentMethodColumns + `
+		FROM pharmacy_shipment_methods
+		WHERE deleted_at IS NULL AND pharmacy_id = $1
+		FOR UPDATE
+	`
+
+	return queryFull(
+		r.querier, ctx, q,
+		ScanPharmacyShipmentMethod,
+		id,
+	)
+}
+
+func (r *pharmacyRepository) AddShipmentMethod(ctx context.Context, pharmacyCourier domain.PharmacyShipmentMethodsCreateDetails) (domain.PharmacyShipmentMethods, error) {
+	q := `
+		INSERT INTO pharmacy_shipment_methods(pharmacy_id, shipment_method_id)
+		VALUES($1, $2)
+		RETURNING
+	` + PharmacyShipmentMethodColumns
+
+	return queryOneFull(
+		r.querier, ctx, q,
+		ScanPharmacyShipmentMethod,
+		pharmacyCourier.PharmacyID,
+		pharmacyCourier.ShipmentMethodID,
+	)
+}
+
+func (r *pharmacyRepository) SoftDeleteShipmentMethodByID(ctx context.Context, id int64) error {
+	q := `
+		UPDATE pharmacy_shipment_methods
+		SET deleted_at = now(),
+			updated_at = now()
+		WHERE id = $1
+	`
+
+	return execOne(
+		r.querier, ctx, q,
+		id,
 	)
 }

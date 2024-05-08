@@ -85,6 +85,27 @@ func main() {
 		pharmacyManagerAccessProvider,
 	})
 
+	managerOrAdminAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+		adminAccessProvider,
+		pharmacyManagerAccessProvider,
+	})
+
+	userOrAdminAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+		adminAccessProvider,
+		userAccessProvider,
+	})
+
+	userOrManagerAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+		userAccessProvider,
+		pharmacyManagerAccessProvider,
+	})
+
+	userOrManagerOrAdminAccessProvider := cryptoutil.NewJWTProviderAny([]cryptoutil.JWTProvider{
+		adminAccessProvider,
+		userAccessProvider,
+		pharmacyManagerAccessProvider,
+	})
+
 	refreshProvider := cryptoutil.NewJWTProviderHS256(
 		conf.JWTIssuer,
 		conf.RefreshSecret,
@@ -193,11 +214,30 @@ func main() {
 
 	productService := service.NewProductService(service.ProductServiceOpts{
 		DataRepository: dataRepository,
-        Cloud:  cld,
+		Cloud:          cld,
 	})
 
 	pharmacyService := service.NewPharmacyService(service.PharmacyServiceOpts{
 		DataRepository: dataRepository,
+	})
+
+	pharmacyManagerService := service.NewPharmacyManagerService(service.PharmacyManagerServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
+	stockService := service.NewStockService(service.StockServiceOpts{
+		DataRepository: dataRepository,
+	})
+
+	paymentService := service.NewPaymentService(service.PaymentServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
+	})
+
+	orderService := service.NewOrderService(service.OrderServiceOpts{
+		DataRepository: dataRepository,
+		CloudProvider:  cld,
 	})
 
 	accountHandler := handler.NewAccountHandler(handler.AccountHandlerOpts{
@@ -238,6 +278,22 @@ func main() {
 	})
 	chatHandler := handler.NewChatHandler(chatService)
 
+	pharmacyManagerHandler := handler.NewPharmacyManagerHandler(handler.PharmacyManagerHandlerOpts{
+		PharmacyManagerSrv: pharmacyManagerService,
+	})
+
+	stockHandler := handler.NewStockHandler(handler.StockHandlerOpts{
+		StockSrv: stockService,
+	})
+
+	paymentHandler := handler.NewPaymentHandler(handler.PaymentHandlerOpts{
+		PaymentSrv: paymentService,
+	})
+
+	orderHandler := handler.NewOrderHandler(handler.OrderHandlerOpts{
+		OrderSrv: orderService,
+	})
+
 	requestIDMid := middleware.RequestIDHandler()
 	loggerMid := middleware.Logger(log)
 	corsHandler := middleware.CorsHandler(conf.FEDomain)
@@ -247,31 +303,51 @@ func main() {
 	adminAuthenticator := middleware.Authenticator(adminAccessProvider)
 	userAuthenticator := middleware.Authenticator(userAccessProvider)
 	doctorAuthenticator := middleware.Authenticator(doctorAccessProvider)
+	pharmacyManagerAuthenticator := middleware.Authenticator(pharmacyManagerAccessProvider)
+
+	managerOrAdminAuthenticator := middleware.Authenticator(managerOrAdminAccessProvider)
+
+	UserOrAdminAuthenticator := middleware.Authenticator(userOrAdminAccessProvider)
+
+	userOrManagerAuthenticator := middleware.Authenticator(userOrManagerAccessProvider)
+	userOrManagerOrAdminAuthenticator := middleware.Authenticator(userOrManagerOrAdminAccessProvider)
 
 	router := server.SetupServer(server.SetupServerOpts{
-		AccountHandler:        accountHandler,
-		ChatHandler:           chatHandler,
-		PingHandler:           pingHandler,
-		GoogleAuthHandler:     googleAuthHandler,
-		GoogleHandler:         googleHandler,
-		UserHandler:           userHandler,
-		DoctorHandler:         doctorHandler,
-		SpecializationHandler: specializationHandler,
-		CategoryHandler:       categoryHandler,
-
-		ProductHandler: productHandler,
-		PharmacyHandler:       pharmacyHandler,
+		AccountHandler:         accountHandler,
+		ChatHandler:            chatHandler,
+		PingHandler:            pingHandler,
+		GoogleAuthHandler:      googleAuthHandler,
+		GoogleHandler:          googleHandler,
+		UserHandler:            userHandler,
+		DoctorHandler:          doctorHandler,
+		SpecializationHandler:  specializationHandler,
+		CategoryHandler:        categoryHandler,
+		ProductHandler:         productHandler,
+		PharmacyHandler:        pharmacyHandler,
+		PharmacyManagerHandler: pharmacyManagerHandler,
+		StockHandler:           stockHandler,
+		PaymentHandler:         paymentHandler,
+		OrderHandler:           orderHandler,
 
 		SessionKey: conf.SessionKey,
 
-		RequestID:           requestIDMid,
-		Authenticator:       authenticator,
-		AdminAuthenticator:  adminAuthenticator,
-		UserAuthenticator:   userAuthenticator,
-		DoctorAuthenticator: doctorAuthenticator,
-		CorsHandler:         corsHandler,
-		Logger:              loggerMid,
-		ErrorHandler:        errorHandler,
+		RequestID:                    requestIDMid,
+		Authenticator:                authenticator,
+		AdminAuthenticator:           adminAuthenticator,
+		UserAuthenticator:            userAuthenticator,
+		DoctorAuthenticator:          doctorAuthenticator,
+		PharmacyManagerAuthenticator: pharmacyManagerAuthenticator,
+		CorsHandler:                  corsHandler,
+		Logger:                       loggerMid,
+		ErrorHandler:                 errorHandler,
+
+		ManagerOrAdminAuthenticator: managerOrAdminAuthenticator,
+
+		UserOrAdminAuthenticator: UserOrAdminAuthenticator,
+
+		UserOrManagerAuthenticator: userOrManagerAuthenticator,
+
+		UserOrManagerOrAdminAuthenticator: userOrManagerOrAdminAuthenticator,
 	})
 
 	srv := &http.Server{

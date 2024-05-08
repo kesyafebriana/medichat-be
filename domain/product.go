@@ -117,7 +117,7 @@ type ProductDetailsRepository interface {
 }
 
 type ProductService interface {
-	GetProduct(ctx context.Context, slug string) (Product, error)
+	GetProduct(ctx context.Context, slug string) (Product, ProductDetails, error)
 	GetProducts(ctx context.Context, query ProductsQuery) ([]Product, PageInfo, error)
 	GetProductLocation(ctx context.Context, query ProductsQuery) ([]Product, PageInfo, error)
 	CreateProduct(ctx context.Context, request AddProductRequest, file *multipart.File) (Product, error)

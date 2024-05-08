@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"medichat-be/apperror"
+	"medichat-be/domain"
 )
 
 func query[T any](
@@ -133,4 +134,29 @@ func execOne(
 	}
 
 	return nil
+}
+
+func getPageInfo(
+	querier Querier,
+	ctx context.Context,
+	query string,
+	page int,
+	limit int,
+	args ...any,
+) (domain.PageInfo, error) {
+	count, err := queryOne(
+		querier, ctx, query,
+		int64ScanDest,
+		args...,
+	)
+	if err != nil {
+		return domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	return domain.PageInfo{
+		CurrentPage:  page,
+		ItemsPerPage: limit,
+		ItemCount:    count,
+		PageCount:    int((count - 1 + int64(limit)) / int64(limit)),
+	}, nil
 }

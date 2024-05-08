@@ -29,13 +29,13 @@ func (r *doctorRepository) List(
 	`)
 
 	if det.SpecializationID != nil {
-		fmt.Fprintf(&sb, ` AND d.specialization_id $%d 
+		fmt.Fprintf(&sb, ` AND d.specialization_id = $%d 
 		`, idx)
 		idx++
 		args = append(args, *det.SpecializationID)
 	}
 	if det.Name != nil {
-		fmt.Fprintf(&sb, ` AND a.name ILIKE $%d 
+		fmt.Fprintf(&sb, ` AND a.name ILIKE '%%' || $%d || '%%' 
 		`, idx)
 		idx++
 		args = append(args, *det.Name)

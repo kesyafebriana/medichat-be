@@ -93,8 +93,9 @@ type AccountResponse struct {
 	AccountType   string `json:"account_type"`
 	ProfileSet    bool   `json:"profile_set"`
 
-	User   *UserResponse   `json:"user,omitempty"`
-	Doctor *DoctorResponse `json:"doctor,omitempty"`
+	User            *UserResponse            `json:"user,omitempty"`
+	Doctor          *DoctorResponse          `json:"doctor,omitempty"`
+	PharmacyManager *PharmacyManagerResponse `json:"pharmacy_manager,omitempty"`
 }
 
 func NewAccountResponse(u domain.Account) AccountResponse {
@@ -123,6 +124,11 @@ func NewProfileResponse(a any) AccountResponse {
 		ret := NewAccountResponse(v.Account)
 		d := NewDoctorResponse(v)
 		ret.Doctor = &d
+		return ret
+	case domain.PharmacyManager:
+		ret := NewAccountResponse(v.Account)
+		p := NewPharmacyManagerResponse(v)
+		ret.PharmacyManager = &p
 		return ret
 	default:
 		return AccountResponse{}
