@@ -12,6 +12,7 @@ type Chat struct {
 	Type 			string
 	UserId 			int
 	UserName 		string
+	CreatedAt		time.Time
 }
 
 type Room struct{

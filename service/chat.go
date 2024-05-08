@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"medichat-be/constants"
 	"medichat-be/domain"
@@ -90,6 +91,7 @@ func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin
         "userName": user.Account.Name,
         "message": string(json),
         "createdAt": now,
+		"url" : "",
         "type": "message/prescription",
 	}
 	_,_,err = colRef.Doc(roomId).Collection("chats").Add(ctx, content)
@@ -288,15 +290,30 @@ func (u *chatService) CloseRoom(roomId string,ctx *gin.Context) (error) {
 
 	for i := 0; i < len(docs); i++ {
 		data := docs[i].Data()
+
+
+		userId:= int(data["userId"].(int64))
+
+		if err !=nil {
+			return err
+		}
+
+		fmt.Println(data)
+
 		chat:= domain.Chat{
 			RoomId: int64(room_id),
             Message: data["message"].(string),
-            File: data["file"].(string),
+            File: data["url"].(string),
             Type: data["type"].(string),
-            UserId: data["userId"].(int),
+            UserId: userId,
 			UserName: data["userName"].(string),
+			CreatedAt: data["createdAt"].(time.Time),
 		}
-		chatRepository.AddChat(ctx, chat)
+
+		_,err := chatRepository.AddChat(ctx, chat)
+		if err!= nil {
+            return err
+        }
 	}
 	if err!= nil {
         return err
