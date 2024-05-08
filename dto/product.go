@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"log"
 	"medichat-be/constants"
 	"medichat-be/domain"
 	"mime/multipart"
@@ -108,6 +109,8 @@ func (q *GetProductsQuery) ToProductsQuery() domain.ProductsQuery {
 	var sortBy string = q.SortBy
 	var sortType string = q.SortType
 
+	log.Println(sortBy, sortType)
+
 	if q.Page == 0 || q.Limit == 0 {
 		page = 1
 	}
@@ -120,11 +123,6 @@ func (q *GetProductsQuery) ToProductsQuery() domain.ProductsQuery {
 		sortType = constants.SortAsc
 	}
 
-	if sortType == constants.SortAsc {
-		sortType = constants.SortDesc
-	} else {
-		sortType = constants.SortAsc
-	}
 	return domain.ProductsQuery{
 		Page:      page,
 		Limit:     q.Limit,
