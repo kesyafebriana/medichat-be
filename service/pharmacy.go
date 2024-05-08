@@ -83,19 +83,19 @@ func (s *pharmacyService) GetPharmacies(ctx context.Context, query domain.Pharma
 	return p, pageInfo, nil
 }
 
-func (s *pharmacyService) GetPharmaciesByProductSlug(ctx context.Context, query domain.PharmaciesQuery) ([]domain.Pharmacy, domain.Stock, domain.PageInfo, error) {
+func (s *pharmacyService) GetPharmaciesByProductSlug(ctx context.Context, query domain.PharmaciesQuery) ([]domain.PharmacyStock, domain.PageInfo, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 	shipmentRepo := s.dataRepository.ShipmentMethodRepository()
 	productRepo := s.dataRepository.ProductRepository()
 	stockRepo := s.dataRepository.StockRepository()
 
 	var product domain.Product
-	var stock domain.Stock
+	var newP []domain.PharmacyStock
 
 	if query.ProductSlug != nil {
 		productDet, err := productRepo.GetBySlug(ctx, *query.ProductSlug)
 		if err != nil {
-			return []domain.Pharmacy{}, domain.Stock{}, domain.PageInfo{}, apperror.Wrap(err)
+			return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
 		}
 
 		query.ProductId = &productDet.ID
@@ -104,24 +104,36 @@ func (s *pharmacyService) GetPharmaciesByProductSlug(ctx context.Context, query 
 
 	p, err := pharmacyRepo.GetPharmacies(ctx, query)
 	if err != nil {
-		return []domain.Pharmacy{}, domain.Stock{}, domain.PageInfo{}, apperror.Wrap(err)
+		return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
 	}
 
 	for i, v := range p {
+		newP = append(newP, domain.PharmacyStock{
+			ID: v.ID,
+			ManagerID: v.ManagerID,
+			Slug: v.Slug,
+			Name: v.Name,
+			Address: v.Address,
+			Coordinate: v.Coordinate,
+			PharmacistName: v.PharmacistName,
+			PharmacistLicense: v.PharmacistLicense,
+			PharmacistPhone: v.PharmacistPhone,
+		})
+
 		o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, v.ID)
 		if err != nil {
-			return []domain.Pharmacy{}, domain.Stock{}, domain.PageInfo{}, apperror.Wrap(err)
+			return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
 		}
 
 		sh, err := pharmacyRepo.GetShipmentMethodsByPharmacyId(ctx, v.ID)
 		if err != nil {
-			return []domain.Pharmacy{}, domain.Stock{}, domain.PageInfo{}, apperror.Wrap(err)
+			return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
 		}
 
 		for i, x := range sh {
 			shDetail, err := shipmentRepo.GetShipmentMethodById(ctx, x.ShipmentMethodID)
 			if err != nil {
-				return []domain.Pharmacy{}, domain.Stock{}, domain.PageInfo{}, apperror.Wrap(err)
+				return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
 			}
 
 			sh[i].Name = &shDetail.Name
@@ -129,17 +141,17 @@ func (s *pharmacyService) GetPharmaciesByProductSlug(ctx context.Context, query 
 
 		s, err := stockRepo.GetByPharmacyAndProduct(ctx, v.ID, product.ID)
 		if err != nil {
-			return []domain.Pharmacy{}, domain.Stock{}, domain.PageInfo{}, apperror.Wrap(err)
+			return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
 		}
 
-		p[i].PharmacyOperations = o
-		p[i].PharmacyShipmentMethods = sh
-		stock = s
+		newP[i].PharmacyOperations = o
+		newP[i].PharmacyShipmentMethods = sh
+		newP[i].Stock = s	
 	}
 
 	pageInfo, err := pharmacyRepo.GetPageInfo(ctx, query)
 	if err != nil {
-		return []domain.Pharmacy{}, domain.Stock{}, domain.PageInfo{}, apperror.Wrap(err)
+		return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
 	}
 
 	pageInfo.ItemsPerPage = int(query.Limit)
@@ -153,7 +165,7 @@ func (s *pharmacyService) GetPharmaciesByProductSlug(ctx context.Context, query 
 		pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
 	}
 
-	return p, stock, pageInfo, nil
+	return newP, pageInfo, nil
 }
 
 func (s *pharmacyService) GetPharmacyBySlug(ctx context.Context, slug string) (domain.Pharmacy, error) {

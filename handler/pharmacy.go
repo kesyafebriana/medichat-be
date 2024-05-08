@@ -74,7 +74,7 @@ func (h *PharmacyHandler) GetPharmaciesByProductSlug(ctx *gin.Context) {
 		return
 	}
 
-	p, s, pInfo, err := h.pharmacySrv.GetPharmaciesByProductSlug(ctx, query)
+	p, pInfo, err := h.pharmacySrv.GetPharmaciesByProductSlug(ctx, query)
 
 	if err != nil {
 		ctx.Error(err)
@@ -84,7 +84,7 @@ func (h *PharmacyHandler) GetPharmaciesByProductSlug(ctx *gin.Context) {
 
 	ctx.JSON(
 		http.StatusOK,
-		dto.ResponseOk(dto.NewPharmaciesStockResponse(p, s, pInfo)),
+		dto.ResponseOk(dto.NewPharmaciesStockResponse(p, pInfo)),
 	)
 }
 

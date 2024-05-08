@@ -41,6 +41,21 @@ type Pharmacy struct {
 	PharmacyShipmentMethods []PharmacyShipmentMethods
 }
 
+type PharmacyStock struct {
+	ID                      int64
+	ManagerID               int64
+	Slug                    string
+	Name                    string
+	Address                 string
+	Coordinate              Coordinate
+	PharmacistName          string
+	PharmacistLicense       string
+	PharmacistPhone         string
+	PharmacyOperations      []PharmacyOperations
+	PharmacyShipmentMethods []PharmacyShipmentMethods
+	Stock                   Stock
+}
+
 type PharmacyCreateDetails struct {
 	Name                    string
 	ManagerID               int64
@@ -139,7 +154,7 @@ type PharmacyRepository interface {
 type PharmacyService interface {
 	CreatePharmacy(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
 	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, PageInfo, error)
-	GetPharmaciesByProductSlug(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, Stock, PageInfo, error)
+	GetPharmaciesByProductSlug(ctx context.Context, query PharmaciesQuery) ([]PharmacyStock, PageInfo, error)
 	GetPharmacyBySlug(ctx context.Context, slug string) (Pharmacy, error)
 	UpdatePharmacy(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
 	DeletePharmacyBySlug(ctx context.Context, slug string) error

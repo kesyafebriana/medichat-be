@@ -263,7 +263,7 @@ func scanSpecialization(r RowScanner, s *domain.Specialization) error {
 
 var (
 	productColumns        = " id, name, slug, product_detail_id, category_id, picture, is_active  "
-	productDetailsColumns = " id, generic_name, content, manufacturer, description, product_classification, product_form, unit_in_pack, selling_unit, weight, height, length, width  "
+	productDetailsColumns = " id, generic_name, composition, content, manufacturer, description, product_classification, product_form, unit_in_pack, selling_unit, weight, height, length, width  "
 )
 
 func scanProduct(r RowScanner, c *domain.Product) error {
@@ -279,7 +279,7 @@ func scanProduct(r RowScanner, c *domain.Product) error {
 
 func scanProductDetails(r RowScanner, d *domain.ProductDetails) error {
 	if err := r.Scan(
-		&d.ID, &d.GenericName, &d.Content, &d.Manufacturer, &d.Description, &d.ProductClassification, &d.ProductForm, &d.UnitInPack, &d.SellingUnit, &d.Weight, &d.Height, &d.Length, &d.Width,
+		&d.ID, &d.GenericName, &d.Composition, &d.Content, &d.Manufacturer, &d.Description, &d.ProductClassification, &d.ProductForm, &d.UnitInPack, &d.SellingUnit, &d.Weight, &d.Height, &d.Length, &d.Width,
 	); err != nil {
 		return err
 	}

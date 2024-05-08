@@ -20,15 +20,29 @@ type PharmacyResponse struct {
 	PharmacyShipmentMethods []PharmacyShipmentMethodResponse `json:"pharmacy_shipment_methods"`
 }
 
+type PharmacyResponseWithStock struct {
+	ID                      int64                            `json:"id"`
+	Name                    string                           `json:"name"`
+	Slug                    string                           `json:"slug"`
+	ManagerID               int64                            `json:"manager_id"`
+	Address                 string                           `json:"address"`
+	Coordinate              CoordinateDTO                    `json:"coordinate"`
+	PharmacistName          string                           `json:"pharmacist_name"`
+	PharmacistLicense       string                           `json:"pharmacist_license"`
+	PharmacistPhone         string                           `json:"pharmacist_phone"`
+	PharmacyOperations      []PharmacyOperationResponse      `json:"pharmacy_operations"`
+	PharmacyShipmentMethods []PharmacyShipmentMethodResponse `json:"pharmacy_shipment_methods"`
+	StockInfo               StockResponse                    `json:"stock"`
+}
+
 type PharmaciesResponse struct {
-	Pharmacies []PharmacyResponse
-	PageInfo   PageInfoResponse
+	Pharmacies []PharmacyResponse `json:"pharmacies"`
+	PageInfo   PageInfoResponse   `json:"page_info"`
 }
 
 type PharmaciesStockResponse struct {
-	Pharmacies []PharmacyResponse
-	Stock      StockResponse
-	PageInfo   PageInfoResponse
+	Pharmacies []PharmacyResponseWithStock `json:"pharmacies"`
+	PageInfo   PageInfoResponse            `json:"page_info"`
 }
 
 type PharmacySlugParams struct {
@@ -51,6 +65,23 @@ func NewPharmacyResponse(pharmacy domain.Pharmacy) PharmacyResponse {
 	}
 }
 
+func NewPharmacyWithStockResponse(pharmacy domain.PharmacyStock) PharmacyResponseWithStock {
+	return PharmacyResponseWithStock{
+		ID:                      pharmacy.ID,
+		ManagerID:               pharmacy.ManagerID,
+		Slug:                    pharmacy.Slug,
+		Name:                    pharmacy.Name,
+		Address:                 pharmacy.Address,
+		Coordinate:              CoordinateDTO(pharmacy.Coordinate),
+		PharmacistName:          pharmacy.PharmacistName,
+		PharmacistLicense:       pharmacy.PharmacistLicense,
+		PharmacistPhone:         pharmacy.PharmacistLicense,
+		PharmacyOperations:      util.MapSlice(pharmacy.PharmacyOperations, NewPharmacyOperationResponse),
+		PharmacyShipmentMethods: util.MapSlice(pharmacy.PharmacyShipmentMethods, NewPharmacyShipmentMethodResponse),
+		StockInfo:               NewStockResponse(pharmacy.Stock),
+	}
+}
+
 func NewPharmaciesResponse(pharmacy []domain.Pharmacy, pageInfo domain.PageInfo) PharmaciesResponse {
 	var res PharmaciesResponse
 
@@ -63,15 +94,14 @@ func NewPharmaciesResponse(pharmacy []domain.Pharmacy, pageInfo domain.PageInfo)
 	return res
 }
 
-func NewPharmaciesStockResponse(pharmacy []domain.Pharmacy, stock domain.Stock, pageInfo domain.PageInfo) PharmaciesStockResponse {
+func NewPharmaciesStockResponse(pharmacy []domain.PharmacyStock, pageInfo domain.PageInfo) PharmaciesStockResponse {
 	var res PharmaciesStockResponse
 
 	for _, v := range pharmacy {
-		res.Pharmacies = append(res.Pharmacies, NewPharmacyResponse(v))
+		res.Pharmacies = append(res.Pharmacies, NewPharmacyWithStockResponse(v))
 	}
 
 	res.PageInfo = NewPageInfoResponse(pageInfo)
-	res.Stock = NewStockResponse(stock)
 
 	return res
 }
