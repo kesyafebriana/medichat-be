@@ -276,18 +276,18 @@ func (u *chatService) CloseRoom(roomId string,ctx *gin.Context) (error) {
         return err
     }
 
-	ss,err := colRef.Doc(roomId).Get(ctx)
+	docs,err := colRef.Doc(roomId).Collection("chats").Documents(ctx).GetAll()
 	if err !=nil{
 		return err
 	}
-	data := ss.Data()
 
 	room_id,err := strconv.Atoi(roomId)
 	if (err!=nil){
 		return err
 	}
 
-	for i := 0; i < len(data); i++ {
+	for i := 0; i < len(docs); i++ {
+		data := docs[i].Data()
 		chat:= domain.Chat{
 			RoomId: int64(room_id),
             Message: data["message"].(string),
