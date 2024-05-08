@@ -61,17 +61,17 @@ func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin
 
 	doctorId,err := util.GetAccountIDFromContext(ctx);
 	if err!= nil {
-        return err
+		return err
     }
 	doctor,err:= doctorRepository.GetByAccountID(ctx,doctorId)
 	if err!= nil {
-        return err
+		return err
     }
+
 	user,err := userRepository.GetByID(ctx,int64(req.UserId))
 	if err!= nil {
         return err
     }
-
 	now := time.Now()
 
 	prescription := map[string]interface{}{
@@ -88,7 +88,7 @@ func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin
 	content := map[string]interface{}{
         "userId": doctor.Account.ID,
         "userName": user.Account.Name,
-        "message": json,
+        "message": string(json),
         "createdAt": now,
         "type": "message/prescription",
 	}

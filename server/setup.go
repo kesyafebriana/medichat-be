@@ -65,6 +65,7 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 	chatGroup.PATCH("/close", opts.ChatHandler.CloseRoom)
 	chatGroup.POST("/create",opts.Authenticator, opts.ChatHandler.CreateRoom)
 	chatGroup.POST("/note",opts.DoctorAuthenticator, opts.ChatHandler.CreateNote)
+	chatGroup.POST("/prescribe",opts.DoctorAuthenticator, opts.ChatHandler.CreatePrescription)
 
 
 	authGroup := apiV1Group.Group("/auth")

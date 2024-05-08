@@ -30,6 +30,7 @@ type ChatPrescription struct{
 }
 
 type ChatPrescriptionDrugs struct {
-	ProductId       string `json:"product_id" binding:"required,no_leading_trailing_space"`
-	Count			string `json:"count" binding:"required,no_leading_trailing_space"`
+	ProductId       int `json:"product_id" binding:"required,no_leading_trailing_space"`
+	Count			int `json:"count" binding:"required,no_leading_trailing_space"`
+	Direction		string `json:"direction" binding:"required,no_leading_trailing_space"`
 }

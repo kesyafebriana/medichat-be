@@ -119,8 +119,11 @@ func (h *ChatHandler) CloseRoom(ctx *gin.Context) {
 }
 
 func (h*ChatHandler) CreatePrescription(ctx *gin.Context){
-	var req dto.PharmacyCreateRequest
+	roomId := ctx.Query("roomId")
+	var req dto.ChatPrescription
 
+	
+	
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.Error(apperror.NewBadRequest(err))
@@ -128,6 +131,14 @@ func (h*ChatHandler) CreatePrescription(ctx *gin.Context){
 		return
 	}
 	
+
+	err = h.chatService.Prescribe(&req,roomId,ctx)
+	if err!= nil {
+        ctx.Error(apperror.NewBadRequest(err))
+        ctx.Abort()
+        return
+    }
+	ctx.JSON(http.StatusOK, gin.H{"message": "message sent"})
 }
 
 func (h*ChatHandler) CreateNote(ctx *gin.Context){
