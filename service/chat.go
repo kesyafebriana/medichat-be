@@ -59,6 +59,7 @@ func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin
 
 	userRepository := u.dataRepository.UserRepository()
 	doctorRepository := u.dataRepository.DoctorRepository()
+	productRepository := u.dataRepository.ProductRepository()
 
 	doctorId,err := util.GetAccountIDFromContext(ctx);
 	if err!= nil {
@@ -75,9 +76,26 @@ func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin
     }
 	now := time.Now()
 
+	var drugs []map[string]interface{}
+
+	for i := 0; i < len(req.Drugs); i++ {
+		prod,err:= productRepository.GetById(ctx,int64(req.Drugs[i].ProductId))
+		if err!= nil {
+            return err
+        }
+		drugs = append(drugs, map[string]interface{}{
+			"id": req.Drugs[i].ProductId,
+			"name": prod.Name,
+            "count": req.Drugs[i].Count,
+            "direction": req.Drugs[i].Direction,
+            "picture": prod.Picture,
+		})
+	}
+
+
 	prescription := map[string]interface{}{
 		"userId":req.UserId,
-		"drugs":req.Drugs,
+		"drugs":drugs,
 	}
 
 	json,err := json.Marshal(prescription)
