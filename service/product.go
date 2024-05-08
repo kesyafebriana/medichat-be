@@ -34,13 +34,13 @@ func (s *productService) CreateProduct(ctx context.Context, request domain.AddPr
 	categoryRepo := s.dataRepository.CategoryRepository()
 	detailRepo := s.dataRepository.ProductDetailsRepository()
 
-	product:= domain.Product{}
+	product := domain.Product{}
 
 	product.IsActive = true
 	product.Name = strings.TrimSpace(strings.ToLower(request.Name))
 	product.Slug = util.GenerateSlug(request.Name)
 
-	product.KeyWord = product.Name + " " + request.Manufacturer + " "+request.Composition
+	product.KeyWord = product.Name + " " + request.Manufacturer + " " + request.Composition
 
 	p, err := productRepo.GetByName(ctx, product.Name)
 	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
@@ -51,7 +51,7 @@ func (s *productService) CreateProduct(ctx context.Context, request domain.AddPr
 		return domain.Product{}, apperror.NewAlreadyExists("product")
 	}
 
-	cat,err := categoryRepo.GetById(ctx,request.ProductCategoryId)
+	cat, err := categoryRepo.GetById(ctx, request.ProductCategoryId)
 	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
 		return domain.Product{}, apperror.Wrap(err)
 	}
@@ -66,29 +66,29 @@ func (s *productService) CreateProduct(ctx context.Context, request domain.AddPr
 	}
 
 	detail := domain.ProductDetails{
-		GenericName: request.GenericName,
-		Content: request.Content,
-		Manufacturer: request.Manufacturer,
-		Composition: request.Composition,
-		Description: request.Description,
+		GenericName:           request.GenericName,
+		Content:               request.Content,
+		Manufacturer:          request.Manufacturer,
+		Composition:           request.Composition,
+		Description:           request.Description,
 		ProductClassification: request.ProductClassification,
-		ProductForm: request.ProductForm,
-		UnitInPack: request.UnitInPack,
-		SellingUnit: request.SellingUnit,
-		Weight: request.Weight,
-		Height: request.Height,
-		Length: request.Length,
-		Width: request.Width,
+		ProductForm:           request.ProductForm,
+		UnitInPack:            request.UnitInPack,
+		SellingUnit:           request.SellingUnit,
+		Weight:                request.Weight,
+		Height:                request.Height,
+		Length:                request.Length,
+		Width:                 request.Width,
 	}
 
-	det,err:= detailRepo.Add(ctx,detail);
+	det, err := detailRepo.Add(ctx, detail)
 	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
 		return domain.Product{}, apperror.Wrap(err)
 	}
 
-	product.ProductDetailId = det.ID;
+	product.ProductDetailId = det.ID
 
-	prod,err := productRepo.Add(ctx,product)
+	prod, err := productRepo.Add(ctx, product)
 	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
 		return domain.Product{}, apperror.Wrap(err)
 	}
@@ -100,15 +100,21 @@ func (s *productService) CreateProduct(ctx context.Context, request domain.AddPr
 	return prod, nil
 }
 
-func (s *productService) GetProduct(ctx context.Context, slug string) (domain.Product, error) {
+func (s *productService) GetProduct(ctx context.Context, slug string) (domain.Product, domain.ProductDetails, error) {
 	productRepo := s.dataRepository.ProductRepository()
+	productDetailRepo := s.dataRepository.ProductDetailsRepository()
 
 	products, err := productRepo.GetBySlug(ctx, slug)
 	if err != nil {
-		return domain.Product{}, apperror.Wrap(err)
+		return domain.Product{}, domain.ProductDetails{}, apperror.Wrap(err)
 	}
 
-	return products, nil
+	productDetail, err := productDetailRepo.GetById(ctx, products.ProductDetailId)
+	if err != nil {
+		return domain.Product{}, domain.ProductDetails{}, apperror.Wrap(err)
+	}
+
+	return products, productDetail, nil
 }
 
 func (s *productService) GetProductLocation(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, domain.PageInfo, error) {
@@ -118,7 +124,6 @@ func (s *productService) GetProductLocation(ctx context.Context, query domain.Pr
 	if err != nil {
 		return nil, domain.PageInfo{}, apperror.Wrap(err)
 	}
-
 
 	pageInfo, err := productRepo.GetPageInfoFromArea(ctx, query)
 	if err != nil {
@@ -195,15 +200,15 @@ func (s *productService) UpdateProduct(ctx context.Context, slug string, request
 	}
 
 	detailId := prod.ProductDetailId
-	detail,err:= detailRepo.GetById(ctx,detailId);
-	if err !=nil{
+	detail, err := detailRepo.GetById(ctx, detailId)
+	if err != nil {
 		if apperror.IsErrorCode(err, apperror.CodeNotFound) {
-            return domain.Product{}, apperror.NewEntityNotFound(fmt.Sprintf("products with slug %s", slug))
-        }
-        return domain.Product{}, apperror.Wrap(err)
+			return domain.Product{}, apperror.NewEntityNotFound(fmt.Sprintf("products with slug %s", slug))
+		}
+		return domain.Product{}, apperror.Wrap(err)
 	}
 
-	prod.Name = strings.TrimSpace(strings.ToLower(request.Name));
+	prod.Name = strings.TrimSpace(strings.ToLower(request.Name))
 
 	if file != nil {
 		res, err := s.cloud.UploadImage(ctx, *file, uploader.UploadParams{})
@@ -212,7 +217,7 @@ func (s *productService) UpdateProduct(ctx context.Context, slug string, request
 		}
 	}
 
-	prod.KeyWord = prod.Name +" "+ detail.GenericName
+	prod.KeyWord = prod.Name + " " + detail.GenericName
 	prod.Slug = util.GenerateSlug(prod.Name)
 
 	detail.GenericName = request.GenericName
@@ -227,14 +232,14 @@ func (s *productService) UpdateProduct(ctx context.Context, slug string, request
 	detail.Height = request.Height
 	detail.Length = request.Length
 	detail.Width = request.Width
-	updatedDetail,err:= detailRepo.Update(ctx,detail);
+	updatedDetail, err := detailRepo.Update(ctx, detail)
 	if err != nil {
-        return domain.Product{}, apperror.Wrap(err)
-    }
+		return domain.Product{}, apperror.Wrap(err)
+	}
 	prod.ProductDetailId = updatedDetail.ID
 	updatedProduct, err := productRepo.Update(ctx, prod)
 	if err != nil {
-        return domain.Product{}, apperror.Wrap(err)
-    }
+		return domain.Product{}, apperror.Wrap(err)
+	}
 	return updatedProduct, nil
 }
