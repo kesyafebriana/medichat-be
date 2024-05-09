@@ -9,6 +9,7 @@ const (
 	PharmacySortById        = "id"
 	PharmacySortByName      = "name"
 	PharmacySortByManagerId = "manager"
+	PharmacySortByDistance = "distance"
 )
 
 type PharmacyShipmentMethods struct {

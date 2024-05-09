@@ -288,13 +288,13 @@ func scanProductDetails(r RowScanner, d *domain.ProductDetails) error {
 }
 
 var (
-	chatsColumns = " id, chat_room_id, type, message, file, user_id, user_name  "
-	roomsColumns = " user_id, doctor_id, end_at  "
+	chatsColumns        = " chat_room_id, type, message, file, user_id, user_name, created_at  "
+	roomsColumns        = " user_id, doctor_id, end_at  "
 )
 
 func scanChats(r RowScanner, c *domain.Chat) error {
 	if err := r.Scan(
-		&c.ID, &c.RoomId, &c.Type, &c.Message, &c.File, &c.UserId, &c.UserName,
+		&c.RoomId,  &c.Type, &c.Message, &c.File, &c.UserId, &c.UserName,&c.CreatedAt,
 	); err != nil {
 		return err
 	}
