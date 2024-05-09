@@ -89,6 +89,7 @@ func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin
             "count": req.Drugs[i].Count,
             "direction": req.Drugs[i].Direction,
             "picture": prod.Picture,
+			"slug":prod.Slug,
 		})
 	}
 
