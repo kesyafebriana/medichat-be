@@ -115,6 +115,11 @@ func SetupServer(opts SetupServerOpts) *gin.Engine {
 		opts.AdminAuthenticator,
 		opts.PharmacyManagerHandler.CreateAccount,
 	)
+	adminGroup.DELETE(
+		"/pharmacy-managers/:id",
+		opts.AdminAuthenticator,
+		opts.PharmacyManagerHandler.DeleteAccount,
+	)
 	adminGroup.GET(
 		"/pharmacy-managers",
 		opts.AdminAuthenticator,

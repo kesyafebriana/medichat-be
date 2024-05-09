@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"log"
 	"medichat-be/apperror"
 	"medichat-be/constants"
 	"medichat-be/domain"
@@ -28,10 +27,10 @@ func NewPharmacyManagerService(opts PharmacyManagerServiceOpts) *pharmacyManager
 	}
 }
 
-func (s *pharmacyManagerService) GetAll(ctx context.Context) ([]domain.Account, error) {
+func (s *pharmacyManagerService) GetAll(ctx context.Context, query domain.PharmacyManagerQuery) ([]domain.Account, error) {
 	accountRepo := s.dataRepository.AccountRepository()
 
-	p, err := accountRepo.GetAllPharmacyManager(ctx)
+	p, err := accountRepo.GetAllPharmacyManager(ctx, query)
 	if err != nil {
 		return []domain.Account{}, apperror.Wrap(err)
 	}
@@ -47,7 +46,6 @@ func (s *pharmacyManagerService) CreateClosure(
 		accountRepo := dr.AccountRepository()
 
 		accountID, err := util.GetAccountIDFromContext(ctx)
-		log.Print(accountID)
 		if err != nil {
 			return domain.Account{}, apperror.Wrap(err)
 		}
@@ -160,4 +158,31 @@ func (s *pharmacyManagerService) CreateProfilePharmacyManager(
 		ctx,
 		s.CreateProfileClosure(ctx, p),
 	)
+}
+
+func (s *pharmacyManagerService) DeletePharmacyManager(
+	ctx context.Context,
+	id int64,
+) error {
+	accountRepo := s.dataRepository.AccountRepository()
+	pharmacyManagerRepo := s.dataRepository.PharmacyManagerRepository()
+
+	exist, err := pharmacyManagerRepo.IsExistByAccountID(ctx, id)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	if exist {
+		err = pharmacyManagerRepo.DeleteByAccountId(ctx, id)
+		if err != nil {
+			return apperror.Wrap(err)
+		}
+	}
+
+	err = accountRepo.SoftDeleteById(ctx, id)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	return nil
 }

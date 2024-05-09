@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"log"
 	"medichat-be/domain"
 	"medichat-be/repository/postgis"
 	"strings"
@@ -96,7 +95,6 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
 
-	log.Print(sb.String())
 	return queryFull(
 		r.querier, ctx, sb.String(),
 		scanPharmacy,
@@ -185,8 +183,6 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 	var totalData int64
 	row := r.querier.QueryRowContext(ctx, sb.String(), args...)
 	err := row.Scan(&totalData)
-
-	log.Print(totalData)
 
 	if err != nil {
 		return domain.PageInfo{}, err
