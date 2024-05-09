@@ -94,7 +94,8 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		sb.WriteString(`)`)
 	}
 
-
+	sb.WriteString(`GROUP BY p.id`)
+	
 	if query.SortBy == domain.PharmacySortByName {
 		fmt.Fprintf(&sb, " ORDER BY %s %s", query.SortBy, query.SortType)
 	}
