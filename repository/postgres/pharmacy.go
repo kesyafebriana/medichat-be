@@ -19,11 +19,21 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 	var idx = 1
 	offset := (query.Page - 1) * query.Limit
 
-	sb.WriteString(`
-		SELECT ` + pharmacyJoinedColumns + `
-		FROM pharmacies p JOIN stocks as s ON s.pharmacy_id = p.id
-		WHERE p.deleted_at IS NULL
-	`)
+	if query.Longitude != nil && query.Latitude != nil {
+		sb.WriteString(`
+			SELECT ` + pharmacyJoinedColumns + `, p.coordinate <-> $1
+			FROM pharmacies p JOIN stocks as s ON s.pharmacy_id = p.id
+			WHERE p.deleted_at IS NULL
+		`)
+		idx = 2
+		args = append(args, postgis.NewPoint(*query.Longitude, *query.Latitude))
+	} else {
+		sb.WriteString(`
+			SELECT ` + pharmacyJoinedColumns + `
+			FROM pharmacies p JOIN stocks as s ON s.pharmacy_id = p.id
+			WHERE p.deleted_at IS NULL
+		`)
+	}
 
 	if query.ProductId != nil {
 		fmt.Fprintf(&sb, ` AND s.product_id = $%d 
@@ -94,23 +104,26 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		sb.WriteString(`)`)
 	}
 
-
 	if query.SortBy == domain.PharmacySortByName {
 		fmt.Fprintf(&sb, " ORDER BY %s %s", query.SortBy, query.SortType)
 	}
 
-	if query.SortBy == domain.PharmacySortByDistance && query.Latitude!=nil && query.Longitude!=nil{
-		fmt.Fprintf(&sb, " ORDER BY p.coordinate <-> ST_MakePoint(%f, %f)::geometry",*query.Longitude, *query.Latitude)
+	if query.SortBy == domain.PharmacySortByDistance && query.Latitude != nil && query.Longitude != nil {
+		fmt.Fprintf(&sb, " ORDER BY p.coordinate <-> ST_MakePoint(%f, %f)::geometry", *query.Longitude, *query.Latitude)
 	}
 
 	if query.Limit != 0 {
 		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
 
+	scanner := scanPharmacy
+	if query.Longitude != nil && query.Latitude != nil {
+		scanner = scanPharmacyWithDistance
+	}
 
 	return queryFull(
 		r.querier, ctx, sb.String(),
-		scanPharmacy,
+		scanner,
 		args...,
 	)
 }

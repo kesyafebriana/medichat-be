@@ -109,15 +109,17 @@ func (s *pharmacyService) GetPharmaciesByProductSlug(ctx context.Context, query 
 
 	for i, v := range p {
 		newP = append(newP, domain.PharmacyStock{
-			ID: v.ID,
-			ManagerID: v.ManagerID,
-			Slug: v.Slug,
-			Name: v.Name,
-			Address: v.Address,
-			Coordinate: v.Coordinate,
-			PharmacistName: v.PharmacistName,
+			ID:                v.ID,
+			ManagerID:         v.ManagerID,
+			Slug:              v.Slug,
+			Name:              v.Name,
+			Address:           v.Address,
+			Coordinate:        v.Coordinate,
+			PharmacistName:    v.PharmacistName,
 			PharmacistLicense: v.PharmacistLicense,
-			PharmacistPhone: v.PharmacistPhone,
+			PharmacistPhone:   v.PharmacistPhone,
+
+			Distance: v.Distance,
 		})
 
 		o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, v.ID)
@@ -146,7 +148,7 @@ func (s *pharmacyService) GetPharmaciesByProductSlug(ctx context.Context, query 
 
 		newP[i].PharmacyOperations = o
 		newP[i].PharmacyShipmentMethods = sh
-		newP[i].Stock = s	
+		newP[i].Stock = s
 	}
 
 	pageInfo, err := pharmacyRepo.GetPageInfo(ctx, query)
