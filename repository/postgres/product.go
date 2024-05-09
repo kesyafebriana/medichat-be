@@ -116,6 +116,11 @@ func (r *productRepository) GetProducts(ctx context.Context, query domain.Produc
 		args["name"] = query.Term
 	}
 
+	if query.CategoryID != nil {
+		sb.WriteString(` AND p.category_id = @categoryID `)
+		args["categoryID"] = *query.CategoryID
+	}
+
 	if query.SortBy != domain.CategorySortByParent {
 		fmt.Fprintf(&sb, " ORDER BY %s %s", query.SortBy, query.SortType)
 	}
@@ -188,8 +193,14 @@ func (r *productRepository) GetPageInfo(ctx context.Context, query domain.Produc
 	`)
 
 	if query.Term != "" {
-		sb.WriteString(` AND c.name ILIKE '%' || @name || '%' `)
+		sb.WriteString(` AND (c.keyword ILIKE '%' || @name || '%' `)
+		sb.WriteString(` OR c.name ILIKE '%' || @name || '%') `)
 		args["name"] = query.Term
+	}
+
+	if query.CategoryID != nil {
+		sb.WriteString(` AND c.category_id = @categoryID `)
+		args["categoryID"] = *query.CategoryID
 	}
 
 	var totalData int64
