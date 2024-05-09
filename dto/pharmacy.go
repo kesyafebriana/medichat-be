@@ -83,7 +83,10 @@ func NewPharmacyWithStockResponse(pharmacy domain.PharmacyStock) PharmacyRespons
 }
 
 func NewPharmaciesResponse(pharmacy []domain.Pharmacy, pageInfo domain.PageInfo) PharmaciesResponse {
-	var res PharmaciesResponse
+	res := PharmaciesResponse{
+		Pharmacies: []PharmacyResponse{},
+		PageInfo:   PageInfoResponse{},
+	}
 
 	for _, v := range pharmacy {
 		res.Pharmacies = append(res.Pharmacies, NewPharmacyResponse(v))
