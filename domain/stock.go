@@ -16,7 +16,7 @@ const (
 	StockSortByProductName  = "product_name"
 	StockSortByPharmacyName = "pharmacy_name"
 	StockSortByPrice        = "price"
-	StockSortByAmount       = "stock"
+	StockSortByAmount       = "amount"
 
 	StockSortBySourcePharmacyName = "source_pharmacy_name"
 	StockSortByTargetPharmacyName = "target_pharmacy_name"
