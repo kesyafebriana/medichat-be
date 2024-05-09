@@ -12,7 +12,7 @@ type PaymentResponse struct {
 		ID   int64  `json:"id"`
 		Name string `json:"name,omitempty"`
 	} `json:"user"`
-	FileURL     *string `json:"file_url"`
+	FileURL     *string `json:"file_url,omitempty"`
 	IsConfirmed bool    `json:"is_confirmed"`
 	Amount      int     `json:"amount"`
 }

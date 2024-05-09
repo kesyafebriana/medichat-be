@@ -62,7 +62,7 @@ func NewOrderResponse(o domain.Order) OrderResponse {
 			ID   int64  "json:\"id\""
 			Name string "json:\"name\""
 		}(o.ShipmentMethod),
-		Address:     "",
+		Address:     o.Address,
 		Coordinate:  CoordinateDTO(o.Coordinate),
 		NItems:      o.NItems,
 		Subtotal:    o.Subtotal,
