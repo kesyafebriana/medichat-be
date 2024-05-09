@@ -6,13 +6,13 @@ import (
 )
 
 type Chat struct {
-	ID            	int64
 	RoomId 			int64
 	Message 		string
 	File 			string
 	Type 			string
 	UserId 			int
 	UserName 		string
+	CreatedAt		time.Time
 }
 
 type Room struct{

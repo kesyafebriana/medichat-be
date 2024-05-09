@@ -24,7 +24,7 @@ type SendFileOpts struct {
 	Context  context.Context
 	Filename string `json:"filename"`
 	Roomid   string `json:"roomid"`
-	File     multipart.File
+	File     interface{}
 }
 
 func NewCloudinarylProvider() (*cloudinaryProviderImpl, error) {

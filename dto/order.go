@@ -14,9 +14,10 @@ type OrderResponse struct {
 		Name string `json:"name"`
 	} `json:"user"`
 	Pharmacy struct {
-		ID   int64  `json:"id"`
-		Slug string `json:"slug"`
-		Name string `json:"name"`
+		ID        int64  `json:"id"`
+		Slug      string `json:"slug"`
+		Name      string `json:"name"`
+		ManagerID int64  `json:"manager_id"`
 	} `json:"pharmacy"`
 	Payment struct {
 		ID            int64  `json:"id"`
@@ -50,9 +51,10 @@ func NewOrderResponse(o domain.Order) OrderResponse {
 			Name string "json:\"name\""
 		}(o.User),
 		Pharmacy: struct {
-			ID   int64  "json:\"id\""
-			Slug string "json:\"slug\""
-			Name string "json:\"name\""
+			ID        int64  "json:\"id\""
+			Slug      string "json:\"slug\""
+			Name      string "json:\"name\""
+			ManagerID int64  `json:"manager_id"`
 		}(o.Pharmacy),
 		Payment: struct {
 			ID            int64  "json:\"id\""
@@ -79,9 +81,10 @@ type OrderItemResponse struct {
 	ID int64 `json:"id"`
 
 	Product struct {
-		ID   int64  `json:"id"`
-		Slug string `json:"slug"`
-		Name string `json:"name"`
+		ID       int64  `json:"id"`
+		Slug     string `json:"slug"`
+		Name     string `json:"name"`
+		PhotoURL string `json:"photo_url"`
 	} `json:"product"`
 
 	Price  int `json:"price"`
@@ -92,13 +95,15 @@ func NewOrderItemResponse(oi domain.OrderItem) OrderItemResponse {
 	return OrderItemResponse{
 		ID: oi.ID,
 		Product: struct {
-			ID   int64  "json:\"id\""
-			Slug string "json:\"slug\""
-			Name string "json:\"name\""
+			ID       int64  "json:\"id\""
+			Slug     string "json:\"slug\""
+			Name     string "json:\"name\""
+			PhotoURL string `json:"photo_url"`
 		}{
-			ID:   oi.Product.ID,
-			Slug: oi.Product.Slug,
-			Name: oi.Product.Name,
+			ID:       oi.Product.ID,
+			Slug:     oi.Product.Slug,
+			Name:     oi.Product.Name,
+			PhotoURL: oi.Product.PhotoURL,
 		},
 		Price:  oi.Price,
 		Amount: oi.Amount,

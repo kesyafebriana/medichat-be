@@ -35,11 +35,12 @@ func (r *chatRepository) AddChat(ctx context.Context, chat domain.Chat) (domain.
 		INSERT INTO chat_items(`+chatsColumns+`)
 		VALUES
 		($1, $2, $3, $4, $5, $6, $7)
-		`
+		Returning `+chatsColumns
+		
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanChats,
-		chat.ID, chat.RoomId, chat.Type, chat.Message, chat.File, chat.UserId, chat.UserName,
+		chat.RoomId, chat.Type, chat.Message, chat.File, chat.UserId, chat.UserName, chat.CreatedAt,
 	)
 }
 
