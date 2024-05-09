@@ -26,6 +26,37 @@ func NewPharmacyHandler(opts PharmacyHandlerOpts) *PharmacyHandler {
 	}
 }
 
+func (h *PharmacyHandler) GetOwnPharmacies(ctx *gin.Context) {
+	var q dto.PharmacyListQuery
+
+	err := ctx.ShouldBindQuery(&q)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	query, err := q.ToDetails()
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	p, pInfo, err := h.pharmacySrv.GetOwnPharmacies(ctx, query)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(dto.NewPharmaciesResponse(p, pInfo)),
+	)
+}
+
 func (h *PharmacyHandler) GetPharmacies(ctx *gin.Context) {
 	var q dto.PharmacyListQuery
 
