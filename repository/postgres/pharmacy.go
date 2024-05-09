@@ -94,13 +94,19 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		sb.WriteString(`)`)
 	}
 
+
 	if query.SortBy == domain.PharmacySortByName {
 		fmt.Fprintf(&sb, " ORDER BY %s %s", query.SortBy, query.SortType)
+	}
+
+	if query.SortBy == domain.PharmacySortByDistance && query.Latitude!=nil && query.Longitude!=nil{
+		fmt.Fprintf(&sb, " ORDER BY p.coordinate <-> ST_MakePoint(%f, %f)::geometry",*query.Longitude, *query.Latitude)
 	}
 
 	if query.Limit != 0 {
 		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
+
 
 	return queryFull(
 		r.querier, ctx, sb.String(),
