@@ -284,6 +284,7 @@ func PharmacyShipmentMethodRequestToDetails(p PharmacyShipmentMethodUpdateReques
 type PharmacyListQuery struct {
 	ManagerID   *int64   `form:"manager_id"`
 	Name        *string  `form:"name"`
+	Term        *string  `form:"term"`
 	Day         *string  `form:"day"`
 	StartTime   *string  `form:"start_time"`
 	EndTime     *string  `form:"end_time"`
@@ -300,6 +301,7 @@ type PharmacyListQuery struct {
 func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
 	query := domain.PharmaciesQuery{
 		Name:        p.Name,
+		Term:        p.Term,
 		Day:         p.Day,
 		ManagerID:   p.ManagerID,
 		Longitude:   p.Longitude,
