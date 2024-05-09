@@ -450,7 +450,7 @@ var (
 		SELECT
 			o.id, 
 			u.id, a.name,
-			ph.id, ph.slug, ph.name,
+			ph.id, ph.slug, ph.name, ph.manager_id,
 			py.id, py.invoice_number,
 			sm.id, sm.name,
 			o.address, o.coordinate, 
@@ -517,7 +517,7 @@ func scanOrderJoined(r RowScanner, o *domain.Order) error {
 	if err := r.Scan(
 		&o.ID,
 		&u.ID, &u.Name,
-		&ph.ID, &ph.Slug, &ph.Name,
+		&ph.ID, &ph.Slug, &ph.Name, &ph.ManagerID,
 		&py.ID, &py.InvoiceNumber,
 		&sm.ID, &sm.Name,
 		&o.Address, &point,

@@ -22,9 +22,10 @@ type Order struct {
 		Name string
 	}
 	Pharmacy struct {
-		ID   int64
-		Slug string
-		Name string
+		ID        int64
+		Slug      string
+		Name      string
+		ManagerID int64
 	}
 	Payment struct {
 		ID            int64

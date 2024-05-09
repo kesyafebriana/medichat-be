@@ -14,9 +14,10 @@ type OrderResponse struct {
 		Name string `json:"name"`
 	} `json:"user"`
 	Pharmacy struct {
-		ID   int64  `json:"id"`
-		Slug string `json:"slug"`
-		Name string `json:"name"`
+		ID        int64  `json:"id"`
+		Slug      string `json:"slug"`
+		Name      string `json:"name"`
+		ManagerID int64  `json:"manager_id"`
 	} `json:"pharmacy"`
 	Payment struct {
 		ID            int64  `json:"id"`
@@ -50,9 +51,10 @@ func NewOrderResponse(o domain.Order) OrderResponse {
 			Name string "json:\"name\""
 		}(o.User),
 		Pharmacy: struct {
-			ID   int64  "json:\"id\""
-			Slug string "json:\"slug\""
-			Name string "json:\"name\""
+			ID        int64  "json:\"id\""
+			Slug      string "json:\"slug\""
+			Name      string "json:\"name\""
+			ManagerID int64  `json:"manager_id"`
 		}(o.Pharmacy),
 		Payment: struct {
 			ID            int64  "json:\"id\""
