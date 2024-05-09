@@ -100,21 +100,29 @@ func (s *productService) CreateProduct(ctx context.Context, request domain.AddPr
 	return prod, nil
 }
 
-func (s *productService) GetProduct(ctx context.Context, slug string) (domain.Product, domain.ProductDetails, error) {
+func (s *productService) GetProduct(ctx context.Context, slug string) (domain.Product, domain.ProductDetails, domain.CategoryWithParentName, error) {
 	productRepo := s.dataRepository.ProductRepository()
 	productDetailRepo := s.dataRepository.ProductDetailsRepository()
+	categoryRepo := s.dataRepository.CategoryRepository()
 
 	products, err := productRepo.GetBySlug(ctx, slug)
 	if err != nil {
-		return domain.Product{}, domain.ProductDetails{}, apperror.Wrap(err)
+		return domain.Product{}, domain.ProductDetails{}, domain.CategoryWithParentName{}, apperror.Wrap(err)
 	}
 
 	productDetail, err := productDetailRepo.GetById(ctx, products.ProductDetailId)
 	if err != nil {
-		return domain.Product{}, domain.ProductDetails{}, apperror.Wrap(err)
+		return domain.Product{}, domain.ProductDetails{}, domain.CategoryWithParentName{}, apperror.Wrap(err)
 	}
 
-	return products, productDetail, nil
+	c, err := categoryRepo.GetById(ctx, products.ProductCategoryId)
+	if err != nil {
+		return domain.Product{}, domain.ProductDetails{}, domain.CategoryWithParentName{}, apperror.Wrap(err)
+	}
+
+	category, err := categoryRepo.GetBySlugWithParentName(ctx, c.Slug)
+
+	return products, productDetail, category, nil
 }
 
 func (s *productService) GetProductLocation(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, domain.PageInfo, error) {
