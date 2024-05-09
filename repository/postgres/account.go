@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"log"
 	"medichat-be/apperror"
 	"medichat-be/domain"
 	"strings"
@@ -125,6 +126,41 @@ func (r *accountRepository) GetAllPharmacyManager(
 		scanAccountPharmacy,
 		args,
 	)
+}
+
+func (r *accountRepository) GetPageInfo(
+	ctx context.Context,
+	query domain.PharmacyManagerQuery,
+) (domain.PageInfo, error) {
+	sb := strings.Builder{}
+	args := pgx.NamedArgs{}
+
+	sb.WriteString(`
+	SELECT COUNT(*) as totalData 
+	FROM accounts
+	WHERE role = 'pharmacy_manager'
+		AND deleted_at IS NULL
+	`)
+
+	sb.WriteString(` AND name ILIKE '%' || @name || '%' `)
+	args["name"] = query.Term
+
+	if query.ProfileSet != nil {
+		sb.WriteString(` AND profile_set = @profileSet `)
+		args["profileSet"] = *query.ProfileSet
+	}
+
+	var totalData int64
+	row := r.querier.QueryRowContext(ctx, sb.String(), args)
+	row.Scan(&totalData)
+
+	log.Print(sb.String())
+	log.Print(totalData)
+
+	return domain.PageInfo{
+		CurrentPage: int(query.Page),
+		ItemCount:   totalData,
+	}, nil
 }
 
 func (r *accountRepository) GetByID(

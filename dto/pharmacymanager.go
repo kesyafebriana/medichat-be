@@ -43,6 +43,18 @@ func NewPharmacyManagersAccountResponse(p []domain.Account) []PharmacyManagerAcc
 	return res
 }
 
+type PharmacyManagersResponse struct {
+	PharmacyManagers []PharmacyManagerAccountResponse `json:"pharmacy_managers"`
+	PageInfo         PageInfoResponse                 `json:"page_info"`
+}
+
+func NewPharmacyManagersWithPage(p []domain.Account, pI domain.PageInfo) PharmacyManagersResponse {
+	return PharmacyManagersResponse{
+		PharmacyManagers: NewPharmacyManagersAccountResponse(p),
+		PageInfo:         NewPageInfoResponse(pI),
+	}
+}
+
 type PharmacyManagerCreateRequest = MultipartForm[
 	struct {
 		Photo *multipart.FileHeader `form:"photo" binding:"omitempty,content_type=image/png"`

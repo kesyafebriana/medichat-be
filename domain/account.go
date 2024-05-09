@@ -62,6 +62,7 @@ type AccountRepository interface {
 	GetByEmailAndLock(ctx context.Context, email string) (Account, error)
 	GetWithCredentialsByEmail(ctx context.Context, email string) (AccountWithCredentials, error)
 	IsExistByEmail(ctx context.Context, email string) (bool, error)
+	GetPageInfo(ctx context.Context, query PharmacyManagerQuery) (PageInfo, error)
 
 	GetByID(ctx context.Context, id int64) (Account, error)
 	GetByIDAndLock(ctx context.Context, id int64) (Account, error)

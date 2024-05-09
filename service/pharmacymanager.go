@@ -27,15 +27,31 @@ func NewPharmacyManagerService(opts PharmacyManagerServiceOpts) *pharmacyManager
 	}
 }
 
-func (s *pharmacyManagerService) GetAll(ctx context.Context, query domain.PharmacyManagerQuery) ([]domain.Account, error) {
+func (s *pharmacyManagerService) GetAll(ctx context.Context, query domain.PharmacyManagerQuery) ([]domain.Account, domain.PageInfo, error) {
 	accountRepo := s.dataRepository.AccountRepository()
 
 	p, err := accountRepo.GetAllPharmacyManager(ctx, query)
 	if err != nil {
-		return []domain.Account{}, apperror.Wrap(err)
+		return []domain.Account{}, domain.PageInfo{}, apperror.Wrap(err)
 	}
 
-	return p, nil
+	pageInfo, err := accountRepo.GetPageInfo(ctx, query)
+	if err != nil {
+		return []domain.Account{}, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	pageInfo.ItemsPerPage = int(query.Limit)
+	if query.Limit == 0 {
+		pageInfo.ItemsPerPage = len(p)
+	}
+
+	if pageInfo.ItemsPerPage == 0 {
+		pageInfo.PageCount = 0
+	} else {
+		pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
+	}
+
+	return p, pageInfo, nil
 }
 
 func (s *pharmacyManagerService) CreateClosure(

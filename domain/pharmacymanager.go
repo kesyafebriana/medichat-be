@@ -45,6 +45,6 @@ type PharmacyManagerRepository interface {
 type PharmacyManagerService interface {
 	CreatePharmacyManager(ctx context.Context, creds AccountRegisterCredentials) (Account, error)
 	CreateProfilePharmacyManager(ctx context.Context, p PharmacyManagerCreateDetails) (PharmacyManager, error)
-	GetAll(ctx context.Context, query PharmacyManagerQuery) ([]Account, error)
+	GetAll(ctx context.Context, query PharmacyManagerQuery) ([]Account, PageInfo, error)
 	DeletePharmacyManager(ctx context.Context, id int64) error
 }

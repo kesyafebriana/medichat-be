@@ -35,14 +35,14 @@ func (h *PharmacyManagerHandler) GetAll(ctx *gin.Context) {
 		return
 	}
 
-	p, err := h.pharmacyManagerSrv.GetAll(ctx, query.ToPharmacyManagerQuery())
+	p, pI, err := h.pharmacyManagerSrv.GetAll(ctx, query.ToPharmacyManagerQuery())
 	if err != nil {
 		ctx.Error(apperror.Wrap(err))
 		ctx.Abort()
 		return
 	}
 
-	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewPharmacyManagersAccountResponse(p)))
+	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewPharmacyManagersWithPage(p, pI)))
 }
 
 func (h *PharmacyManagerHandler) CreateAccount(ctx *gin.Context) {
