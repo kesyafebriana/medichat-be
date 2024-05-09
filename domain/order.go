@@ -7,7 +7,7 @@ import (
 
 const (
 	OrderStatusWaitingPayment      = "waiting for payment"
-	OrderStatusWaitingConfirmation = "Waiting for confirmation"
+	OrderStatusWaitingConfirmation = "waiting for confirmation"
 	OrderStatusProcessing          = "processing"
 	OrderStatusSent                = "sent"
 	OrderStatusFinished            = "finished"
