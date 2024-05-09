@@ -81,8 +81,8 @@ func (r *productRepository) GetPageInfoFromArea(ctx context.Context, query domai
 
 
 	if query.Term != "" {
-		fmt.Fprintf(&sb,`AND c.name ILIKE $%d`,idx)
-		args = append(args, query.Term)
+		fmt.Fprintf(&sb,`AND p.name ILIKE $%d`,idx)
+		args = append(args, "%"+query.Term+"%")
 		idx += 1
 	}
 
@@ -113,8 +113,7 @@ func (r *productRepository) GetProducts(ctx context.Context, query domain.Produc
 	`)
 
 	if query.Term != "" {
-		sb.WriteString(` AND c.keyword ILIKE '%' || @name || '%' `)
-		args["name"] = query.Term
+		fmt.Fprintf(&sb, " AND p.keyword ILIKE '%s'", "%"+query.Term+"%")
 	}
 
 	if query.SortBy != domain.CategorySortByParent {
@@ -124,6 +123,7 @@ func (r *productRepository) GetProducts(ctx context.Context, query domain.Produc
 	if query.Limit != 0 {
 		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
+
 
 	return queryFull(
 		r.querier, ctx, sb.String(),

@@ -121,8 +121,6 @@ func (h*ChatHandler) CreatePrescription(ctx *gin.Context){
 	roomId := ctx.Query("roomId")
 	var req dto.ChatPrescription
 
-	
-	
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.Error(apperror.NewBadRequest(err))

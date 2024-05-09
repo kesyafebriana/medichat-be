@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"html/template"
 	"medichat-be/constants"
 	"medichat-be/domain"
@@ -57,7 +56,6 @@ func NewChatService(opts ChatServiceOpts) *chatService {
 
 func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin.Context) (error) {
 
-	userRepository := u.dataRepository.UserRepository()
 	doctorRepository := u.dataRepository.DoctorRepository()
 	productRepository := u.dataRepository.ProductRepository()
 
@@ -70,7 +68,6 @@ func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin
 		return err
     }
 
-	user,err := userRepository.GetByID(ctx,int64(req.UserId))
 	if err!= nil {
         return err
     }
@@ -95,7 +92,6 @@ func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin
 
 
 	prescription := map[string]interface{}{
-		"userId":req.UserId,
 		"drugs":drugs,
 	}
 
@@ -107,7 +103,7 @@ func (u *chatService) Prescribe(req *dto.ChatPrescription,roomId string,ctx *gin
 	colRef := u.client.Collection("rooms");
 	content := map[string]interface{}{
         "userId": doctor.Account.ID,
-        "userName": user.Account.Name,
+        "userName": doctor.Account.Name,
         "message": string(json),
         "createdAt": now,
 		"url" : "",
@@ -317,7 +313,6 @@ func (u *chatService) CloseRoom(roomId string,ctx *gin.Context) (error) {
 			return err
 		}
 
-		fmt.Println(data)
 
 		chat:= domain.Chat{
 			RoomId: int64(room_id),
