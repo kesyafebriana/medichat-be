@@ -303,10 +303,18 @@ func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
 		Latitude:    p.Latitude,
 		Limit:       10,
 		Page:        1,
-		SortBy:      *p.SortBy,
-		SortType:    *p.Sort,
+		SortBy:      "name",
+		SortType:    "asc",
 		IsOpen:      p.IsOpen,
 		ProductSlug: p.ProductSlug,
+	}
+
+	if p.Sort != nil {
+		query.SortType = *p.Sort
+	}
+
+	if p.SortBy != nil {
+		query.SortBy = *p.SortBy
 	}
 
 	if p.Limit != nil {
