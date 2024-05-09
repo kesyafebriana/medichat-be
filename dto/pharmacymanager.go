@@ -13,6 +13,7 @@ type PharmacyManagerAccountResponse struct {
 	AccountID  int64  `json:"account_id"`
 	Email      string `json:"email"`
 	Name       string `json:"name"`
+	PhotoUrl   string `json:"photo_url"`
 	ProfileSet bool   `json:"profile_set"`
 }
 
@@ -30,6 +31,7 @@ func NewPharmacyManagersAccountResponse(p []domain.Account) []PharmacyManagerAcc
 			Email:      v.Email,
 			Name:       v.Name,
 			ProfileSet: v.ProfileSet,
+			PhotoUrl:   v.PhotoURL,
 		})
 	}
 
