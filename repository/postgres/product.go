@@ -208,6 +208,10 @@ func (r *productRepository) GetPageInfo(ctx context.Context, query domain.Produc
 }
 
 func (r *productRepository) Add(ctx context.Context, product domain.Product) (domain.Product, error) {
+	picture := ""
+	if product.Picture != nil {
+		picture = *product.Picture
+	}
 	q := `
 		INSERT INTO products(name,category_id, product_detail_id, picture, slug, is_active, keyword)
 		VALUES
@@ -217,7 +221,7 @@ func (r *productRepository) Add(ctx context.Context, product domain.Product) (do
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanProduct,
-		product.Name, product.ProductCategoryId, product.ProductDetailId, product.Picture, product.Slug, product.IsActive, product.KeyWord,
+		product.Name, product.ProductCategoryId, product.ProductDetailId, picture, product.Slug, product.IsActive, product.KeyWord,
 	)
 }
 
