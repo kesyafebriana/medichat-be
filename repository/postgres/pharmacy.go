@@ -42,11 +42,17 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		args = append(args, *query.ProductId)
 	}
 
-	if query.Name != nil {
+	if query.Name != nil && query.Term == nil {
 		fmt.Fprintf(&sb, ` AND p.name ILIKE $%d 
 		`, idx)
 		idx++
 		args = append(args, *query.Name)
+	} else if query.Term != nil {
+		sb.WriteString(` AND p.name ILIKE '%' || `)
+		fmt.Fprintf(&sb, ` $%d || `, idx)
+		sb.WriteString(` '%' `)
+		idx++
+		args = append(args, *query.Term)
 	}
 
 	if query.ManagerID != nil {
@@ -104,6 +110,8 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 		sb.WriteString(`)`)
 	}
 
+	sb.WriteString(`GROUP BY p.id`)
+
 	if query.SortBy == domain.PharmacySortByName {
 		fmt.Fprintf(&sb, " ORDER BY %s %s", query.SortBy, query.SortType)
 	}
@@ -132,7 +140,6 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 	sb := strings.Builder{}
 	var args = make([]any, 0)
 	var idx = 1
-	offset := (query.Page - 1) * query.Limit
 
 	sb.WriteString(`
 		SELECT COUNT(p.*) as total_data 
@@ -200,10 +207,6 @@ func (r *pharmacyRepository) GetPageInfo(ctx context.Context, query domain.Pharm
 		}
 
 		sb.WriteString(`)`)
-	}
-
-	if query.Limit != 0 {
-		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
 
 	var totalData int64
