@@ -121,12 +121,25 @@ func (s *productService) GetProduct(ctx context.Context, slug string) (domain.Pr
 	}
 
 	category, err := categoryRepo.GetBySlugWithParentName(ctx, c.Slug)
+	if err != nil {
+		return domain.Product{}, domain.ProductDetails{}, domain.CategoryWithParentName{}, apperror.Wrap(err)
+	}
 
 	return products, productDetail, category, nil
 }
 
 func (s *productService) GetProductLocation(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, domain.PageInfo, error) {
 	productRepo := s.dataRepository.ProductRepository()
+	categoryRepo := s.dataRepository.CategoryRepository()
+	
+	if query.CategorySlug != nil {
+		category, err := categoryRepo.GetBySlug(ctx, *query.CategorySlug)
+		if err != nil {
+			return nil, domain.PageInfo{}, apperror.Wrap(err)
+		}
+
+		query.CategoryID = &category.ID
+	}
 
 	products, err := productRepo.GetProductsFromArea(ctx, query)
 	if err != nil {

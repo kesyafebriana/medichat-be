@@ -42,6 +42,12 @@ func (r *productRepository) GetProductsFromArea(ctx context.Context, query domai
 
 	}
 
+	if query.CategoryID != nil {
+		fmt.Fprintf(&sb, ` AND p.category_id = $%d `, idx)
+		idx += 1
+		args = append(args, *query.CategoryID)
+	}
+
 	if query.SortBy != domain.CategorySortByParent {
 		query.SortBy = "p." + query.SortBy
 		fmt.Fprintf(&sb, " ORDER BY %v %v", query.SortBy, query.SortType)
@@ -84,6 +90,12 @@ func (r *productRepository) GetPageInfoFromArea(ctx context.Context, query domai
 		fmt.Fprintf(&sb, `AND c.name ILIKE $%d`, idx)
 		args = append(args, query.Term)
 		idx += 1
+	}
+	
+	if query.CategoryID != nil {
+		fmt.Fprintf(&sb, ` AND p.category_id = $%d `, idx)
+		idx += 1
+		args = append(args, *query.CategoryID)
 	}
 
 	var totalData int64
