@@ -192,6 +192,8 @@ func (s *pharmacyService) GetPharmaciesByProductSlug(ctx context.Context, query 
 			PharmacistName:    v.PharmacistName,
 			PharmacistLicense: v.PharmacistLicense,
 			PharmacistPhone:   v.PharmacistPhone,
+
+			Distance: v.Distance,
 		})
 
 		o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, v.ID)

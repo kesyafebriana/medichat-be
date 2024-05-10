@@ -40,6 +40,8 @@ type Pharmacy struct {
 	PharmacistPhone         string
 	PharmacyOperations      []PharmacyOperations
 	PharmacyShipmentMethods []PharmacyShipmentMethods
+
+	Distance *float64
 }
 
 type PharmacyStock struct {
@@ -55,6 +57,8 @@ type PharmacyStock struct {
 	PharmacyOperations      []PharmacyOperations
 	PharmacyShipmentMethods []PharmacyShipmentMethods
 	Stock                   Stock
+
+	Distance *float64
 }
 
 type PharmacyCreateDetails struct {

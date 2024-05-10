@@ -73,13 +73,15 @@ type UpdateProductRequest struct {
 }
 
 type ProductsQuery struct {
-	Page      int64
-	Limit     int64
-	Latitude  *float64
-	Longitude *float64
-	Term      string
-	SortBy    string
-	SortType  string
+	Page         int64
+	Limit        int64
+	Latitude     *float64
+	Longitude    *float64
+	Term         string
+	SortBy       string
+	SortType     string
+	CategorySlug *string
+	CategoryID   *int64
 }
 
 const (
