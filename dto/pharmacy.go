@@ -83,7 +83,10 @@ func NewPharmacyWithStockResponse(pharmacy domain.PharmacyStock) PharmacyRespons
 }
 
 func NewPharmaciesResponse(pharmacy []domain.Pharmacy, pageInfo domain.PageInfo) PharmaciesResponse {
-	var res PharmaciesResponse
+	res := PharmaciesResponse{
+		Pharmacies: []PharmacyResponse{},
+		PageInfo:   PageInfoResponse{},
+	}
 
 	for _, v := range pharmacy {
 		res.Pharmacies = append(res.Pharmacies, NewPharmacyResponse(v))
@@ -281,6 +284,7 @@ func PharmacyShipmentMethodRequestToDetails(p PharmacyShipmentMethodUpdateReques
 type PharmacyListQuery struct {
 	ManagerID   *int64   `form:"manager_id"`
 	Name        *string  `form:"name"`
+	Term        *string  `form:"term"`
 	Day         *string  `form:"day"`
 	StartTime   *string  `form:"start_time"`
 	EndTime     *string  `form:"end_time"`
@@ -297,16 +301,25 @@ type PharmacyListQuery struct {
 func (p PharmacyListQuery) ToDetails() (domain.PharmaciesQuery, error) {
 	query := domain.PharmaciesQuery{
 		Name:        p.Name,
+		Term:        p.Term,
 		Day:         p.Day,
 		ManagerID:   p.ManagerID,
 		Longitude:   p.Longitude,
 		Latitude:    p.Latitude,
 		Limit:       10,
 		Page:        1,
-		SortBy:      *p.SortBy,
-		SortType:    *p.Sort,
+		SortBy:      "name",
+		SortType:    "asc",
 		IsOpen:      p.IsOpen,
 		ProductSlug: p.ProductSlug,
+	}
+
+	if p.Sort != nil {
+		query.SortType = *p.Sort
+	}
+
+	if p.SortBy != nil {
+		query.SortBy = *p.SortBy
 	}
 
 	if p.Limit != nil {

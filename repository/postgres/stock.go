@@ -122,7 +122,7 @@ func (r *stockRepository) List(ctx context.Context, det domain.StockListDetails)
 	case domain.StockSortByPrice:
 		sortCol = "st.price"
 	case domain.StockSortByAmount:
-		sortCol = "st.amount"
+		sortCol = "st.stock"
 	}
 
 	fmt.Fprintf(
