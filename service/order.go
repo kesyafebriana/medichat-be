@@ -95,6 +95,7 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 	userRepo := dr.UserRepository()
 	stockRepo := dr.StockRepository()
 	shipmentRepo := dr.ShipmentMethodRepository()
+	productDetailRepo := dr.ProductDetailsRepository()
 
 	accountID, err := util.GetAccountIDFromContext(ctx)
 	if err != nil {
@@ -164,6 +165,11 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 				return domain.Orders{}, apperror.Wrap(err)
 			}
 
+			productDetail, err := productDetailRepo.GetById(ctx, product.ProductDetailId)
+			if err != nil {
+				return domain.Orders{}, apperror.Wrap(err)
+			}
+
 			stock, err := stockRepo.GetByPharmacyAndProduct(ctx, pharmacy.ID, product.ID)
 			if err != nil {
 				return domain.Orders{}, apperror.Wrap(err)
@@ -182,15 +188,17 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 				ID:      itemID,
 				OrderID: order.ID,
 				Product: struct {
-					ID       int64
-					Slug     string
-					Name     string
-					PhotoURL string
+					ID             int64
+					Slug           string
+					Name           string
+					PhotoURL       string
+					Classification string
 				}{
-					ID:       product.ID,
-					Slug:     product.Slug,
-					Name:     product.Name,
-					PhotoURL: picture,
+					ID:             product.ID,
+					Slug:           product.Slug,
+					Name:           product.Name,
+					PhotoURL:       picture,
+					Classification: productDetail.ProductClassification,
 				},
 				Price:  price,
 				Amount: it.Amount,

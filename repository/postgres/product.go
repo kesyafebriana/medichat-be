@@ -20,10 +20,10 @@ func (r *productRepository) GetProductsFromArea(ctx context.Context, query domai
 	var idx = 1
 	offset := (query.Page - 1) * query.Limit
 
-	_, err := fmt.Fprintf(&sb, ` SELECT DISTINCT p.id, p.name, p.product_detail_id, p.category_id, p.picture, p.is_active from products p inner join
+	_, err := fmt.Fprintf(&sb, ` SELECT DISTINCT p.id, p.name, p.slug, p.product_detail_id, p.category_id, p.picture, p.is_active from products p inner join
 		(select pharma.id as pharmacy_id,pharma.name, stock.product_id as product_id from
 			(SELECT id, name, address, coordinate FROM pharmacies
-			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 2500)) as pharma
+			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 25000)) as pharma
 			inner join (select s.id,s.product_id,s.pharmacy_id from stocks s where s.deleted_at is null and stock >=0) as stock
 		on pharma.id = stock.pharmacy_id) as pp
 		on p.id = pp.product_id
@@ -53,6 +53,7 @@ func (r *productRepository) GetProductsFromArea(ctx context.Context, query domai
 		args = append(args, offset, query.Limit)
 		idx += 2
 	}
+
 	return queryFull(
 		r.querier, ctx, sb.String(),
 		scanProduct,
@@ -68,7 +69,7 @@ func (r *productRepository) GetPageInfoFromArea(ctx context.Context, query domai
 	_, err := fmt.Fprintf(&sb, ` SELECT COUNT(DISTINCT p.id) as total_data from products p inner join
 		(select pharma.id as pharmacy_id,pharma.name, stock.product_id as product_id from
 			(SELECT id, name, address, coordinate FROM pharmacies
-			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 2500)) as pharma
+			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 25000)) as pharma
 			inner join (select s.id,s.product_id,s.pharmacy_id from stocks s where s.deleted_at is null and stock >=0) as stock
 		on pharma.id = stock.pharmacy_id) as pp
 		on p.id = pp.product_id
