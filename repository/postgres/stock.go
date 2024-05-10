@@ -270,7 +270,7 @@ func (r *stockRepository) buildListMutationQuery(sel string, det domain.StockMut
 		sb.WriteString(`
 			AND sm.status = @status
 		`)
-		args["status"] = *det.Method
+		args["status"] = *det.Status
 	}
 	if det.ManagerID != nil {
 		sb.WriteString(`
