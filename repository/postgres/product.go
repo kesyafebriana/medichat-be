@@ -20,7 +20,7 @@ func (r *productRepository) GetProductsFromArea(ctx context.Context, query domai
 	var idx = 1
 	offset := (query.Page - 1) * query.Limit
 
-	_,err := fmt.Fprintf(&sb, ` SELECT DISTINCT p.id, p.name, p.product_detail_id, p.category_id, p.picture, p.is_active from products p inner join
+	_, err := fmt.Fprintf(&sb, ` SELECT DISTINCT p.id, p.name, p.product_detail_id, p.category_id, p.picture, p.is_active from products p inner join
 		(select pharma.id as pharmacy_id,pharma.name, stock.product_id as product_id from
 			(SELECT id, name, address, coordinate FROM pharmacies
 			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 2500)) as pharma
@@ -36,21 +36,21 @@ func (r *productRepository) GetProductsFromArea(ctx context.Context, query domai
 
 	if query.Term != "" {
 
-		fmt.Fprintf(&sb,`AND c.keyword ILIKE $%d`,idx)
+		fmt.Fprintf(&sb, `AND c.keyword ILIKE $%d`, idx)
 		args = append(args, query.Term)
 		idx += 1
 
 	}
 
 	if query.SortBy != domain.CategorySortByParent {
-		query.SortBy = "p."+query.SortBy
-		fmt.Fprintf(&sb, " ORDER BY %v %v", query.SortBy,query.SortType)
+		query.SortBy = "p." + query.SortBy
+		fmt.Fprintf(&sb, " ORDER BY %v %v", query.SortBy, query.SortType)
 
 	}
 
 	if query.Limit != 0 {
 		fmt.Fprintf(&sb, " OFFSET $%d LIMIT $%d ", idx, idx+1)
-		args = append(args, offset,query.Limit)
+		args = append(args, offset, query.Limit)
 		idx += 2
 	}
 	return queryFull(
@@ -65,7 +65,7 @@ func (r *productRepository) GetPageInfoFromArea(ctx context.Context, query domai
 	args := make([]any, 0)
 	var idx = 1
 
-	_,err := fmt.Fprintf(&sb, ` SELECT COUNT(DISTINCT p.id) as total_data from products p inner join
+	_, err := fmt.Fprintf(&sb, ` SELECT COUNT(DISTINCT p.id) as total_data from products p inner join
 		(select pharma.id as pharmacy_id,pharma.name, stock.product_id as product_id from
 			(SELECT id, name, address, coordinate FROM pharmacies
 			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 2500)) as pharma
@@ -79,9 +79,8 @@ func (r *productRepository) GetPageInfoFromArea(ctx context.Context, query domai
 		return domain.PageInfo{}, apperror.Wrap(err)
 	}
 
-
 	if query.Term != "" {
-		fmt.Fprintf(&sb,`AND c.name ILIKE $%d`,idx)
+		fmt.Fprintf(&sb, `AND c.name ILIKE $%d`, idx)
 		args = append(args, query.Term)
 		idx += 1
 	}
@@ -100,7 +99,6 @@ func (r *productRepository) GetPageInfoFromArea(ctx context.Context, query domai
 	}, nil
 }
 
-
 func (r *productRepository) GetProducts(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, error) {
 	sb := strings.Builder{}
 	args := pgx.NamedArgs{}
@@ -113,7 +111,8 @@ func (r *productRepository) GetProducts(ctx context.Context, query domain.Produc
 	`)
 
 	if query.Term != "" {
-		sb.WriteString(` AND c.keyword ILIKE '%' || @name || '%' `)
+		sb.WriteString(` AND (p.keyword ILIKE '%' || @name || '%' `)
+		sb.WriteString(` OR p.name ILIKE '%' || @name || '%') `)
 		args["name"] = query.Term
 	}
 
@@ -163,7 +162,6 @@ func (r *productRepository) GetByName(ctx context.Context, name string) (domain.
 		name,
 	)
 }
-
 
 func (r *productRepository) GetById(ctx context.Context, id int64) (domain.Product, error) {
 	q := `
@@ -276,5 +274,3 @@ func (r *productRepository) BulkSoftDeleteBySlug(ctx context.Context, slugs []st
 		params...,
 	)
 }
-
-

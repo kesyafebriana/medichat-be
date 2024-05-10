@@ -9,6 +9,7 @@ const (
 	PharmacySortById        = "id"
 	PharmacySortByName      = "name"
 	PharmacySortByManagerId = "manager"
+	PharmacySortByDistance  = "distance"
 )
 
 type PharmacyShipmentMethods struct {
@@ -39,6 +40,21 @@ type Pharmacy struct {
 	PharmacistPhone         string
 	PharmacyOperations      []PharmacyOperations
 	PharmacyShipmentMethods []PharmacyShipmentMethods
+}
+
+type PharmacyStock struct {
+	ID                      int64
+	ManagerID               int64
+	Slug                    string
+	Name                    string
+	Address                 string
+	Coordinate              Coordinate
+	PharmacistName          string
+	PharmacistLicense       string
+	PharmacistPhone         string
+	PharmacyOperations      []PharmacyOperations
+	PharmacyShipmentMethods []PharmacyShipmentMethods
+	Stock                   Stock
 }
 
 type PharmacyCreateDetails struct {
@@ -98,9 +114,11 @@ type PharmacyShipmentMethodsUpdateDetails struct {
 type PharmaciesQuery struct {
 	ManagerID   *int64
 	Day         *string
+	Term        *string
 	StartTime   *string
 	EndTime     *string
 	ProductSlug *string
+	ProductId   *int64
 	Longitude   *float64
 	Latitude    *float64
 	Name        *string
@@ -115,6 +133,7 @@ type PharmacyRepository interface {
 	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, error)
 	GetBySlug(ctx context.Context, slug string) (Pharmacy, error)
 	GetPageInfo(ctx context.Context, query PharmaciesQuery) (PageInfo, error)
+	GetByID(ctx context.Context, id int64) (Pharmacy, error)
 
 	Add(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
 	Update(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
@@ -136,7 +155,9 @@ type PharmacyRepository interface {
 
 type PharmacyService interface {
 	CreatePharmacy(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
+	GetOwnPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, PageInfo, error)
 	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, PageInfo, error)
+	GetPharmaciesByProductSlug(ctx context.Context, query PharmaciesQuery) ([]PharmacyStock, PageInfo, error)
 	GetPharmacyBySlug(ctx context.Context, slug string) (Pharmacy, error)
 	UpdatePharmacy(ctx context.Context, pharmacy PharmacyUpdateDetails) (Pharmacy, error)
 	DeletePharmacyBySlug(ctx context.Context, slug string) error

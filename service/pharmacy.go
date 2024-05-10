@@ -21,9 +21,31 @@ func NewPharmacyService(opts PharmacyServiceOpts) *pharmacyService {
 	}
 }
 
-func (s *pharmacyService) GetPharmacies(ctx context.Context, query domain.PharmaciesQuery) ([]domain.Pharmacy, domain.PageInfo, error) {
+func (s *pharmacyService) GetOwnPharmacies(ctx context.Context, query domain.PharmaciesQuery) ([]domain.Pharmacy, domain.PageInfo, error) {
 	pharmacyRepo := s.dataRepository.PharmacyRepository()
 	shipmentRepo := s.dataRepository.ShipmentMethodRepository()
+	pharmacyManagerRepo := s.dataRepository.PharmacyManagerRepository()
+	productRepo := s.dataRepository.ProductRepository()
+
+	accountID, err := util.GetAccountIDFromContext(ctx)
+	if err != nil {
+		return []domain.Pharmacy{}, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	pharmacyManager, err := pharmacyManagerRepo.GetByAccountID(ctx, accountID)
+	if err != nil {
+		return []domain.Pharmacy{}, domain.PageInfo{}, apperror.Wrap(err)
+	}
+	query.ManagerID = &pharmacyManager.ID
+
+	if query.ProductSlug != nil {
+		product, err := productRepo.GetBySlug(ctx, *query.ProductSlug)
+		if err != nil {
+			return []domain.Pharmacy{}, domain.PageInfo{}, apperror.Wrap(err)
+		}
+
+		query.ProductId = &product.ID
+	}
 
 	p, err := pharmacyRepo.GetPharmacies(ctx, query)
 	if err != nil {
@@ -71,6 +93,153 @@ func (s *pharmacyService) GetPharmacies(ctx context.Context, query domain.Pharma
 	}
 
 	return p, pageInfo, nil
+}
+
+func (s *pharmacyService) GetPharmacies(ctx context.Context, query domain.PharmaciesQuery) ([]domain.Pharmacy, domain.PageInfo, error) {
+	pharmacyRepo := s.dataRepository.PharmacyRepository()
+	shipmentRepo := s.dataRepository.ShipmentMethodRepository()
+	productRepo := s.dataRepository.ProductRepository()
+
+	if query.ProductSlug != nil {
+		product, err := productRepo.GetBySlug(ctx, *query.ProductSlug)
+		if err != nil {
+			return []domain.Pharmacy{}, domain.PageInfo{}, apperror.Wrap(err)
+		}
+
+		query.ProductId = &product.ID
+	}
+
+	p, err := pharmacyRepo.GetPharmacies(ctx, query)
+	if err != nil {
+		return []domain.Pharmacy{}, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	for i, v := range p {
+		o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, v.ID)
+		if err != nil {
+			return []domain.Pharmacy{}, domain.PageInfo{}, apperror.Wrap(err)
+		}
+
+		sh, err := pharmacyRepo.GetShipmentMethodsByPharmacyId(ctx, v.ID)
+		if err != nil {
+			return []domain.Pharmacy{}, domain.PageInfo{}, apperror.Wrap(err)
+		}
+
+		for i, x := range sh {
+			shDetail, err := shipmentRepo.GetShipmentMethodById(ctx, x.ShipmentMethodID)
+			if err != nil {
+				return []domain.Pharmacy{}, domain.PageInfo{}, apperror.Wrap(err)
+			}
+
+			sh[i].Name = &shDetail.Name
+		}
+
+		p[i].PharmacyOperations = o
+		p[i].PharmacyShipmentMethods = sh
+	}
+
+	pageInfo, err := pharmacyRepo.GetPageInfo(ctx, query)
+	if err != nil {
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	pageInfo.ItemsPerPage = int(query.Limit)
+	if query.Limit == 0 {
+		pageInfo.ItemsPerPage = len(p)
+	}
+
+	if pageInfo.ItemsPerPage == 0 {
+		pageInfo.PageCount = 0
+	} else {
+		pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
+	}
+
+	return p, pageInfo, nil
+}
+
+func (s *pharmacyService) GetPharmaciesByProductSlug(ctx context.Context, query domain.PharmaciesQuery) ([]domain.PharmacyStock, domain.PageInfo, error) {
+	pharmacyRepo := s.dataRepository.PharmacyRepository()
+	shipmentRepo := s.dataRepository.ShipmentMethodRepository()
+	productRepo := s.dataRepository.ProductRepository()
+	stockRepo := s.dataRepository.StockRepository()
+
+	var product domain.Product
+	var newP []domain.PharmacyStock
+
+	if query.ProductSlug != nil {
+		productDet, err := productRepo.GetBySlug(ctx, *query.ProductSlug)
+		if err != nil {
+			return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
+		}
+
+		query.ProductId = &productDet.ID
+		product = productDet
+	}
+
+	p, err := pharmacyRepo.GetPharmacies(ctx, query)
+	if err != nil {
+		return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	for i, v := range p {
+		newP = append(newP, domain.PharmacyStock{
+			ID:                v.ID,
+			ManagerID:         v.ManagerID,
+			Slug:              v.Slug,
+			Name:              v.Name,
+			Address:           v.Address,
+			Coordinate:        v.Coordinate,
+			PharmacistName:    v.PharmacistName,
+			PharmacistLicense: v.PharmacistLicense,
+			PharmacistPhone:   v.PharmacistPhone,
+		})
+
+		o, err := pharmacyRepo.GetPharmacyOperationsByPharmacyId(ctx, v.ID)
+		if err != nil {
+			return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
+		}
+
+		sh, err := pharmacyRepo.GetShipmentMethodsByPharmacyId(ctx, v.ID)
+		if err != nil {
+			return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
+		}
+
+		for i, x := range sh {
+			shDetail, err := shipmentRepo.GetShipmentMethodById(ctx, x.ShipmentMethodID)
+			if err != nil {
+				return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
+			}
+
+			sh[i].Name = &shDetail.Name
+		}
+
+		s, err := stockRepo.GetByPharmacyAndProduct(ctx, v.ID, product.ID)
+		if err != nil {
+			return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
+		}
+
+		newP[i].PharmacyOperations = o
+		newP[i].PharmacyShipmentMethods = sh
+		newP[i].Stock = s
+	}
+
+	pageInfo, err := pharmacyRepo.GetPageInfo(ctx, query)
+	if err != nil {
+		return []domain.PharmacyStock{}, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	pageInfo.ItemsPerPage = int(query.Limit)
+	if query.Limit == 0 {
+		pageInfo.ItemsPerPage = len(p)
+	}
+
+	if pageInfo.ItemsPerPage == 0 {
+		pageInfo.PageCount = 0
+	} else {
+		pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
+	}
+
+	return newP, pageInfo, nil
 }
 
 func (s *pharmacyService) GetPharmacyBySlug(ctx context.Context, slug string) (domain.Pharmacy, error) {

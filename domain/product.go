@@ -5,87 +5,86 @@ import (
 	"mime/multipart"
 )
 
-const (
-)
+const ()
 
 type Product struct {
-	ID            int64
-	Name string
-	Slug string
-	Picture *string
-	KeyWord string
-	ProductDetailId int64
+	ID                int64
+	Name              string
+	Slug              string
+	Picture           *string
+	KeyWord           string
+	ProductDetailId   int64
 	ProductCategoryId int64
-	IsActive bool
+	IsActive          bool
 }
 
-type ProductDetails struct{
-	ID int64
-	GenericName string
-	Content string
-	Composition string
-	Manufacturer string
-	Description string
+type ProductDetails struct {
+	ID                    int64
+	GenericName           string
+	Content               string
+	Composition           string
+	Manufacturer          string
+	Description           string
 	ProductClassification string
-	ProductForm string
-	UnitInPack string
-	SellingUnit string
-	Weight float64
-	Height float64
-	Length float64
-	Width float64
+	ProductForm           string
+	UnitInPack            string
+	SellingUnit           string
+	Weight                float64
+	Height                float64
+	Length                float64
+	Width                 float64
 }
 
-type AddProductRequest struct{
-	Name string
+type AddProductRequest struct {
+	Name              string
 	ProductCategoryId int64
 
-	GenericName string
-	Composition string
-	Content string
-	Manufacturer string
-	Description string
+	GenericName           string
+	Composition           string
+	Content               string
+	Manufacturer          string
+	Description           string
 	ProductClassification string
-	ProductForm string
-	UnitInPack string
-	SellingUnit string
-	Weight float64
-	Height float64
-	Length float64
-	Width float64
+	ProductForm           string
+	UnitInPack            string
+	SellingUnit           string
+	Weight                float64
+	Height                float64
+	Length                float64
+	Width                 float64
 }
 
-type UpdateProductRequest struct{
-	Name string
+type UpdateProductRequest struct {
+	Name              string
 	ProductCategoryId int64
 
-	GenericName string
-	Content string
-	Manufacturer string
-	Description string
+	GenericName           string
+	Content               string
+	Manufacturer          string
+	Description           string
 	ProductClassification string
-	ProductForm string
-	UnitInPack string
-	SellingUnit string
-	Weight float64
-	Height float64
-	Length float64
-	Width float64
+	ProductForm           string
+	UnitInPack            string
+	SellingUnit           string
+	Weight                float64
+	Height                float64
+	Length                float64
+	Width                 float64
 }
 
 type ProductsQuery struct {
-	Page       int64
-	Limit      int64
-	Latitude   *float64
-	Longitude  *float64
-	Term       string
-	SortBy     string
-	SortType   string
+	Page      int64
+	Limit     int64
+	Latitude  *float64
+	Longitude *float64
+	Term      string
+	SortBy    string
+	SortType  string
 }
 
 const (
-	ProductSortById     = "id"
-	ProductSortByName   = "name"
+	ProductSortById   = "id"
+	ProductSortByName = "name"
 )
 
 func DefaultProductsQuery() ProductsQuery {
@@ -117,7 +116,7 @@ type ProductDetailsRepository interface {
 }
 
 type ProductService interface {
-	GetProduct(ctx context.Context, slug string) (Product, error)
+	GetProduct(ctx context.Context, slug string) (Product, ProductDetails, CategoryWithParentName, error)
 	GetProducts(ctx context.Context, query ProductsQuery) ([]Product, PageInfo, error)
 	GetProductLocation(ctx context.Context, query ProductsQuery) ([]Product, PageInfo, error)
 	CreateProduct(ctx context.Context, request AddProductRequest, file *multipart.File) (Product, error)

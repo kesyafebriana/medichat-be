@@ -13,7 +13,6 @@ import (
 
 type ProductHandler struct {
 	productsrv domain.ProductService
-	domain      string
 }
 
 type ProductHandlerOpts struct {
@@ -35,14 +34,14 @@ func (h *ProductHandler) GetProducts(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
-	products, pageInfo, err := h.productsrv.GetProducts(ctx,query.ToProductsQuery() )
-	
+	products, pageInfo, err := h.productsrv.GetProducts(ctx, query.ToProductsQuery())
+
 	if err != nil {
 		ctx.Error(err)
 		ctx.Abort()
 		return
 	}
-	
+
 	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewProductsResponse(products, pageInfo)))
 }
 
@@ -56,8 +55,7 @@ func (h *ProductHandler) GetProductsFromArea(ctx *gin.Context) {
 		return
 	}
 
-
-	products, pageInfo, err := h.productsrv.GetProductLocation(ctx,query.ToProductsQuery() )
+	products, pageInfo, err := h.productsrv.GetProductLocation(ctx, query.ToProductsQuery())
 
 	if err != nil {
 		ctx.Error(err)
@@ -78,14 +76,14 @@ func (h *ProductHandler) GetProductBySlug(ctx *gin.Context) {
 		return
 	}
 
-	product, err := h.productsrv.GetProduct(ctx, params.Slug)
+	product, detail, category, err := h.productsrv.GetProduct(ctx, params.Slug)
 	if err != nil {
 		ctx.Error(err)
 		ctx.Abort()
 		return
 	}
 
-	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewProductResponse(product)))
+	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewProductwithDetailResponse(product, detail, category)))
 }
 
 func (h *ProductHandler) CreateProduct(ctx *gin.Context) {
@@ -116,21 +114,21 @@ func (h *ProductHandler) CreateProduct(ctx *gin.Context) {
 	}
 
 	product, err := h.productsrv.CreateProduct(ctx, domain.AddProductRequest{
-		Name: form.Name,
-		ProductCategoryId: form.CategoryId,
-		GenericName: form.GenericName,
-		Content: form.Content,
-		Manufacturer: form.Manufacturer,
-		Description: form.Description,
+		Name:                  form.Name,
+		ProductCategoryId:     form.CategoryId,
+		GenericName:           form.GenericName,
+		Content:               form.Content,
+		Manufacturer:          form.Manufacturer,
+		Description:           form.Description,
 		ProductClassification: form.ProductClassification,
-		ProductForm: form.ProductForm,
-		Composition: form.Composition,
-		UnitInPack: form.UnitInPack,
-		SellingUnit: form.SellingUnit,
-		Weight: form.Weight,
-		Height: form.Height,
-		Length: form.Length,
-		Width: form.Width,
+		ProductForm:           form.ProductForm,
+		Composition:           form.Composition,
+		UnitInPack:            form.UnitInPack,
+		SellingUnit:           form.SellingUnit,
+		Weight:                form.Weight,
+		Height:                form.Height,
+		Length:                form.Length,
+		Width:                 form.Width,
 	}, file)
 
 	if err != nil {
@@ -188,21 +186,21 @@ func (h *ProductHandler) UpdateProduct(ctx *gin.Context) {
 		defer f.Close()
 	}
 
-	product, err := h.productsrv.UpdateProduct(ctx, form.Slug,domain.UpdateProductRequest{
-		Name: form.Name,
-		ProductCategoryId: form.CategoryId,
-		GenericName: form.GenericName,
-		Content: form.Content,
-		Manufacturer: form.Manufacturer,
-		Description: form.Description,
+	product, err := h.productsrv.UpdateProduct(ctx, form.Slug, domain.UpdateProductRequest{
+		Name:                  form.Name,
+		ProductCategoryId:     form.CategoryId,
+		GenericName:           form.GenericName,
+		Content:               form.Content,
+		Manufacturer:          form.Manufacturer,
+		Description:           form.Description,
 		ProductClassification: form.ProductClassification,
-		ProductForm: form.ProductForm,
-		UnitInPack: form.UnitInPack,
-		SellingUnit: form.SellingUnit,
-		Weight: form.Weight,
-		Height: form.Height,
-		Length: form.Length,
-		Width: form.Width,
+		ProductForm:           form.ProductForm,
+		UnitInPack:            form.UnitInPack,
+		SellingUnit:           form.SellingUnit,
+		Weight:                form.Weight,
+		Height:                form.Height,
+		Length:                form.Length,
+		Width:                 form.Width,
 	}, file)
 	if err != nil {
 		ctx.Error(err)

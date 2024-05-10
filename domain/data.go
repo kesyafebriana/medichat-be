@@ -12,8 +12,10 @@ type AtomicFuncAny AtomicFunc[any]
 type DataRepository interface {
 	Atomic(ctx context.Context, fn AtomicFuncAny) (any, error)
 	Sleep(ctx context.Context, duration time.Duration) error
+	GetDistance(ctx context.Context, a, b Coordinate) (float64, error)
 
 	AccountRepository() AccountRepository
+	ChatRepository() ChatRepository
 	ProductRepository() ProductRepository
 	ProductDetailsRepository() ProductDetailsRepository
 	RefreshTokenRepository() RefreshTokenRepository
@@ -29,6 +31,11 @@ type DataRepository interface {
 	SpecializationRepository() SpecializationRepository
 	PharmacyRepository() PharmacyRepository
 	ShipmentMethodRepository() ShipmentMethodRepository
+
+	StockRepository() StockRepository
+
+	PaymentRepository() PaymentRepository
+	OrderRepository() OrderRepository
 }
 
 func RunAtomic[T any](

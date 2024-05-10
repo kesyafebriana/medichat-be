@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"medichat-be/apperror"
 	"medichat-be/domain"
+	"medichat-be/repository/postgis"
 	"time"
 )
 
@@ -59,6 +60,19 @@ func (r *dataRepository) Sleep(ctx context.Context, duration time.Duration) erro
 	)
 }
 
+func (r *dataRepository) GetDistance(ctx context.Context, a, b domain.Coordinate) (float64, error) {
+	q := `
+		SELECT ST_Distance($1::geography, $2::geography)
+	`
+
+	return queryOne(
+		r.querier, ctx, q,
+		float64ScanDest,
+		postgis.NewPointFromCoordinate(a),
+		postgis.NewPointFromCoordinate(b),
+	)
+}
+
 func (r *dataRepository) ProductRepository() domain.ProductRepository {
 	return &productRepository{
 		querier: r.querier,
@@ -71,6 +85,11 @@ func (r *dataRepository) ProductDetailsRepository() domain.ProductDetailsReposit
 	}
 }
 
+func (r *dataRepository) ChatRepository() domain.ChatRepository {
+	return &chatRepository{
+		querier: r.querier,
+	}
+}
 
 
 func (r *dataRepository) AccountRepository() domain.AccountRepository {
@@ -139,6 +158,24 @@ func (r *dataRepository) PharmacyRepository() domain.PharmacyRepository {
 
 func (r *dataRepository) ShipmentMethodRepository() domain.ShipmentMethodRepository {
 	return &shipmentMethodRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) StockRepository() domain.StockRepository {
+	return &stockRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) PaymentRepository() domain.PaymentRepository {
+	return &paymentRepository{
+		querier: r.querier,
+	}
+}
+
+func (r *dataRepository) OrderRepository() domain.OrderRepository {
+	return &orderRepository{
 		querier: r.querier,
 	}
 }
