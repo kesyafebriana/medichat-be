@@ -9,7 +9,7 @@ const (
 	PharmacySortById        = "id"
 	PharmacySortByName      = "name"
 	PharmacySortByManagerId = "manager"
-	PharmacySortByDistance = "distance"
+	PharmacySortByDistance  = "distance"
 )
 
 type PharmacyShipmentMethods struct {
@@ -40,6 +40,8 @@ type Pharmacy struct {
 	PharmacistPhone         string
 	PharmacyOperations      []PharmacyOperations
 	PharmacyShipmentMethods []PharmacyShipmentMethods
+
+	Distance *float64
 }
 
 type PharmacyStock struct {
@@ -55,6 +57,8 @@ type PharmacyStock struct {
 	PharmacyOperations      []PharmacyOperations
 	PharmacyShipmentMethods []PharmacyShipmentMethods
 	Stock                   Stock
+
+	Distance *float64
 }
 
 type PharmacyCreateDetails struct {
@@ -114,6 +118,7 @@ type PharmacyShipmentMethodsUpdateDetails struct {
 type PharmaciesQuery struct {
 	ManagerID   *int64
 	Day         *string
+	Term        *string
 	StartTime   *string
 	EndTime     *string
 	ProductSlug *string
@@ -154,6 +159,7 @@ type PharmacyRepository interface {
 
 type PharmacyService interface {
 	CreatePharmacy(ctx context.Context, pharmacy PharmacyCreateDetails) (Pharmacy, error)
+	GetOwnPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, PageInfo, error)
 	GetPharmacies(ctx context.Context, query PharmaciesQuery) ([]Pharmacy, PageInfo, error)
 	GetPharmaciesByProductSlug(ctx context.Context, query PharmaciesQuery) ([]PharmacyStock, PageInfo, error)
 	GetPharmacyBySlug(ctx context.Context, slug string) (Pharmacy, error)

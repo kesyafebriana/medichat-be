@@ -28,6 +28,19 @@ func NewOrderService(opts OrderServiceOpts) *orderService {
 func (s *orderService) List(ctx context.Context, dets domain.OrderListDetails) ([]domain.Order, domain.PageInfo, error) {
 	orderRepo := s.dataRepository.OrderRepository()
 
+	_, profile, err := util.GetProfileFromContext(ctx, s.dataRepository)
+	if err != nil {
+		return nil, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	if user, ok := profile.(domain.User); ok {
+		dets.UserID = &user.ID
+	}
+
+	if manager, ok := profile.(domain.PharmacyManager); ok {
+		dets.PharmacyManagerID = &manager.ID
+	}
+
 	page, err := orderRepo.GetPageInfo(ctx, dets)
 	if err != nil {
 		return nil, domain.PageInfo{}, apperror.Wrap(err)
@@ -44,6 +57,11 @@ func (s *orderService) List(ctx context.Context, dets domain.OrderListDetails) (
 func (s *orderService) GetByID(ctx context.Context, id int64) (domain.Order, error) {
 	orderRepo := s.dataRepository.OrderRepository()
 
+	_, profile, err := util.GetProfileFromContext(ctx, s.dataRepository)
+	if err != nil {
+		return domain.Order{}, apperror.Wrap(err)
+	}
+
 	order, err := orderRepo.GetByID(ctx, id)
 	if err != nil {
 		return domain.Order{}, apperror.Wrap(err)
@@ -52,6 +70,18 @@ func (s *orderService) GetByID(ctx context.Context, id int64) (domain.Order, err
 	items, err := orderRepo.ListItemsByOrderID(ctx, id)
 	if err != nil {
 		return domain.Order{}, apperror.Wrap(err)
+	}
+
+	if user, ok := profile.(domain.User); ok {
+		if order.User.ID != user.ID {
+			return domain.Order{}, apperror.NewForbidden(nil)
+		}
+	}
+
+	if manager, ok := profile.(domain.PharmacyManager); ok {
+		if order.Pharmacy.ManagerID != manager.ID {
+			return domain.Order{}, apperror.NewForbidden(nil)
+		}
 	}
 
 	order.Items = items
@@ -65,6 +95,7 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 	userRepo := dr.UserRepository()
 	stockRepo := dr.StockRepository()
 	shipmentRepo := dr.ShipmentMethodRepository()
+	productDetailRepo := dr.ProductDetailsRepository()
 
 	accountID, err := util.GetAccountIDFromContext(ctx)
 	if err != nil {
@@ -105,13 +136,15 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 				Name: user.Account.Name,
 			},
 			Pharmacy: struct {
-				ID   int64
-				Slug string
-				Name string
+				ID        int64
+				Slug      string
+				Name      string
+				ManagerID int64
 			}{
-				ID:   pharmacy.ID,
-				Slug: pharmacy.Slug,
-				Name: pharmacy.Name,
+				ID:        pharmacy.ID,
+				Slug:      pharmacy.Slug,
+				Name:      pharmacy.Name,
+				ManagerID: pharmacy.ManagerID,
 			},
 			ShipmentMethod: shipment,
 			Address:        det.Address,
@@ -132,6 +165,11 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 				return domain.Orders{}, apperror.Wrap(err)
 			}
 
+			productDetail, err := productDetailRepo.GetById(ctx, product.ProductDetailId)
+			if err != nil {
+				return domain.Orders{}, apperror.Wrap(err)
+			}
+
 			stock, err := stockRepo.GetByPharmacyAndProduct(ctx, pharmacy.ID, product.ID)
 			if err != nil {
 				return domain.Orders{}, apperror.Wrap(err)
@@ -141,17 +179,26 @@ func (s *orderService) getOrders(dr domain.DataRepository, ctx context.Context, 
 			}
 			price := stock.Price
 
+			picture := ""
+			if product.Picture != nil {
+				picture = *product.Picture
+			}
+
 			order.Items = append(order.Items, domain.OrderItem{
 				ID:      itemID,
 				OrderID: order.ID,
 				Product: struct {
-					ID   int64
-					Slug string
-					Name string
+					ID             int64
+					Slug           string
+					Name           string
+					PhotoURL       string
+					Classification string
 				}{
-					ID:   product.ID,
-					Slug: product.Slug,
-					Name: product.Name,
+					ID:             product.ID,
+					Slug:           product.Slug,
+					Name:           product.Name,
+					PhotoURL:       picture,
+					Classification: productDetail.ProductClassification,
 				},
 				Price:  price,
 				Amount: it.Amount,

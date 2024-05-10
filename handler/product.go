@@ -13,7 +13,6 @@ import (
 
 type ProductHandler struct {
 	productsrv domain.ProductService
-	domain     string
 }
 
 type ProductHandlerOpts struct {
@@ -77,14 +76,14 @@ func (h *ProductHandler) GetProductBySlug(ctx *gin.Context) {
 		return
 	}
 
-	product, detail, err := h.productsrv.GetProduct(ctx, params.Slug)
+	product, detail, category, err := h.productsrv.GetProduct(ctx, params.Slug)
 	if err != nil {
 		ctx.Error(err)
 		ctx.Abort()
 		return
 	}
 
-	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewProductwithDetailResponse(product, detail)))
+	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewProductwithDetailResponse(product, detail, category)))
 }
 
 func (h *ProductHandler) CreateProduct(ctx *gin.Context) {

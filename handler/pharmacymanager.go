@@ -25,6 +25,26 @@ func NewPharmacyManagerHandler(opts PharmacyManagerHandlerOpts) *PharmacyManager
 	}
 }
 
+func (h *PharmacyManagerHandler) GetAll(ctx *gin.Context) {
+	var query dto.GetPharmacyManagerQuery
+
+	err := ctx.ShouldBindQuery(&query)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	p, pI, err := h.pharmacyManagerSrv.GetAll(ctx, query.ToPharmacyManagerQuery())
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.ResponseOk(dto.NewPharmacyManagersWithPage(p, pI)))
+}
+
 func (h *PharmacyManagerHandler) CreateAccount(ctx *gin.Context) {
 	var req dto.AccountRegisterRequest
 
@@ -84,5 +104,28 @@ func (h *PharmacyManagerHandler) CreateProfile(ctx *gin.Context) {
 	ctx.JSON(
 		http.StatusCreated,
 		dto.ResponseCreated(nil),
+	)
+}
+
+func (h *PharmacyManagerHandler) DeleteAccount(ctx *gin.Context) {
+	var uri dto.PharmacyManagerIdParams
+
+	err := ctx.ShouldBindUri(&uri)
+	if err != nil {
+		ctx.Error(apperror.NewBadRequest(err))
+		ctx.Abort()
+		return
+	}
+
+	err = h.pharmacyManagerSrv.DeletePharmacyManager(ctx, uri.Id)
+	if err != nil {
+		ctx.Error(apperror.Wrap(err))
+		ctx.Abort()
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		dto.ResponseOk(nil),
 	)
 }

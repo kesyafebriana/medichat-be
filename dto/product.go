@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"log"
 	"medichat-be/constants"
 	"medichat-be/domain"
 	"mime/multipart"
@@ -58,13 +59,14 @@ type UpdateProductForm struct {
 }
 
 type GetProductsQuery struct {
-	Page      int64    `form:"page" binding:"numeric,omitempty,min=1"`
-	Limit     int64    `form:"limit" binding:"numeric,omitempty,min=1"`
-	Term      string   `form:"term"`
-	Longitude *float64 `form:"long"`
-	Latitude  *float64 `form:"lat"`
-	SortBy    string   `form:"sort_by" binding:"omitempty,oneof=name slug"`
-	SortType  string   `form:"sort_type" binding:"omitempty,oneof=ASC DESC"`
+	Page         int64    `form:"page" binding:"numeric,omitempty,min=1"`
+	Limit        int64    `form:"limit" binding:"numeric,omitempty,min=1"`
+	Term         string   `form:"term"`
+	Longitude    *float64 `form:"long"`
+	Latitude     *float64 `form:"lat"`
+	SortBy       string   `form:"sort_by" binding:"omitempty,oneof=name slug"`
+	SortType     string   `form:"sort_type" binding:"omitempty,oneof=ASC DESC"`
+	CategorySlug *string  `form:"category_slug"`
 }
 
 type ProductResponse struct {
@@ -94,19 +96,22 @@ type ProductDetailResponse struct {
 }
 
 type ProductWithDetailResponse struct {
-	ID              int64                 `json:"id"`
-	CategoryId      *int64                `json:"category_id,omitempty"`
-	ProductDetailId *int64                `json:"product_detail_id"`
-	Name            string                `json:"name"`
-	Slug            string                `json:"slug"`
-	Picture         *string               `json:"photo_url,omitempty"`
-	ProductDetail   ProductDetailResponse `json:"product_detail"`
+	ID              int64                          `json:"id"`
+	CategoryId      *int64                         `json:"category_id,omitempty"`
+	ProductDetailId *int64                         `json:"product_detail_id"`
+	Name            string                         `json:"name"`
+	Slug            string                         `json:"slug"`
+	Picture         *string                        `json:"photo_url,omitempty"`
+	ProductDetail   ProductDetailResponse          `json:"product_detail"`
+	Category        CategoryWithParentNameResponse `json:"category"`
 }
 
 func (q *GetProductsQuery) ToProductsQuery() domain.ProductsQuery {
 	var page int64 = q.Page
 	var sortBy string = q.SortBy
 	var sortType string = q.SortType
+
+	log.Println(sortBy, sortType)
 
 	if q.Page == 0 || q.Limit == 0 {
 		page = 1
@@ -120,19 +125,15 @@ func (q *GetProductsQuery) ToProductsQuery() domain.ProductsQuery {
 		sortType = constants.SortAsc
 	}
 
-	if sortType == constants.SortAsc {
-		sortType = constants.SortDesc
-	} else {
-		sortType = constants.SortAsc
-	}
 	return domain.ProductsQuery{
-		Page:      page,
-		Limit:     q.Limit,
-		Term:      q.Term,
-		Latitude:  q.Latitude,
-		Longitude: q.Longitude,
-		SortBy:    sortBy,
-		SortType:  sortType,
+		Page:         page,
+		Limit:        q.Limit,
+		Term:         q.Term,
+		Latitude:     q.Latitude,
+		Longitude:    q.Longitude,
+		SortBy:       sortBy,
+		SortType:     sortType,
+		CategorySlug: q.CategorySlug,
 	}
 }
 
@@ -171,21 +172,22 @@ func NewProductDetail(c domain.ProductDetails) ProductDetailResponse {
 	}
 }
 
-func NewProductwithDetailResponse(c domain.Product, d domain.ProductDetails) ProductWithDetailResponse {
-	picture := c.Picture
+func NewProductwithDetailResponse(p domain.Product, d domain.ProductDetails, c domain.CategoryWithParentName) ProductWithDetailResponse {
+	picture := p.Picture
 	if picture == nil {
 		t := constants.DefaultCategoryImageURL
 		picture = &t
 	}
 
 	return ProductWithDetailResponse{
-		ID:              c.ID,
-		Name:            c.Name,
-		Slug:            c.Slug,
-		CategoryId:      &c.ProductCategoryId,
-		ProductDetailId: &c.ProductDetailId,
+		ID:              p.ID,
+		Name:            p.Name,
+		Slug:            p.Slug,
+		CategoryId:      &p.ProductCategoryId,
+		ProductDetailId: &p.ProductDetailId,
 		Picture:         picture,
 		ProductDetail:   NewProductDetail(d),
+		Category:        NewCategoryWithParentNameResponse(c),
 	}
 }
 

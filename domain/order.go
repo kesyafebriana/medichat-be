@@ -7,7 +7,7 @@ import (
 
 const (
 	OrderStatusWaitingPayment      = "waiting for payment"
-	OrderStatusWaitingConfirmation = "Waiting for confirmation"
+	OrderStatusWaitingConfirmation = "waiting for confirmation"
 	OrderStatusProcessing          = "processing"
 	OrderStatusSent                = "sent"
 	OrderStatusFinished            = "finished"
@@ -22,9 +22,10 @@ type Order struct {
 		Name string
 	}
 	Pharmacy struct {
-		ID   int64
-		Slug string
-		Name string
+		ID        int64
+		Slug      string
+		Name      string
+		ManagerID int64
 	}
 	Payment struct {
 		ID            int64
@@ -55,9 +56,11 @@ type OrderItem struct {
 
 	OrderID int64
 	Product struct {
-		ID   int64
-		Slug string
-		Name string
+		ID             int64
+		Slug           string
+		Name           string
+		PhotoURL       string
+		Classification string
 	}
 
 	Price  int

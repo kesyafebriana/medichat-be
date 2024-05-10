@@ -122,7 +122,7 @@ func (r *stockRepository) List(ctx context.Context, det domain.StockListDetails)
 	case domain.StockSortByPrice:
 		sortCol = "st.price"
 	case domain.StockSortByAmount:
-		sortCol = "st.amount"
+		sortCol = "st.stock"
 	}
 
 	fmt.Fprintf(
@@ -270,7 +270,7 @@ func (r *stockRepository) buildListMutationQuery(sel string, det domain.StockMut
 		sb.WriteString(`
 			AND sm.status = @status
 		`)
-		args["status"] = *det.Method
+		args["status"] = *det.Status
 	}
 	if det.ManagerID != nil {
 		sb.WriteString(`
