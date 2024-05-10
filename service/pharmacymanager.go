@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"log"
 	"medichat-be/apperror"
 	"medichat-be/constants"
 	"medichat-be/domain"
@@ -28,6 +27,33 @@ func NewPharmacyManagerService(opts PharmacyManagerServiceOpts) *pharmacyManager
 	}
 }
 
+func (s *pharmacyManagerService) GetAll(ctx context.Context, query domain.PharmacyManagerQuery) ([]domain.Account, domain.PageInfo, error) {
+	accountRepo := s.dataRepository.AccountRepository()
+
+	p, err := accountRepo.GetAllPharmacyManager(ctx, query)
+	if err != nil {
+		return []domain.Account{}, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	pageInfo, err := accountRepo.GetPageInfo(ctx, query)
+	if err != nil {
+		return []domain.Account{}, domain.PageInfo{}, apperror.Wrap(err)
+	}
+
+	pageInfo.ItemsPerPage = int(query.Limit)
+	if query.Limit == 0 {
+		pageInfo.ItemsPerPage = len(p)
+	}
+
+	if pageInfo.ItemsPerPage == 0 {
+		pageInfo.PageCount = 0
+	} else {
+		pageInfo.PageCount = (int(pageInfo.ItemCount) + pageInfo.ItemsPerPage - 1) / pageInfo.ItemsPerPage
+	}
+
+	return p, pageInfo, nil
+}
+
 func (s *pharmacyManagerService) CreateClosure(
 	ctx context.Context,
 	creds domain.AccountRegisterCredentials,
@@ -36,7 +62,6 @@ func (s *pharmacyManagerService) CreateClosure(
 		accountRepo := dr.AccountRepository()
 
 		accountID, err := util.GetAccountIDFromContext(ctx)
-		log.Print(accountID)
 		if err != nil {
 			return domain.Account{}, apperror.Wrap(err)
 		}
@@ -149,4 +174,31 @@ func (s *pharmacyManagerService) CreateProfilePharmacyManager(
 		ctx,
 		s.CreateProfileClosure(ctx, p),
 	)
+}
+
+func (s *pharmacyManagerService) DeletePharmacyManager(
+	ctx context.Context,
+	id int64,
+) error {
+	accountRepo := s.dataRepository.AccountRepository()
+	pharmacyManagerRepo := s.dataRepository.PharmacyManagerRepository()
+
+	exist, err := pharmacyManagerRepo.IsExistByAccountID(ctx, id)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	if exist {
+		err = pharmacyManagerRepo.DeleteByAccountId(ctx, id)
+		if err != nil {
+			return apperror.Wrap(err)
+		}
+	}
+
+	err = accountRepo.SoftDeleteById(ctx, id)
+	if err != nil {
+		return apperror.Wrap(err)
+	}
+
+	return nil
 }

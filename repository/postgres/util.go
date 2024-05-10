@@ -42,6 +42,13 @@ var (
 	accountWithCredentialsColumns = " id, email, email_verified, name, photo_url, role, account_type, profile_set, hashed_password "
 )
 
+func scanAccountPharmacy(r RowScanner, p *domain.Account) error {
+	if err := r.Scan(&p.ID, &p.Email, &p.EmailVerified, &p.Name, &p.PhotoURL, &p.Role, &p.AccountType, &p.ProfileSet); err != nil {
+		return err
+	}
+	return nil
+}
+
 func accountScanDests(u *domain.Account) []any {
 	return []any{
 		&u.ID, &u.Email, &u.EmailVerified, &u.Name, &u.PhotoURL, &u.Role, &u.AccountType, &u.ProfileSet,
