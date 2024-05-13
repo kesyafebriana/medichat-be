@@ -36,6 +36,16 @@ func main() {
 	}
 
 	l := logrus.New()
+
+	if conf.IsRelease {
+		infofile, err := os.OpenFile("/var/log/medichat.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		defer infofile.Close()
+		l.SetOutput(infofile)
+	}
+
 	log := logger.FromLogrus(l)
 
 	db, err := database.ConnectPostgresDB(conf.DatabaseURL)
@@ -128,8 +138,6 @@ func main() {
 
 	cld, _ := util.NewCloudinarylProvider()
 
-
-
 	passwordHasher := cryptoutil.NewPasswordHasherBcrypt(constants.HashCost)
 
 	resetPasswordTokenProvider := cryptoutil.NewRandomTokenProvider(
@@ -165,8 +173,8 @@ func main() {
 
 	chatService := service.NewChatService(service.ChatServiceOpts{
 		DataRepository: dataRepository,
-		Client: client,
-		Cloud: cld,
+		Client:         client,
+		Cloud:          cld,
 	})
 
 	accountService := service.NewAccountService(service.AccountServiceOpts{
