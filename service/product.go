@@ -38,7 +38,7 @@ func (s *productService) CreateProduct(ctx context.Context, request domain.AddPr
 
 	product.IsActive = true
 	product.Name = strings.TrimSpace(strings.ToLower(request.Name))
-	product.Slug = util.GenerateSlug(request.Name)
+	product.Slug = util.GenerateSlug(product.Name)
 
 	product.KeyWord = product.Name + " " + request.Manufacturer + " " + request.Composition
 
