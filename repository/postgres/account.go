@@ -114,7 +114,7 @@ func (r *accountRepository) GetAllPharmacyManager(
 	}
 
 	if query.SortBy != domain.CategorySortByParent {
-		fmt.Fprintf(&sb, " ORDER BY %s %s", query.SortBy, query.SortType)
+		fmt.Fprintf(&sb, " ORDER BY %s %s, id asc", query.SortBy, query.SortType)
 	}
 
 	if query.Limit != 0 {
