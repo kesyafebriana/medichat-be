@@ -259,7 +259,7 @@ func (r *pharmacyRepository) Update(ctx context.Context, pharmacy domain.Pharmac
 			coordinate = $3,
 			pharmacist_name = $4,
 			pharmacist_license = $5,
-			pharmacist_phone = $6
+			pharmacist_phone = $6,
 			updated_at = now()
 		WHERE slug = $7 RETURNING
 	` + pharmacyColumns
