@@ -37,7 +37,7 @@ type ProductsResponse struct {
 }
 
 type UpdateProductForm struct {
-	Slug string `uri:"slug"`
+	Slug string `form:"slug"`
 
 	Name                  string  `form:"name"`
 	GenericName           string  `form:"generic_name"`

@@ -131,7 +131,7 @@ func (s *productService) GetProduct(ctx context.Context, slug string) (domain.Pr
 func (s *productService) GetProductLocation(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, domain.PageInfo, error) {
 	productRepo := s.dataRepository.ProductRepository()
 	categoryRepo := s.dataRepository.CategoryRepository()
-	
+
 	if query.CategorySlug != nil {
 		category, err := categoryRepo.GetBySlug(ctx, *query.CategorySlug)
 		if err != nil {
