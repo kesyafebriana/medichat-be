@@ -22,7 +22,7 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 	if query.Longitude != nil && query.Latitude != nil {
 		sb.WriteString(`
 			SELECT ` + pharmacyJoinedColumns + `, p.coordinate <-> $1
-			FROM pharmacies p JOIN stocks as s ON s.pharmacy_id = p.id
+			FROM pharmacies p LEFT JOIN stocks as s ON s.pharmacy_id = p.id
 			WHERE p.deleted_at IS NULL
 		`)
 		idx = 2
@@ -30,7 +30,7 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 	} else {
 		sb.WriteString(`
 			SELECT ` + pharmacyJoinedColumns + `
-			FROM pharmacies p JOIN stocks as s ON s.pharmacy_id = p.id
+			FROM pharmacies p LEFT JOIN stocks as s ON s.pharmacy_id = p.id
 			WHERE p.deleted_at IS NULL
 		`)
 	}
@@ -274,7 +274,7 @@ func (r *pharmacyRepository) Update(ctx context.Context, pharmacy domain.Pharmac
 			coordinate = $3,
 			pharmacist_name = $4,
 			pharmacist_license = $5,
-			pharmacist_phone = $6
+			pharmacist_phone = $6,
 			updated_at = now()
 		WHERE slug = $7 RETURNING
 	` + pharmacyColumns
