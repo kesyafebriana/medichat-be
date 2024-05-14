@@ -200,7 +200,6 @@ func (sh PharmacyShipmentMethodCreateRequest) ToEntity() domain.PharmacyShipment
 
 type PharmacyCreateRequest struct {
 	Name                    string                                `json:"name" binding:"required,no_leading_trailing_space"`
-	ManagerID               int64                                 `json:"manager_id" binding:"required"`
 	Address                 string                                `json:"address" binding:"required,no_leading_trailing_space"`
 	Coordinate              CoordinateDTO                         `json:"coordinate" binding:"required"`
 	PharmacistName          string                                `json:"pharmacist_name" binding:"required,no_leading_trailing_space"`
@@ -213,7 +212,6 @@ type PharmacyCreateRequest struct {
 func PharmacyCreateToDetails(p PharmacyCreateRequest) domain.PharmacyCreateDetails {
 	return domain.PharmacyCreateDetails{
 		Name:              p.Name,
-		ManagerID:         p.ManagerID,
 		Address:           p.Address,
 		Coordinate:        p.Coordinate.ToCoordinate(),
 		PharmacistName:    p.PharmacistName,

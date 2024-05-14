@@ -21,7 +21,7 @@ func (r *pharmacyRepository) GetPharmacies(ctx context.Context, query domain.Pha
 
 	sb.WriteString(`
 		SELECT ` + pharmacyJoinedColumns + `
-		FROM pharmacies p JOIN stocks as s ON s.pharmacy_id = p.id
+		FROM pharmacies p LEFT JOIN stocks as s ON s.pharmacy_id = p.id
 		WHERE p.deleted_at IS NULL
 	`)
 
