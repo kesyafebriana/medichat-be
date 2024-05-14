@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"medichat-be/apperror"
 	"medichat-be/constants"
 	"medichat-be/domain"
@@ -234,6 +235,8 @@ func (h *CategoryHandler) UpdateCategory(ctx *gin.Context) {
 		file = &f
 		defer f.Close()
 	}
+
+	log.Print(form.Name)
 
 	category, err := h.categorySrv.UpdateCategory(ctx, domain.Category{
 		Name:     form.Name,
