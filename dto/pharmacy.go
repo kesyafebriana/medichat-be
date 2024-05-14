@@ -63,7 +63,7 @@ func NewPharmacyResponse(pharmacy domain.Pharmacy) PharmacyResponse {
 		Coordinate:              CoordinateDTO(pharmacy.Coordinate),
 		PharmacistName:          pharmacy.PharmacistName,
 		PharmacistLicense:       pharmacy.PharmacistLicense,
-		PharmacistPhone:         pharmacy.PharmacistLicense,
+		PharmacistPhone:         pharmacy.PharmacistPhone,
 		PharmacyOperations:      util.MapSlice(pharmacy.PharmacyOperations, NewPharmacyOperationResponse),
 		PharmacyShipmentMethods: util.MapSlice(pharmacy.PharmacyShipmentMethods, NewPharmacyShipmentMethodResponse),
 
