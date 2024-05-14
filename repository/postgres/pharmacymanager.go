@@ -124,3 +124,17 @@ func (r *pharmacyManagerRepository) Add(ctx context.Context, ph domain.PharmacyM
 		ph.Account.ID,
 	)
 }
+
+func (r *pharmacyManagerRepository) DeleteByAccountId(ctx context.Context, id int64) error {
+	q := `
+		UPDATE pharmacy_managers
+		SET deleted_at = now(),
+		updated_at = now()
+		WHERE account_id = $1
+	`
+
+	return execOne(
+		r.querier, ctx, q,
+		id,
+	)
+}

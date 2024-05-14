@@ -57,10 +57,12 @@ type AccountRefreshTokensCredentials struct {
 }
 
 type AccountRepository interface {
+	GetAllPharmacyManager(ctx context.Context, query PharmacyManagerQuery) ([]Account, error)
 	GetByEmail(ctx context.Context, email string) (Account, error)
 	GetByEmailAndLock(ctx context.Context, email string) (Account, error)
 	GetWithCredentialsByEmail(ctx context.Context, email string) (AccountWithCredentials, error)
 	IsExistByEmail(ctx context.Context, email string) (bool, error)
+	GetPageInfo(ctx context.Context, query PharmacyManagerQuery) (PageInfo, error)
 
 	GetByID(ctx context.Context, id int64) (Account, error)
 	GetByIDAndLock(ctx context.Context, id int64) (Account, error)
@@ -72,6 +74,7 @@ type AccountRepository interface {
 	UpdatePasswordByID(ctx context.Context, id int64, newHashedPassword string) error
 	VerifyEmailByID(ctx context.Context, id int64) error
 	ProfileSetByID(ctx context.Context, id int64) error
+	SoftDeleteById(ctx context.Context, id int64) error 
 }
 
 type AccountService interface {

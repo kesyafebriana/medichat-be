@@ -356,7 +356,7 @@ func (s *accountService) GetVerifyEmailTokenClosure(
 			return "", apperror.Wrap(err)
 		}
 
-		err = s.emailProvider.SendEmail(account.Email, s.appEmail.NewVerifyAccountEmail("Fullname", account.Email, tokenStr))
+		err = s.emailProvider.SendEmail(account.Email, s.appEmail.NewVerifyAccountEmail(account.Name, account.Email, tokenStr))
 		if err != nil {
 			return "", apperror.Wrap(err)
 		}

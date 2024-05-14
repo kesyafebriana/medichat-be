@@ -20,10 +20,10 @@ func (r *productRepository) GetProductsFromArea(ctx context.Context, query domai
 	var idx = 1
 	offset := (query.Page - 1) * query.Limit
 
-	_, err := fmt.Fprintf(&sb, ` SELECT DISTINCT p.id, p.name, p.product_detail_id, p.category_id, p.picture, p.is_active from products p inner join
+	_, err := fmt.Fprintf(&sb, ` SELECT DISTINCT p.id, p.name, p.slug, p.product_detail_id, p.category_id, p.picture, p.is_active from products p inner join
 		(select pharma.id as pharmacy_id,pharma.name, stock.product_id as product_id from
 			(SELECT id, name, address, coordinate FROM pharmacies
-			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 2500)) as pharma
+			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 25000)) as pharma
 			inner join (select s.id,s.product_id,s.pharmacy_id from stocks s where s.deleted_at is null and stock >=0) as stock
 		on pharma.id = stock.pharmacy_id) as pp
 		on p.id = pp.product_id
@@ -42,6 +42,12 @@ func (r *productRepository) GetProductsFromArea(ctx context.Context, query domai
 
 	}
 
+	if query.CategoryID != nil {
+		fmt.Fprintf(&sb, ` AND p.category_id = $%d `, idx)
+		idx += 1
+		args = append(args, *query.CategoryID)
+	}
+
 	if query.SortBy != domain.CategorySortByParent {
 		query.SortBy = "p." + query.SortBy
 		fmt.Fprintf(&sb, " ORDER BY %v %v", query.SortBy, query.SortType)
@@ -53,6 +59,7 @@ func (r *productRepository) GetProductsFromArea(ctx context.Context, query domai
 		args = append(args, offset, query.Limit)
 		idx += 2
 	}
+
 	return queryFull(
 		r.querier, ctx, sb.String(),
 		scanProduct,
@@ -68,7 +75,7 @@ func (r *productRepository) GetPageInfoFromArea(ctx context.Context, query domai
 	_, err := fmt.Fprintf(&sb, ` SELECT COUNT(DISTINCT p.id) as total_data from products p inner join
 		(select pharma.id as pharmacy_id,pharma.name, stock.product_id as product_id from
 			(SELECT id, name, address, coordinate FROM pharmacies
-			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 2500)) as pharma
+			WHERE deleted_at IS null AND ST_DWithin(coordinate, ST_MakePoint($%d, $%d)::geography, 25000)) as pharma
 			inner join (select s.id,s.product_id,s.pharmacy_id from stocks s where s.deleted_at is null and stock >=0) as stock
 		on pharma.id = stock.pharmacy_id) as pp
 		on p.id = pp.product_id
@@ -80,9 +87,15 @@ func (r *productRepository) GetPageInfoFromArea(ctx context.Context, query domai
 	}
 
 	if query.Term != "" {
-		fmt.Fprintf(&sb, `AND c.name ILIKE $%d`, idx)
-		args = append(args, query.Term)
+		fmt.Fprintf(&sb, `AND p.name ILIKE $%d`, idx)
+		args = append(args, "%"+query.Term+"%")
 		idx += 1
+	}
+
+	if query.CategoryID != nil {
+		fmt.Fprintf(&sb, ` AND p.category_id = $%d `, idx)
+		idx += 1
+		args = append(args, *query.CategoryID)
 	}
 
 	var totalData int64
@@ -114,6 +127,11 @@ func (r *productRepository) GetProducts(ctx context.Context, query domain.Produc
 		sb.WriteString(` AND (p.keyword ILIKE '%' || @name || '%' `)
 		sb.WriteString(` OR p.name ILIKE '%' || @name || '%') `)
 		args["name"] = query.Term
+	}
+
+	if query.CategoryID != nil {
+		sb.WriteString(` AND p.category_id = @categoryID `)
+		args["categoryID"] = *query.CategoryID
 	}
 
 	if query.SortBy != domain.CategorySortByParent {
@@ -188,8 +206,14 @@ func (r *productRepository) GetPageInfo(ctx context.Context, query domain.Produc
 	`)
 
 	if query.Term != "" {
-		sb.WriteString(` AND c.name ILIKE '%' || @name || '%' `)
+		sb.WriteString(` AND (c.keyword ILIKE '%' || @name || '%' `)
+		sb.WriteString(` OR c.name ILIKE '%' || @name || '%') `)
 		args["name"] = query.Term
+	}
+
+	if query.CategoryID != nil {
+		sb.WriteString(` AND c.category_id = @categoryID `)
+		args["categoryID"] = *query.CategoryID
 	}
 
 	var totalData int64
@@ -207,6 +231,10 @@ func (r *productRepository) GetPageInfo(ctx context.Context, query domain.Produc
 }
 
 func (r *productRepository) Add(ctx context.Context, product domain.Product) (domain.Product, error) {
+	picture := ""
+	if product.Picture != nil {
+		picture = *product.Picture
+	}
 	q := `
 		INSERT INTO products(name,category_id, product_detail_id, picture, slug, is_active, keyword)
 		VALUES
@@ -216,7 +244,7 @@ func (r *productRepository) Add(ctx context.Context, product domain.Product) (do
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanProduct,
-		product.Name, product.ProductCategoryId, product.ProductDetailId, product.Picture, product.Slug, product.IsActive, product.KeyWord,
+		product.Name, product.ProductCategoryId, product.ProductDetailId, picture, product.Slug, product.IsActive, product.KeyWord,
 	)
 }
 
@@ -226,11 +254,11 @@ func (r *productRepository) Update(ctx context.Context, product domain.Product) 
 		SET name = $1,
 			category_id = $2,
 			product_detail_id = $3,
-			picture = $4
-			slug = $5
-			is_active = $6
+			picture = $4,
+			slug = $5,
+			is_active = $6,
 			keyword = $7
-		WHERE id = $8 RETURNING ` + categoryColumns
+		WHERE id = $8 RETURNING ` + productColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,

@@ -42,6 +42,13 @@ var (
 	accountWithCredentialsColumns = " id, email, email_verified, name, photo_url, role, account_type, profile_set, hashed_password "
 )
 
+func scanAccountPharmacy(r RowScanner, p *domain.Account) error {
+	if err := r.Scan(&p.ID, &p.Email, &p.EmailVerified, &p.Name, &p.PhotoURL, &p.Role, &p.AccountType, &p.ProfileSet); err != nil {
+		return err
+	}
+	return nil
+}
+
 func accountScanDests(u *domain.Account) []any {
 	return []any{
 		&u.ID, &u.Email, &u.EmailVerified, &u.Name, &u.PhotoURL, &u.Role, &u.AccountType, &u.ProfileSet,
@@ -193,6 +200,21 @@ func scanPharmacy(r RowScanner, p *domain.Pharmacy) error {
 	return nil
 }
 
+func scanPharmacyWithDistance(r RowScanner, p *domain.Pharmacy) error {
+	var pos postgis.Point
+	var dis float64
+	if err := r.Scan(
+		&p.ID, &p.ManagerID, &p.Name, &p.Address, &pos,
+		&p.PharmacistName, &p.PharmacistLicense,
+		&p.PharmacistPhone, &p.Slug, &dis,
+	); err != nil {
+		return err
+	}
+	p.Coordinate = pos.ToCoordinate()
+	p.Distance = &dis
+	return nil
+}
+
 func ScanPharmacyOperation(r RowScanner, p *domain.PharmacyOperations) error {
 	if err := r.Scan(&p.ID, &p.PharmacyID, &p.Day, &p.StartTime, &p.EndTime); err != nil {
 		return err
@@ -288,13 +310,13 @@ func scanProductDetails(r RowScanner, d *domain.ProductDetails) error {
 }
 
 var (
-	chatsColumns        = " chat_room_id, type, message, file, user_id, user_name, created_at  "
-	roomsColumns        = " user_id, doctor_id, end_at  "
+	chatsColumns = " chat_room_id, type, message, file, user_id, user_name, created_at  "
+	roomsColumns = " user_id, doctor_id, end_at  "
 )
 
 func scanChats(r RowScanner, c *domain.Chat) error {
 	if err := r.Scan(
-		&c.RoomId,  &c.Type, &c.Message, &c.File, &c.UserId, &c.UserName,&c.CreatedAt,
+		&c.RoomId, &c.Type, &c.Message, &c.File, &c.UserId, &c.UserName, &c.CreatedAt,
 	); err != nil {
 		return err
 	}

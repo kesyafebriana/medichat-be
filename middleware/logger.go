@@ -32,6 +32,7 @@ func Logger(logger logger.Logger) gin.HandlerFunc {
 		}
 
 		fields := map[string]interface{}{
+			"app":         "medichat",
 			"request_id":  requestID,
 			"path":        path,
 			"latency":     time.Since(start),

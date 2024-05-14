@@ -25,7 +25,6 @@ type ChatMessage struct{
 }
 
 type ChatPrescription struct{
-	UserId int `json:"userId"`
 	Drugs []*ChatPrescriptionDrugs `json:"drugs"`
 }
 

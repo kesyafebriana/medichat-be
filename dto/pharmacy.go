@@ -18,6 +18,8 @@ type PharmacyResponse struct {
 	PharmacistPhone         string                           `json:"pharmacist_phone"`
 	PharmacyOperations      []PharmacyOperationResponse      `json:"pharmacy_operations"`
 	PharmacyShipmentMethods []PharmacyShipmentMethodResponse `json:"pharmacy_shipment_methods"`
+
+	Distance *float64 `json:"distance,omitempty"`
 }
 
 type PharmacyResponseWithStock struct {
@@ -33,6 +35,8 @@ type PharmacyResponseWithStock struct {
 	PharmacyOperations      []PharmacyOperationResponse      `json:"pharmacy_operations"`
 	PharmacyShipmentMethods []PharmacyShipmentMethodResponse `json:"pharmacy_shipment_methods"`
 	StockInfo               StockResponse                    `json:"stock"`
+
+	Distance *float64 `json:"distance,omitempty"`
 }
 
 type PharmaciesResponse struct {
@@ -62,6 +66,8 @@ func NewPharmacyResponse(pharmacy domain.Pharmacy) PharmacyResponse {
 		PharmacistPhone:         pharmacy.PharmacistLicense,
 		PharmacyOperations:      util.MapSlice(pharmacy.PharmacyOperations, NewPharmacyOperationResponse),
 		PharmacyShipmentMethods: util.MapSlice(pharmacy.PharmacyShipmentMethods, NewPharmacyShipmentMethodResponse),
+
+		Distance: pharmacy.Distance,
 	}
 }
 
@@ -79,6 +85,8 @@ func NewPharmacyWithStockResponse(pharmacy domain.PharmacyStock) PharmacyRespons
 		PharmacyOperations:      util.MapSlice(pharmacy.PharmacyOperations, NewPharmacyOperationResponse),
 		PharmacyShipmentMethods: util.MapSlice(pharmacy.PharmacyShipmentMethods, NewPharmacyShipmentMethodResponse),
 		StockInfo:               NewStockResponse(pharmacy.Stock),
+
+		Distance: pharmacy.Distance,
 	}
 }
 
