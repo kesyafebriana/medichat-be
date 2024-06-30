@@ -37,19 +37,9 @@ func (s *productService) CreateProduct(ctx context.Context, request domain.AddPr
 	product := domain.Product{}
 
 	product.IsActive = true
-	product.Name = strings.TrimSpace(strings.ToLower(request.Name))
-	product.Slug = util.GenerateSlug(request.Name)
+	product.Name = request.Name
 
 	product.KeyWord = product.Name + " " + request.Manufacturer + " " + request.Composition
-
-	p, err := productRepo.GetByName(ctx, product.Name)
-	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
-		return domain.Product{}, apperror.Wrap(err)
-	}
-
-	if p.Name == request.Name {
-		return domain.Product{}, apperror.NewAlreadyExists("product")
-	}
 
 	cat, err := categoryRepo.GetById(ctx, request.ProductCategoryId)
 	if err != nil && !apperror.IsErrorCode(err, apperror.CodeNotFound) {
@@ -131,7 +121,7 @@ func (s *productService) GetProduct(ctx context.Context, slug string) (domain.Pr
 func (s *productService) GetProductLocation(ctx context.Context, query domain.ProductsQuery) ([]domain.Product, domain.PageInfo, error) {
 	productRepo := s.dataRepository.ProductRepository()
 	categoryRepo := s.dataRepository.CategoryRepository()
-	
+
 	if query.CategorySlug != nil {
 		category, err := categoryRepo.GetBySlug(ctx, *query.CategorySlug)
 		if err != nil {

@@ -52,14 +52,14 @@ func (r *productDetailRepository) Update(ctx context.Context, detail domain.Prod
 			height = $10,
 			length = $11,
 			width = $12,
-			composition = $13,
-		WHERE id = $14 RETURNING ` + categoryColumns
+			composition = $13
+		WHERE id = $14 RETURNING ` + productDetailsColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,
 		scanProductDetails,
-		detail.GenericName, detail.Content, detail.Manufacturer, detail.Description, detail.ProductClassification, detail.ProductForm, detail.UnitInPack, detail.SellingUnit, detail.Weight, detail.Height, detail.Length, detail.Composition, detail.Width,detail.ID,
+		detail.GenericName, detail.Content, detail.Manufacturer, detail.Description, 
+		detail.ProductClassification, detail.ProductForm, detail.UnitInPack, detail.SellingUnit, 
+		detail.Weight, detail.Height, detail.Length, detail.Width, detail.Composition, detail.ID,
 	)
 }
-
-

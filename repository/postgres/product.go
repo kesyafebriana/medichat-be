@@ -87,11 +87,11 @@ func (r *productRepository) GetPageInfoFromArea(ctx context.Context, query domai
 	}
 
 	if query.Term != "" {
-		fmt.Fprintf(&sb,`AND p.name ILIKE $%d`,idx)
+		fmt.Fprintf(&sb, `AND p.name ILIKE $%d`, idx)
 		args = append(args, "%"+query.Term+"%")
 		idx += 1
 	}
-	
+
 	if query.CategoryID != nil {
 		fmt.Fprintf(&sb, ` AND p.category_id = $%d `, idx)
 		idx += 1
@@ -141,7 +141,6 @@ func (r *productRepository) GetProducts(ctx context.Context, query domain.Produc
 	if query.Limit != 0 {
 		fmt.Fprintf(&sb, " OFFSET %d LIMIT %d ", offset, query.Limit)
 	}
-
 
 	return queryFull(
 		r.querier, ctx, sb.String(),
@@ -255,11 +254,11 @@ func (r *productRepository) Update(ctx context.Context, product domain.Product) 
 		SET name = $1,
 			category_id = $2,
 			product_detail_id = $3,
-			picture = $4
-			slug = $5
-			is_active = $6
+			picture = $4,
+			slug = $5,
+			is_active = $6,
 			keyword = $7
-		WHERE id = $8 RETURNING ` + categoryColumns
+		WHERE id = $8 RETURNING ` + productColumns
 
 	return queryOneFull(
 		r.querier, ctx, q,

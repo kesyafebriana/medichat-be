@@ -352,11 +352,16 @@ func (s *pharmacyService) UpdatePharmacy(ctx context.Context, pharmacy domain.Ph
 		return domain.Pharmacy{}, apperror.Wrap(err)
 	}
 
-	if pharmacy.ManagerID != manager.ID {
+	p, err := pharmacyRepo.GetBySlug(ctx, pharmacy.Slug)
+	if err != nil {
+		return domain.Pharmacy{}, apperror.Wrap(err)
+	}
+
+	if p.ManagerID != manager.ID {
 		return domain.Pharmacy{}, apperror.NewForbidden(nil)
 	}
 
-	p, err := pharmacyRepo.Update(ctx, pharmacy)
+	p, err = pharmacyRepo.Update(ctx, pharmacy)
 	if err != nil {
 		return domain.Pharmacy{}, apperror.Wrap(err)
 	}
@@ -372,7 +377,7 @@ func (s *pharmacyService) UpdatePharmacy(ctx context.Context, pharmacy domain.Ph
 	}
 
 	for i, v := range sh {
-		shDetail, err := shipmentRepo.GetShipmentMethodById(ctx, v.ID)
+		shDetail, err := shipmentRepo.GetShipmentMethodById(ctx, v.ShipmentMethodID)
 		if err != nil {
 			return domain.Pharmacy{}, apperror.Wrap(err)
 		}
